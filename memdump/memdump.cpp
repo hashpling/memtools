@@ -165,7 +165,22 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		else
 		{
-			size_t minsize = (size_t)-1;
+			if (fi[19].s < meminfo.RegionSize)
+			{
+				int j;
+
+				for(j = 18; j >= 0; --j)
+				{
+					if (fi[j].s >= meminfo.RegionSize) break;
+					fi[j+1].s = fi[j].s;
+					fi[j+1].p = fi[j].p;
+				}
+
+				fi[j+1].s = meminfo.RegionSize;
+				fi[j+1].p = p;
+			}
+
+			/*size_t minsize = (size_t)-1;
 			for (size_t i = 0; i < 20; ++i)
 			{
 				if (fi[i].s < minsize) minsize = fi[i].s;
@@ -181,7 +196,7 @@ int _tmain(int argc, _TCHAR* argv[])
 						break;
 					}
 				}
-			}
+			}*/
 		}
 
 		if (meminfo.RegionSize > 0) p += (meminfo.RegionSize - sysinfo.dwPageSize);
@@ -189,7 +204,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	if (hps != heaps) delete[] hps;
 
-	for (size_t i = 0; i < 20; ++ i)
+	for (size_t i = 0; i < 20; ++i)
 	{
 		if (fi[i].s > 0)
 		{
