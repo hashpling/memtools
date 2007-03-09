@@ -1,9 +1,13 @@
 #include "stdafx.h"
 #include "mmpainter.h"
 #include <cmath>
+#include <vector>
+#include <algorithm>
 
 using std::cos;
 using std::sin;
+using std::vector;
+using std::copy;
 
 const int radius = 100;
 const double dradius = radius;
@@ -39,29 +43,76 @@ void MMPainter::Paint(HDC hdc) const
 	SelectObject(hdc, oldBrush);
 }
 
-struct Mem
+
+COLORREF MMPainter::GetColour(Mem::Region** preg, size_t base, size_t end) const
 {
-	size_t min;
-	size_t max;
+	COLORREF c = RGB(0, 0, 0);
 
-	struct Region
+	Mem::Region*& reg = *preg;
+
+	if (reg != 0)
 	{
-		size_t base;
-		size_t size;
-		int type;
-	};
+		while (reg->base != ((size_t)-1) && (reg->base + reg->size) < base)
+		{
+			++reg;
+		}
 
-	Region* head;
-};
+		size_t tmp = 0, tmp2 = 0;
+		int max_type = 0;
+
+		Mem::Region* oreg = reg;
+		while (reg->base != ((size_t)-1) && reg->base < end)
+		{
+			size_t sbegin = max(base, reg->base);
+			size_t send = min(end, reg->base + reg->size);
+
+			tmp += (send - sbegin) * reg->type;
+			tmp2 += (send - sbegin) * max(reg->type, 1);
+
+			if (reg->type > max_type) max_type = reg->type;
+
+			oreg = reg;
+			++reg;
+		}
+		// Reset back to the last interval so that the overlaps match up
+		reg = oreg;
+
+		if (max_type > 0) tmp = tmp2;
+		/*switch (max_type)
+		{
+		case 0:
+			c = RGB(0, 255, 0);
+			break;
+		case 1:
+			c = RGB(255, 255, 0);
+			break;
+		default:
+			c = RGB(255, 0, 0);
+		}*/
+
+		if (tmp > end - base)
+		{
+			c = RGB(255, 255 - ((tmp - (end - base)) * 255) / (end - base), 0);
+		}
+		else
+		{
+			c = RGB((tmp * 255) / (end - base), 255, 0);
+		}
+	}
+
+	return c;
+}
 
 void MMPainter::DisplayGauge(HDC hdc) const
 {
 	double pi = acos(-1.0);
 	double dstart = pi;
-	double ddiff = dstart / (dradius/2.0);
+	double ddiff = dstart / (dradius*2.0);
 	double dnext;
 
 	double addrmax = double(0x80000000u);
+
+	Mem::Region* pReg = mem.head;
 
 	HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
 	HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
@@ -69,11 +120,11 @@ void MMPainter::DisplayGauge(HDC hdc) const
 	{
 		dnext = d - ddiff;
 
-		size_t base = size_t((pi - d) * addrmax);
-		size_t end = size_t((pi - dnext) * addrmax);
+		size_t base = size_t((pi - d) * addrmax / pi);
+		size_t end = size_t((pi - dnext) * addrmax / pi);
 
-		COLORREF c = RGB((rand() * 256) / RAND_MAX
-					, (rand() * 256) / RAND_MAX, (rand() * 256) / RAND_MAX);
+		COLORREF c = GetColour(&pReg, base, end);//RGB((rand() * 256) / RAND_MAX
+					//, (rand() * 256) / RAND_MAX, (rand() * 256) / RAND_MAX);
 		SetDCBrushColor(hdc, c);
 		SetDCPenColor(hdc, c);
 		int x1 = radius + int(dradius * cos(dnext));
@@ -85,4 +136,66 @@ void MMPainter::DisplayGauge(HDC hdc) const
 	}
 	SelectObject(hdc, hOldPen);
 	SelectObject(hdc, hOldBrush);
+}
+
+void MMPainter::Update()
+{
+	mem.Populate(procid);
+}
+
+MMPainter::Mem::Mem()
+: head(0)
+{
+}
+
+MMPainter::Mem::~Mem()
+{
+	delete[] head;
+}
+
+void MMPainter::Mem::Populate(int pid)
+{
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+
+	Region r;
+	vector<Region> rlist;
+
+	MEMORY_BASIC_INFORMATION meminfo;
+	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+	if (hProc != NULL)
+	{
+		for (char* p = (char*)sysinfo.lpMinimumApplicationAddress; p < (char*)sysinfo.lpMaximumApplicationAddress; p += sysinfo.dwPageSize)
+		{
+			VirtualQueryEx(hProc, p, &meminfo, sizeof(meminfo));
+
+			r.base = (size_t)meminfo.BaseAddress;
+			r.size = meminfo.RegionSize;
+			switch (meminfo.State)
+			{
+			case MEM_FREE:
+				r.type = 0;
+				break;
+			case MEM_RESERVE:
+				r.type = 1;
+				break;
+			case MEM_COMMIT:
+			default:
+				r.type = 2;
+			}
+
+			rlist.push_back(r);
+			if (meminfo.RegionSize > 0) p += (meminfo.RegionSize - sysinfo.dwPageSize);
+		}
+
+		CloseHandle(hProc);
+	}
+
+	size_t newsize = rlist.size() + 1;
+
+	delete[] head;
+	head = new Region[newsize];
+
+	copy(rlist.begin(), rlist.end(), head);
+	head[newsize - 1].base = (size_t)-1;
 }

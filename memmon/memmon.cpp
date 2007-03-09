@@ -12,6 +12,7 @@ HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 MMPainter* pPaint;
+UINT_PTR timerid = 1;
 
 
 // Forward declarations of functions included in this code module:
@@ -128,7 +129,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
-   CreateShNotIcon(hWnd);
+   //CreateShNotIcon(hWnd);
    return TRUE;
 }
 
@@ -138,6 +139,33 @@ void MyPaint(HDC hdc)
 	if (RectVisible(hdc, &rect))
 	{
 		pPaint->Paint(hdc);
+	}
+}
+
+BOOL CALLBACK AttachProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	BOOL ret = FALSE;
+	if (message == WM_COMMAND)
+	{
+		_TCHAR tmp[200] = { 0 };
+		switch (LOWORD(wParam))
+		{
+		case IDOK:
+			GetDlgItemText(hwndDlg, IDC_EDIT1, tmp, 200);
+			pPaint->SetProcessId( _ttoi(tmp) );
+		case IDCANCEL:
+			EndDialog(hwndDlg, wParam);
+			ret = TRUE;
+		}
+	}
+	return ret;
+}
+
+void RunAttachDialog(HWND hWnd)
+{
+	if (DialogBox(hInst, MAKEINTRESOURCE(IDD_ATTACH_DLOG), hWnd, AttachProc))
+	{
+		timerid = SetTimer(hWnd, timerid, 1000, NULL);
 	}
 }
 
@@ -156,6 +184,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
+	RECT rect = { 0, 0, 200, 100 };
 
 	switch (message)
 	{
@@ -171,12 +200,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
+		case ID_FILE_ATTACH:
+			RunAttachDialog(hWnd);
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
+	case WM_TIMER:
+		pPaint->Update();
+		InvalidateRect(hWnd, &rect, TRUE);
+
 	case WM_KEYDOWN:
-		PollShNotIcon(hWnd);
+		//PollShNotIcon(hWnd);
 		break;
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
@@ -185,7 +220,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
-		RemoveShNotIcon(hWnd);
+		//RemoveShNotIcon(hWnd);
+		KillTimer(hWnd, timerid);
 		PostQuitMessage(0);
 		break;
 	default:
