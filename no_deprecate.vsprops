@@ -6,6 +6,6 @@
 	>
 	<Tool
 		Name="VCCLCompilerTool"
-		PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_CRT_NON_CONFORMING_SWPRINTFS"
+		PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_CRT_NON_CONFORMING_SWPRINTFS;_SCL_SECURE_NO_DEPRECATE"
 	/>
 </VisualStudioPropertySheet>

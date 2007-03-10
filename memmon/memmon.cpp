@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "memmon.h"
 #include "mmpainter.h"
+#include <crtdbg.h>
 
 #define MAX_LOADSTRING 100
 
@@ -31,6 +32,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+
+	_CrtSetDbgFlag(_CrtSetDbgFlag(0) | _CRTDBG_LEAK_CHECK_DF);
 
  	// TODO: Place code here.
 	MSG msg;
@@ -94,7 +97,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.hInstance		= hInstance;
 	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MEMMON));
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
+	wcex.hbrBackground	= NULL;//(HBRUSH)(COLOR_WINDOW+1);
 	wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_MEMMON);
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
@@ -119,7 +122,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // Store instance handle in our global variable
 
    hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
+      0, 0, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
    if (!hWnd)
    {
@@ -133,30 +136,37 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-void MyPaint(HDC hdc)
+void MyPaint(HDC hdc, PAINTSTRUCT* ps)
 {
-	RECT rect = { 0, 0, 200, 100 };
+	RECT rect = { 0, 0, 200, 500 };
 	if (RectVisible(hdc, &rect))
 	{
-		pPaint->Paint(hdc);
+		pPaint->Paint(hdc, ps);
 	}
 }
 
-BOOL CALLBACK AttachProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK AttachProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	BOOL ret = FALSE;
-	if (message == WM_COMMAND)
+	INT_PTR ret = (INT_PTR)FALSE;
+	switch (message)
 	{
-		_TCHAR tmp[200] = { 0 };
-		switch (LOWORD(wParam))
+	case WM_COMMAND:
 		{
-		case IDOK:
-			GetDlgItemText(hwndDlg, IDC_EDIT1, tmp, 200);
-			pPaint->SetProcessId( _ttoi(tmp) );
-		case IDCANCEL:
-			EndDialog(hwndDlg, wParam);
-			ret = TRUE;
+			_TCHAR tmp[200] = { 0 };
+			switch (LOWORD(wParam))
+			{
+			case IDOK:
+				GetDlgItemText(hwndDlg, IDC_EDIT1, tmp, 200);
+				pPaint->SetProcessId( _ttoi(tmp) );
+			case IDCANCEL:
+				EndDialog(hwndDlg, wParam);
+				ret = (INT_PTR)TRUE;
+			}
 		}
+		break;
+	case WM_INITDIALOG:
+		// Return true to set default focus
+		ret = (INT_PTR)TRUE;
 	}
 	return ret;
 }
@@ -184,7 +194,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
-	RECT rect = { 0, 0, 200, 100 };
+	RECT rect = { 0, 0, 200, 500 };
+	MINMAXINFO* pMinMax;
 
 	switch (message)
 	{
@@ -216,8 +227,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...
-		MyPaint(hdc);
+		MyPaint(hdc, &ps);
 		EndPaint(hWnd, &ps);
+		break;
+	case WM_GETMINMAXINFO:
+		//RemoveShNotIcon(hWnd);
+		pMinMax = (MINMAXINFO*)lParam;
+		pMinMax->ptMaxSize.x = 208;
+		pMinMax->ptMaxSize.y = 508;
+		pMinMax->ptMaxTrackSize.x = 208;
+		pMinMax->ptMaxTrackSize.y = 508;
 		break;
 	case WM_DESTROY:
 		//RemoveShNotIcon(hWnd);
@@ -249,7 +268,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return (INT_PTR)FALSE;
 }
-
+/*
 void CreateShNotIcon(HWND hwnd)
 {
 	NOTIFYICONDATA nid;
@@ -289,3 +308,4 @@ void RemoveShNotIcon(HWND hwnd)
 	nid.uFlags = 0;
 	Shell_NotifyIcon(NIM_DELETE, &nid);
 }
+*/

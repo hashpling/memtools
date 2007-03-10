@@ -11,9 +11,7 @@ public:
 	MMPainter();
 	~MMPainter();
 
-	void Paint(HDC hdc) const;
-
-	void DisplayGauge(HDC hdc) const;
+	void Paint(HDC hdc, PAINTSTRUCT* ps);
 
 	void SetProcessId(int p) { procid = p; }
 	void Update();
@@ -28,23 +26,38 @@ public:
 		size_t min;
 		size_t max;
 
-		struct Region
+		struct FreeRegion
 		{
 			size_t base;
 			size_t size;
+		};
+
+		struct Region : public FreeRegion
+		{
 			int type;
 		};
 
 		Region* head;
+		Region* freelist;
 	};
 
-	COLORREF GetColour(Mem::Region** preg, size_t base, size_t end) const;
 
 private:
+
+	void DisplayGauge(HDC hdc) const;
+	void DisplayBlobs(HDC hdc) const;
+
+	void MemPaint(HDC hdc) const;
+	COLORREF GetColour(Mem::Region** preg, size_t base, size_t end) const;
+	
+	
 	Mem mem;
 	HBRUSH hBrush;
 	HBRUSH hWBrush;
 	HPEN hPen;
+	HDC hMemDC;
+	HBITMAP hBmp;
+	HGDIOBJ hOldBmp;
 	int procid;
 };
 

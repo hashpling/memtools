@@ -42,7 +42,7 @@ IDC_MEMMON MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&Attach...",                  ID_FILE_ATTACH
+        MENUITEM "&Attach ...",                 ID_FILE_ATTACH
         MENUITEM "E&xit",                       IDM_EXIT
     END
     POPUP "&Help"
@@ -69,14 +69,14 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG  22, 17, 230, 75
-STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+IDD_ABOUTBOX DIALOGEX 22, 17, 230, 75
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
-FONT 8, "System"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    ICON            IDI_MEMMON,IDC_MYICON,14,9,16,16
-    LTEXT           "memmon Version 1.0",IDC_STATIC,49,10,119,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2007",IDC_STATIC,49,20,119,8
+    ICON            IDI_MEMMON,IDC_MYICON,14,9,21,20
+    LTEXT           "memmon Version 0.1a",IDC_STATIC,49,10,119,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2007 Charles Bailey",IDC_STATIC,49,20,119,8
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
 
@@ -85,9 +85,9 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Attach to process"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
+    EDITTEXT        IDC_EDIT1,7,25,102,14,ES_AUTOHSCROLL | ES_NUMBER
     DEFPUSHBUTTON   "OK",IDOK,129,7,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
-    EDITTEXT        IDC_EDIT1,7,25,102,14,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "Process Id:",IDC_STATIC,7,7,37,8
 END
 
@@ -137,6 +137,44 @@ BEGIN
     END
 END
 #endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,1,0,1
+ PRODUCTVERSION 0,1,0,1
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080904b0"
+        BEGIN
+            VALUE "FileDescription", "memmon Application"
+            VALUE "FileVersion", "0.1"
+            VALUE "InternalName", "memmon"
+            VALUE "LegalCopyright", "Copyright (C) 2007 Charles Bailey"
+            VALUE "OriginalFilename", "memmon.exe"
+            VALUE "ProductName", " memmon Application"
+            VALUE "ProductVersion", "0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x809, 1200
+    END
+END
 
 
 /////////////////////////////////////////////////////////////////////////////
