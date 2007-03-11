@@ -9,13 +9,9 @@ using std::sin;
 using std::vector;
 using std::copy;
 
-const int radius = 100;
-const double dradius = radius;
-const int width = 60;
-const size_t maxaddr = 0x80000000u;
-
-MMPainter::MMPainter()
+MMPainter::MMPainter(int r)
 : hMemDC(NULL), hBmp(NULL), hOldBmp(NULL)
+, radius(r), dradius(r), width(r * 3 /  5), maxaddr(0x1000000u)
 {
 	hBrush = CreateSolidBrush(RGB(255, 0, 0));
 	hWBrush = CreateSolidBrush(RGB(255, 255, 255));
@@ -53,16 +49,16 @@ void MMPainter::Paint(HDC hdc, PAINTSTRUCT* ps)
 		SetBkColor(hMemDC, RGB(255, 255, 255));
 	}
 
-	BitBlt(hdc, ps->rcPaint.left, ps->rcPaint.top
-		, ps->rcPaint.right - ps->rcPaint.left, ps->rcPaint.bottom - ps->rcPaint.top
-		, hMemDC, ps->rcPaint.left, ps->rcPaint.top, SRCCOPY);
+	int x, y, w, h;
+	x = max(ps->rcPaint.left, 0);
+	y = max(ps->rcPaint.top, 0);
+	w = min(ps->rcPaint.right - x, (radius << 1) - x);
+	h = min(ps->rcPaint.bottom - y, (radius + 400) - y);
+	BitBlt(hdc, x, y, w, h, hMemDC, x, y, SRCCOPY);
 }
 
 void MMPainter::MemPaint(HDC hdc) const
 {
-	//HGDIOBJ oldBrush = SelectObject(hdc, hBrush);
-	//Pie(hdc, 0, 0, radius << 1, radius << 1, radius << 1, radius, radius, 0);
-	//SelectObject(hdc, oldBrush);
 	RECT r = { 0, 0, radius << 1, radius + 400 };
 	FillRect(hdc, &r, hWBrush);
 	DisplayGauge(hdc);
@@ -78,15 +74,15 @@ void MMPainter::MemPaint(HDC hdc) const
 }
 
 
-COLORREF MMPainter::GetColour(Mem::Region** preg, size_t base, size_t end) const
+COLORREF MMPainter::GetColour(std::vector<Mem::Region>::const_iterator& reg
+							, std::vector<Mem::Region>::const_iterator rend
+							, size_t base, size_t end) const
 {
 	COLORREF c = RGB(0, 0, 0);
 
-	Mem::Region*& reg = *preg;
-
-	if (reg != 0)
+	if (reg != rend)
 	{
-		while (reg->base != ((size_t)-1) && (reg->base + reg->size) < base)
+		while (reg != rend && (reg->base + reg->size) < base)
 		{
 			++reg;
 		}
@@ -94,8 +90,8 @@ COLORREF MMPainter::GetColour(Mem::Region** preg, size_t base, size_t end) const
 		size_t tmp = 0, tmp2 = 0;
 		int max_type = 0;
 
-		Mem::Region* oreg = reg;
-		while (reg->base != ((size_t)-1) && reg->base < end)
+		std::vector<Mem::Region>::const_iterator oreg = reg;
+		while (reg != rend && reg->base < end)
 		{
 			size_t sbegin = max(base, reg->base);
 			size_t send = min(end, reg->base + reg->size);
@@ -112,17 +108,6 @@ COLORREF MMPainter::GetColour(Mem::Region** preg, size_t base, size_t end) const
 		reg = oreg;
 
 		if (max_type > 0) tmp = tmp2;
-		/*switch (max_type)
-		{
-		case 0:
-			c = RGB(0, 255, 0);
-			break;
-		case 1:
-			c = RGB(255, 255, 0);
-			break;
-		default:
-			c = RGB(255, 0, 0);
-		}*/
 
 		if (tmp > end - base)
 		{
@@ -146,7 +131,7 @@ void MMPainter::DisplayGauge(HDC hdc) const
 
 	double addrmax = double(maxaddr);
 
-	Mem::Region* pReg = mem.head;
+	vector<Mem::Region>::const_iterator pReg = mem.blocklist.begin();
 
 	HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
 	HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
@@ -157,8 +142,7 @@ void MMPainter::DisplayGauge(HDC hdc) const
 		size_t base = size_t((pi - d) * addrmax / pi);
 		size_t end = size_t((pi - dnext) * addrmax / pi);
 
-		COLORREF c = GetColour(&pReg, base, end);//RGB((rand() * 256) / RAND_MAX
-					//, (rand() * 256) / RAND_MAX, (rand() * 256) / RAND_MAX);
+		COLORREF c = GetColour(pReg, mem.blocklist.end(), base, end);
 		SetDCBrushColor(hdc, c);
 		SetDCPenColor(hdc, c);
 		int x1 = radius + int(dradius * cos(dnext));
@@ -174,7 +158,7 @@ void MMPainter::DisplayGauge(HDC hdc) const
 
 void MMPainter::DisplayBlobs(HDC hdc) const
 {
-	if (mem.freelist != 0)
+	if (!mem.freelist.empty())
 	{
 		HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
 		HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
@@ -183,9 +167,9 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 
 		SetDCPenColor(hdc, RGB(0, 0, 0));
 
-		for (int j = 0; j < 20; ++j)
+		for (int j = 0; j < int(mem.freelist.size()); ++j)
 		{
-			Mem::FreeRegion& r = mem.freelist[j];
+			const Mem::FreeRegion& r = mem.freelist[j];
 			if (r.size == 0) break;
 			BYTE c = BYTE(255 * double(r.size + r.base)/double(maxaddr));
 			SetDCBrushColor(hdc, RGB(255 - c, c, 255));
@@ -193,7 +177,8 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 			int size = int(log(double(r.size) / scale) / scale2 * dradius);
 			if (size > 0)
 			{
-				Ellipse(hdc, radius - size, radius + 20 * j, radius + size, radius + 20 * (j + 1));
+				Ellipse(hdc, radius - size, radius + 20 * j, radius + size
+													, radius + 20 * (j + 1));
 			}
 		}
 
@@ -204,7 +189,7 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 
 void MMPainter::Update()
 {
-	mem.Populate(procid);
+	maxaddr = mem.Populate(procid);
 	if (hMemDC != NULL)
 	{
 		MemPaint(hMemDC);
@@ -212,35 +197,36 @@ void MMPainter::Update()
 }
 
 MMPainter::Mem::Mem()
-: head(0), freelist(0)
 {
 }
 
 MMPainter::Mem::~Mem()
 {
-	delete[] freelist;
-	delete[] head;
 }
 
-void MMPainter::Mem::Populate(int pid)
+size_t MMPainter::Mem::Populate(int pid)
 {
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
 
 	Region r;
-	vector<Region> rlist;
-	if (freelist == 0) freelist = new Region[20];
 
-	for (int i = 0; i < 20; ++i)
+	freelist.resize(20);
+	blocklist.clear();
+
+	for (vector<FreeRegion>::iterator i = freelist.begin();
+									i != freelist.end(); ++i)
 	{
-		freelist[i].size = 0;
+		i->size = 0;
 	}
 
 	MEMORY_BASIC_INFORMATION meminfo;
 	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
 	if (hProc != NULL)
 	{
-		for (char* p = (char*)sysinfo.lpMinimumApplicationAddress; p < (char*)sysinfo.lpMaximumApplicationAddress; p += sysinfo.dwPageSize)
+		for (char* p = (char*)sysinfo.lpMinimumApplicationAddress;
+			p < (char*)sysinfo.lpMaximumApplicationAddress;
+			p += sysinfo.dwPageSize)
 		{
 			VirtualQueryEx(hProc, p, &meminfo, sizeof(meminfo));
 
@@ -261,13 +247,13 @@ void MMPainter::Mem::Populate(int pid)
 				r.type = 2;
 			}
 
-			rlist.push_back(r);
+			blocklist.push_back(r);
 
-			if (freelist[19].size < meminfo.RegionSize)
+			if (freelist.back().size < meminfo.RegionSize)
 			{
 				int j;
 
-				for(j = 18; j >= 0; --j)
+				for(j = int(freelist.size()) - 2; j >= 0; --j)
 				{
 					if (freelist[j].size >= meminfo.RegionSize) break;
 					freelist[j+1].size = freelist[j].size;
@@ -275,21 +261,18 @@ void MMPainter::Mem::Populate(int pid)
 				}
 
 				freelist[j+1].size = meminfo.RegionSize;
-				freelist[j+1].base = (size_t)meminfo.BaseAddress;
+				freelist[j+1].base = size_t(meminfo.BaseAddress);
 			}
 
 
-			if (meminfo.RegionSize > 0) p += (meminfo.RegionSize - sysinfo.dwPageSize);
+			if (meminfo.RegionSize > 0)
+			{
+				p += (meminfo.RegionSize - sysinfo.dwPageSize);
+			}
 		}
 
 		CloseHandle(hProc);
 	}
 
-	size_t newsize = rlist.size() + 1;
-
-	delete[] head;
-	head = new Region[newsize];
-
-	copy(rlist.begin(), rlist.end(), head);
-	head[newsize - 1].base = (size_t)-1;
+	return (size_t)meminfo.BaseAddress + meminfo.RegionSize;
 }

@@ -2,13 +2,14 @@
 #define MMPAINTER_H
 
 #include <windows.h>
+#include <vector>
 
 struct Mem;
 
 class MMPainter
 {
 public:
-	MMPainter();
+	MMPainter(int r);
 	~MMPainter();
 
 	void Paint(HDC hdc, PAINTSTRUCT* ps);
@@ -21,7 +22,7 @@ public:
 	public:
 		Mem();
 		~Mem();
-		void Populate(int pid);
+		size_t Populate(int pid);
 
 		size_t min;
 		size_t max;
@@ -37,8 +38,8 @@ public:
 			int type;
 		};
 
-		Region* head;
-		Region* freelist;
+		std::vector<Region> blocklist;
+		std::vector<FreeRegion> freelist;
 	};
 
 
@@ -48,7 +49,8 @@ private:
 	void DisplayBlobs(HDC hdc) const;
 
 	void MemPaint(HDC hdc) const;
-	COLORREF GetColour(Mem::Region** preg, size_t base, size_t end) const;
+	COLORREF GetColour(std::vector<Mem::Region>::const_iterator& preg
+		, std::vector<Mem::Region>::const_iterator rend, size_t base, size_t end) const;
 	
 	
 	Mem mem;
@@ -59,6 +61,12 @@ private:
 	HBITMAP hBmp;
 	HGDIOBJ hOldBmp;
 	int procid;
+
+	const int radius;
+	const double dradius;
+	const int width;
+
+	size_t maxaddr;
 };
 
 #endif//MMPAINTER_H

@@ -13,7 +13,7 @@ HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 MMPainter* pPaint;
-UINT_PTR timerid = 1;
+UINT_PTR timerid = 0;
 
 
 // Forward declarations of functions included in this code module:
@@ -44,7 +44,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadString(hInstance, IDC_MEMMON, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
-	MMPainter painter;
+	MMPainter painter(100);
 	pPaint = &painter;
 
 	// Perform application initialization:
@@ -175,7 +175,7 @@ void RunAttachDialog(HWND hWnd)
 {
 	if (DialogBox(hInst, MAKEINTRESOURCE(IDD_ATTACH_DLOG), hWnd, AttachProc))
 	{
-		timerid = SetTimer(hWnd, timerid, 1000, NULL);
+		timerid = SetTimer(hWnd, 1, 1000, NULL);
 	}
 }
 
@@ -234,13 +234,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//RemoveShNotIcon(hWnd);
 		pMinMax = (MINMAXINFO*)lParam;
 		pMinMax->ptMaxSize.x = 208;
-		pMinMax->ptMaxSize.y = 508;
+		pMinMax->ptMaxSize.y = 546;
 		pMinMax->ptMaxTrackSize.x = 208;
-		pMinMax->ptMaxTrackSize.y = 508;
+		pMinMax->ptMaxTrackSize.y = 546;
 		break;
 	case WM_DESTROY:
 		//RemoveShNotIcon(hWnd);
-		KillTimer(hWnd, timerid);
+		if (timerid != 0) KillTimer(hWnd, timerid);
 		PostQuitMessage(0);
 		break;
 	default:
