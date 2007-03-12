@@ -81,9 +81,10 @@ namespace
 	}
 }
 
-
 int _tmain(int argc, _TCHAR* argv[])
 {
+	_TCHAR buf[20];
+#ifdef DO_HEAPS
 	HANDLE heaps[HEAP_HANDLES];
 	PHANDLE hps = heaps;
 	DWORD heapcount = GetProcessHeaps(HEAP_HANDLES, hps);
@@ -95,7 +96,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	PROCESS_HEAP_ENTRY phe;
-	_TCHAR buf[20];
 
 	for (DWORD d = 0; d < heapcount; ++d)
 	{
@@ -128,6 +128,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 		}
 	}
+#endif
 
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
@@ -141,11 +142,27 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	FreeInfo fi[20];
 
+	int pid = 0;
+	if (argc > 1)
+	{
+		pid = _ttoi(argv[1]);
+	}
+
 	MEMORY_BASIC_INFORMATION meminfo;
-	HANDLE hThisProc = GetCurrentProcess();
+	HANDLE hProc;
+
+	if (pid == 0)
+	{
+		hProc = GetCurrentProcess();
+	}
+	else
+	{
+		hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
+	}
+
 	for (char* p = (char*)sysinfo.lpMinimumApplicationAddress; p < (char*)sysinfo.lpMaximumApplicationAddress; p += sysinfo.dwPageSize)
 	{
-		VirtualQuery(p, &meminfo, sizeof(meminfo));
+		VirtualQueryEx(hProc, p, &meminfo, sizeof(meminfo));
 
 #ifdef WIN64
 		_tprintf( _T("%016p %08x %016Ix\n"), meminfo.BaseAddress, meminfo.State, meminfo.RegionSize );
@@ -157,7 +174,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			if (meminfo.Type == MEM_IMAGE || meminfo.Type == MEM_MAPPED)
 			{
 				_TCHAR fname[2048];
-				if (GetMappedFileName(hThisProc, p, fname, sizeof(fname)))
+				if (GetMappedFileName(hProc, p, fname, sizeof(fname)))
 				{
 					_putts(fname);
 				}
@@ -202,7 +219,14 @@ int _tmain(int argc, _TCHAR* argv[])
 		if (meminfo.RegionSize > 0) p += (meminfo.RegionSize - sysinfo.dwPageSize);
 	}
 
+	if (pid != 0 && hProc != NULL)
+	{
+		CloseHandle(hProc);
+	}
+
+#ifdef DO_HEAPS
 	if (hps != heaps) delete[] hps;
+#endif
 
 	for (size_t i = 0; i < 20; ++i)
 	{
