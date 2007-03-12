@@ -208,8 +208,22 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 
 		if (nwidth > (radius << 2)) nwidth = radius << 2;
 
-		BYTE c = BYTE(255 * double(k->size + k->base)/double(maxaddr));
-		SetDCBrushColor(hdc, RGB(255 - c, c, 255));
+		int c = int(511.0 * double(k->size + k->base)/double(maxaddr));
+		int r, g, b;
+		if (c < 256)
+		{
+			r = 255;
+			g = 255 - c;
+			b = c;
+		}
+		else
+		{
+			r = 511 - c;
+			g = c - 256;
+			b = 255;
+		}
+		//BYTE c = BYTE(255 * double(k->size + k->base)/double(maxaddr));
+		SetDCBrushColor(hdc, RGB(r, g, b));
 		Ellipse(hdc, currentpos, radius + 20 * currentline, currentpos + nwidth
 											, radius + 20 * (currentline + 1));
 
