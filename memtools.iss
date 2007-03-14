@@ -18,7 +18,7 @@ SolidCompression=yes
 PrivilegesRequired=none
 ArchitecturesInstallIn64BitMode=x64
 LicenseFile=licence.txt
-VersionInfoVersion=0.1.1.0
+VersionInfoVersion=0.1.1.1
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -31,7 +31,7 @@ Name: t32bitonly; Description: "Install win32 version"
 [Components]
 Name: "c32bitexe"; Description: "win32 program files"; Types: full t32bitonly
 Name: "c64bitexe"; Description: "x64 program files"; Types: full t64bitonly; Check: Is64BitInstallMode
-Name: "common"; Description: "common files"; Types: full t32bitonly t64bitonly; Check: Is64BitInstallMode
+Name: "common"; Description: "common files"; Types: full t32bitonly t64bitonly
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
