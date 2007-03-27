@@ -18,7 +18,7 @@ SolidCompression=yes
 PrivilegesRequired=none
 ArchitecturesInstallIn64BitMode=x64
 LicenseFile=licence.txt
-VersionInfoVersion=0.1.1.1
+VersionInfoVersion=0.1.2.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"

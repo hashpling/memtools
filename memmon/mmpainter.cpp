@@ -3,6 +3,7 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
+#include "hrfmt.h"
 
 using std::cos;
 using std::sin;
@@ -16,6 +17,11 @@ MMPainter::MMPainter(int r)
 	hBrush = CreateSolidBrush(RGB(255, 0, 0));
 	hWBrush = CreateSolidBrush(RGB(255, 255, 255));
 	hPen = CreatePen(PS_SOLID, 0, RGB(255, 255, 255));
+
+	rsize.left = 0;
+	rsize.top = 0;
+	rsize.right = radius << 1;
+	rsize.bottom = radius + 180 + 16;
 }
 
 MMPainter::~MMPainter()
@@ -43,7 +49,7 @@ void MMPainter::Paint(HDC hdc, PAINTSTRUCT* ps)
 	if (hMemDC == NULL)
 	{
 		hMemDC = CreateCompatibleDC(hdc);
-		hBmp = CreateCompatibleBitmap(hdc, radius << 1, radius + 180);
+		hBmp = CreateCompatibleBitmap(hdc, rsize.right, rsize.bottom);
 		hOldBmp = SelectObject(hMemDC, hBmp);
 
 		SetBkColor(hMemDC, RGB(255, 255, 255));
@@ -52,15 +58,14 @@ void MMPainter::Paint(HDC hdc, PAINTSTRUCT* ps)
 	int x, y, w, h;
 	x = max(ps->rcPaint.left, 0);
 	y = max(ps->rcPaint.top, 0);
-	w = min(ps->rcPaint.right - x, (radius << 1) - x);
-	h = min(ps->rcPaint.bottom - y, (radius + 180) - y);
+	w = min(ps->rcPaint.right - x, (rsize.right) - x);
+	h = min(ps->rcPaint.bottom - y, (rsize.bottom) - y);
 	BitBlt(hdc, x, y, w, h, hMemDC, x, y, SRCCOPY);
 }
 
 void MMPainter::MemPaint(HDC hdc) const
 {
-	RECT r = { 0, 0, radius << 1, radius + 180 };
-	FillRect(hdc, &r, hWBrush);
+	FillRect(hdc, &rsize, hWBrush);
 	DisplayGauge(hdc);
 	HGDIOBJ oldPen = SelectObject(hdc, hPen);
 	HGDIOBJ oldBrush = SelectObject(hdc, hWBrush);
@@ -71,6 +76,7 @@ void MMPainter::MemPaint(HDC hdc) const
 	Arc(hdc, 0, 0, radius << 1, radius << 1, radius << 1, radius, 0, radius);
 	SelectObject(hdc, oldBrush);
 	DisplayBlobs(hdc);
+	DisplayTotals(hdc, 280);
 }
 
 
@@ -156,6 +162,26 @@ void MMPainter::DisplayGauge(HDC hdc) const
 	SelectObject(hdc, hOldBrush);
 }
 
+COLORREF MMPainter::GetBlobColour(const Mem::FreeRegion& reg) const
+{
+	int c = int(511.0 * double(reg.size + reg.base)/double(maxaddr));
+	int r, g, b;
+	if (c < 256)
+	{
+		r = 255;
+		g = 255 - c;
+		b = c;
+	}
+	else
+	{
+		r = 511 - c;
+		g = c - 256;
+		b = 255;
+	}
+
+	return RGB(r, g, b);
+}
+
 void MMPainter::DisplayBlobs(HDC hdc) const
 {
 /*	if (!mem.freelist.empty())
@@ -208,22 +234,8 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 
 		if (nwidth > (radius << 2)) nwidth = radius << 2;
 
-		int c = int(511.0 * double(k->size + k->base)/double(maxaddr));
-		int r, g, b;
-		if (c < 256)
-		{
-			r = 255;
-			g = 255 - c;
-			b = c;
-		}
-		else
-		{
-			r = 511 - c;
-			g = c - 256;
-			b = 255;
-		}
 		//BYTE c = BYTE(255 * double(k->size + k->base)/double(maxaddr));
-		SetDCBrushColor(hdc, RGB(r, g, b));
+		SetDCBrushColor(hdc, GetBlobColour(*k));
 		Ellipse(hdc, currentpos, radius + 20 * currentline, currentpos + nwidth
 											, radius + 20 * (currentline + 1));
 
@@ -233,6 +245,101 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 
 	SelectObject(hdc, hOldPen);
 	SelectObject(hdc, hOldBrush);
+}
+
+void MMPainter::DisplayTotals(HDC hdc, int offset) const
+{
+	COLORREF colcomm = RGB(170, 0, 0);
+	COLORREF colresv = RGB(170, 170, 0);
+	COLORREF colfree = RGB(0, 170, 0);
+
+	COLORREF txtcol = GetTextColor(hdc);
+
+	_TCHAR buf[100];
+	RECT rtmp;
+
+	TEXTMETRIC txtmet;
+	GetTextMetrics(hdc, &txtmet);
+
+	rtmp.left = 0;
+	rtmp.top = offset;
+	rtmp.right = rsize.right / 4;
+	rtmp.bottom = rtmp.top + txtmet.tmHeight;
+
+	HRFormat::hr_format(buf, 100, mem.total_commit[0] + mem.total_commit[1] + mem.total_commit[2] + mem.total_commit[3]);
+	SetTextColor(hdc, colcomm);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+
+	rtmp.left = rtmp.right;
+	rtmp.right += rsize.right / 4;
+
+	HRFormat::hr_format(buf, 100, mem.total_reserve[0] + mem.total_reserve[1] + mem.total_reserve[2] + mem.total_reserve[3]);
+	SetTextColor(hdc, colresv);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+
+	rtmp.left = rtmp.right;
+	rtmp.right += rsize.right / 4;
+
+	HRFormat::hr_format(buf, 100, mem.total_free);
+	SetTextColor(hdc, colfree);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+
+	if (!mem.freelist.empty())
+	{
+		const Mem::FreeRegion& fr = mem.freelist.front();
+
+		rtmp.left = rtmp.right;
+		rtmp.right += rsize.right / 4;
+
+		COLORREF bcol = GetBlobColour(fr);
+		COLORREF bcol2 = RGB(GetRValue(bcol)*2/3, GetGValue(bcol)*2/3
+												, GetBValue(bcol)*2/3);
+		HRFormat::hr_format(buf, 100, fr.size);
+		SetTextColor(hdc, bcol2);
+		DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+	}
+
+	SetTextColor(hdc, txtcol);
+/*
+	rtmp.left = 0;
+	rtmp.top = rtmp.bottom;
+	rtmp.right = rsize.right / 4;
+	rtmp.bottom = rtmp.top + txtmet.tmHeight;
+
+	HRFormat::hr_format(buf, 100, mem.total_commit[0]);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+
+	rtmp.left = rtmp.right;
+	rtmp.right += rsize.right / 4;
+
+	HRFormat::hr_format(buf, 100, mem.total_reserve[0]);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+
+	rtmp.left = rtmp.right;
+	rtmp.right += rsize.right / 4;
+
+	HRFormat::hr_format(buf, 100, mem.total_commit[1]);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+
+	rtmp.left = rtmp.right;
+	rtmp.right += rsize.right / 4;
+
+	HRFormat::hr_format(buf, 100, mem.total_reserve[1]);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+	rtmp.left = 0;
+	rtmp.top = rtmp.bottom;
+	rtmp.right = rsize.right / 4;
+	rtmp.bottom = rtmp.top + txtmet.tmHeight;
+
+	HRFormat::hr_format(buf, 100, mem.total_commit[2]);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+
+	rtmp.left = rtmp.right;
+	rtmp.right += rsize.right / 4;
+
+	HRFormat::hr_format(buf, 100, mem.total_reserve[2]);
+	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
+*/
 }
 
 void MMPainter::Update()
@@ -264,6 +371,16 @@ size_t MMPainter::Mem::Populate(int pid)
 	freelist.resize(50);
 	blocklist.clear();
 
+	total_free = 0;
+	total_reserve[0] = 0;
+	total_commit[0] = 0;
+	total_reserve[1] = 0;
+	total_commit[1] = 0;
+	total_reserve[2] = 0;
+	total_commit[2] = 0;
+	total_reserve[3] = 0;
+	total_commit[3] = 0;
+
 	for (vector<FreeRegion>::iterator i = freelist.begin();
 									i != freelist.end(); ++i)
 	{
@@ -289,13 +406,44 @@ size_t MMPainter::Mem::Populate(int pid)
 			{
 			case MEM_FREE:
 				r.type = 0;
+				total_free += r.size;
 				break;
 			case MEM_RESERVE:
 				r.type = 1;
+				switch (meminfo.Type)
+				{
+				case MEM_IMAGE:
+					total_reserve[0] += r.size;
+					break;
+				case MEM_MAPPED:
+					total_reserve[1] += r.size;
+					break;
+				case MEM_PRIVATE:
+					total_reserve[2] += r.size;
+					break;
+				default:
+					total_reserve[3] += r.size;
+					break;
+				}
 				break;
 			case MEM_COMMIT:
 			default:
 				r.type = 2;
+				switch (meminfo.Type)
+				{
+				case MEM_IMAGE:
+					total_commit[0] += r.size;
+					break;
+				case MEM_MAPPED:
+					total_commit[1] += r.size;
+					break;
+				case MEM_PRIVATE:
+					total_commit[2] += r.size;
+					break;
+				default:
+					total_commit[3] += r.size;
+					break;
+				}
 			}
 
 			blocklist.push_back(r);

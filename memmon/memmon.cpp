@@ -138,8 +138,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 void MyPaint(HDC hdc, PAINTSTRUCT* ps)
 {
-	RECT rect = { 0, 0, 200, 280 };
-	if (RectVisible(hdc, &rect))
+	if (RectVisible(hdc, &pPaint->GetRect()))
 	{
 		pPaint->Paint(hdc, ps);
 	}
@@ -194,7 +193,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
-	RECT rect = { 0, 0, 200, 280 };
+	const RECT& rect = pPaint->GetRect();
 	MINMAXINFO* pMinMax;
 
 	switch (message)
@@ -233,10 +232,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_GETMINMAXINFO:
 		//RemoveShNotIcon(hWnd);
 		pMinMax = (MINMAXINFO*)lParam;
-		pMinMax->ptMaxSize.x = 208;
-		pMinMax->ptMaxSize.y = 326;
-		pMinMax->ptMaxTrackSize.x = 208;
-		pMinMax->ptMaxTrackSize.y = 326;
+		pMinMax->ptMaxSize.x = rect.right + 8;
+		pMinMax->ptMaxSize.y = rect.bottom + 46;
+		pMinMax->ptMaxTrackSize.x = rect.right + 8;
+		pMinMax->ptMaxTrackSize.y = rect.bottom + 46;
 		break;
 	case WM_DESTROY:
 		//RemoveShNotIcon(hWnd);

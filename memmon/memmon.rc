@@ -75,7 +75,7 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     ICON            IDI_MEMMON,IDC_MYICON,14,9,20,20
-    LTEXT           "memmon Version 0.1a",IDC_STATIC,49,10,119,8,SS_NOPREFIX
+    LTEXT           "Address Space Monitor Version 0.1a",IDC_STATIC,49,10,119,8,SS_NOPREFIX
     LTEXT           "Copyright (c) 2007 Charles Bailey",IDC_STATIC,49,20,119,8
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
@@ -145,8 +145,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,1,0
- PRODUCTVERSION 0,1,1,0
+ FILEVERSION 0,1,2,0
+ PRODUCTVERSION 0,1,2,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -161,12 +161,12 @@ BEGIN
     BEGIN
         BLOCK "080904b0"
         BEGIN
-            VALUE "FileDescription", "memmon Application"
+            VALUE "FileDescription", "Address Space Monitor exe"
             VALUE "FileVersion", "0.1"
             VALUE "InternalName", "memmon"
             VALUE "LegalCopyright", "Copyright (c) 2007 Charles Bailey"
             VALUE "OriginalFilename", "memmon.exe"
-            VALUE "ProductName", " memmon Application"
+            VALUE "ProductName", "Address Space Monitor"
             VALUE "ProductVersion", "0.1"
         END
     END
@@ -184,7 +184,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_APP_TITLE           "memmon"
+    IDS_APP_TITLE           "Address Space Monitor"
     IDC_MEMMON              "MEMMON"
 END
 

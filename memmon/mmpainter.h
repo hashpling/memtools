@@ -17,6 +17,8 @@ public:
 	void SetProcessId(int p) { procid = p; }
 	void Update();
 
+	const RECT& GetRect() const { return rsize; }
+
 	class Mem
 	{
 	public:
@@ -40,6 +42,10 @@ public:
 
 		std::vector<Region> blocklist;
 		std::vector<FreeRegion> freelist;
+
+		size_t total_free;
+		size_t total_commit[4];
+		size_t total_reserve[4];
 	};
 
 
@@ -47,11 +53,14 @@ private:
 
 	void DisplayGauge(HDC hdc) const;
 	void DisplayBlobs(HDC hdc) const;
+	void DisplayTotals(HDC hdc, int offset) const;
 
 	void MemPaint(HDC hdc) const;
 	COLORREF GetColour(std::vector<Mem::Region>::const_iterator& preg
-		, std::vector<Mem::Region>::const_iterator rend, size_t base, size_t end) const;
-	
+		, std::vector<Mem::Region>::const_iterator rend, size_t base
+		, size_t end) const;
+
+	COLORREF GetBlobColour(const Mem::FreeRegion& reg) const;
 	
 	Mem mem;
 	HBRUSH hBrush;
@@ -60,6 +69,8 @@ private:
 	HDC hMemDC;
 	HBITMAP hBmp;
 	HGDIOBJ hOldBmp;
+	RECT rsize;
+
 	int procid;
 
 	const int radius;
