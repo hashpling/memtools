@@ -1,0 +1,9 @@
+Changelog
+
+2007-05-05 Charles Bailey
+
+* Changelog: Added changelog
+
+* memmon/memmon.cpp (WndProc): Used AdjustWindowRectEx to calculate the correct
+  window size for a given client area.  Now also handles windows theme /
+  appearance changes.

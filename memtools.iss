@@ -18,7 +18,7 @@ SolidCompression=yes
 PrivilegesRequired=none
 ArchitecturesInstallIn64BitMode=x64
 LicenseFile=licence.txt
-VersionInfoVersion=0.1.2.0
+VersionInfoVersion=0.1.3.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -48,14 +48,17 @@ Source: "redist\amd64\Microsoft.VC80.CRT\msvcm80.dll"; DestDir: "{app}\bin64"; C
 Source: "redist\amd64\Microsoft.VC80.CRT\msvcr80.dll"; DestDir: "{app}\bin64"; Components: c64bitexe
 Source: "redist\amd64\Microsoft.VC80.CRT\msvcp80.dll"; DestDir: "{app}\bin64"; Components: c64bitexe
 Source: "readme.txt"; DestDir: "{app}"; Flags: isreadme; Components: common
+Source: "licence.txt"; DestDir: "{app}"; Components: common
+Source: "Changelog"; DestDir: "{app}"; Components: common
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\Address Space Monitor"; Filename: "{app}\bin\memmon.exe"; Components: c32bitexe
+Name: "{group}\Address Space Monitor"; Filename: "{app}\bin\memmon.exe"; Comment: "Run Address Space Monitor"; Components: c32bitexe
 Name: "{commondesktop}\Address Space Monitor"; Filename: "{app}\bin\memmon.exe"; Tasks: desktopicon; Components: c32bitexe
-Name: "{group}\Address Space Monitor (64-bit)"; Filename: "{app}\bin64\memmon.exe"; Components: c64bitexe
+Name: "{group}\Address Space Monitor (64-bit)"; Filename: "{app}\bin64\memmon.exe"; Comment: "Run Address Space Monitor (64-bit)"; Components: c64bitexe
 Name: "{commondesktop}\Address Space Monitor (64-bit)"; Filename: "{app}\bin64\memmon.exe"; Tasks: desktopicon; Components: c64bitexe
-Name: "{group}\readme.txt"; Filename: "{app}\readme.txt"; Components: common
+Name: "{group}\ReadMe"; Filename: "{app}\readme.txt"; Comment: "View the readme file for Address Space Monitor"; Components: common
+Name: "{group}\Licence"; Filename: "{app}\licence.txt"; Comment: "View the licence for Address Space Monitor"; Components: common
 
 ;[Run]
 ;Filename: "{app}\memmon.exe"; Description: "{cm:LaunchProgram,memmon}"; Flags: nowait postinstall skipifsilent

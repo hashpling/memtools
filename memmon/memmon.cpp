@@ -15,7 +15,6 @@ TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 MMPainter* pPaint;
 UINT_PTR timerid = 0;
 
-
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
@@ -117,23 +116,24 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   HWND hWnd;
+	HWND hWnd;
 
-   hInst = hInstance; // Store instance handle in our global variable
+	hInst = hInstance; // Store instance handle in our global variable
 
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      0, 0, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
+	if (!hWnd)
+	{
+		return FALSE;
+	}
 
-   //CreateShNotIcon(hWnd);
-   return TRUE;
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd);
+
+	//CreateShNotIcon(hWnd);
+	return TRUE;
 }
 
 void MyPaint(HDC hdc, PAINTSTRUCT* ps)
@@ -194,7 +194,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 	HDC hdc;
 	const RECT& rect = pPaint->GetRect();
+	RECT tmp;
 	MINMAXINFO* pMinMax;
+	int xdff, ydff;
 
 	switch (message)
 	{
@@ -229,14 +231,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		MyPaint(hdc, &ps);
 		EndPaint(hWnd, &ps);
 		break;
+
 	case WM_GETMINMAXINFO:
 		//RemoveShNotIcon(hWnd);
+		tmp = pPaint->GetRect();
+
+		AdjustWindowRectEx(&tmp, WS_OVERLAPPEDWINDOW & ~WS_OVERLAPPED, true, 0);
+
+		xdff = tmp.right - tmp.left - pPaint->GetRect().right;
+		ydff = tmp.bottom - tmp.top- pPaint->GetRect().bottom;
+
 		pMinMax = (MINMAXINFO*)lParam;
-		pMinMax->ptMaxSize.x = rect.right + 8;
-		pMinMax->ptMaxSize.y = rect.bottom + 46;
-		pMinMax->ptMaxTrackSize.x = rect.right + 8;
-		pMinMax->ptMaxTrackSize.y = rect.bottom + 46;
+		pMinMax->ptMaxSize.x = rect.right + xdff;
+		pMinMax->ptMaxSize.y = rect.bottom + ydff;
+		pMinMax->ptMaxTrackSize.x = rect.right + xdff;
+		pMinMax->ptMaxTrackSize.y = rect.bottom + ydff;
 		break;
+
 	case WM_DESTROY:
 		//RemoveShNotIcon(hWnd);
 		if (timerid != 0) KillTimer(hWnd, timerid);
