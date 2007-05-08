@@ -11,8 +11,9 @@ using std::vector;
 using std::copy;
 
 MMPainter::MMPainter(int r)
-: hMemDC(NULL), hBmp(NULL), hOldBmp(NULL)
+: hMemDC(NULL), hBmp(NULL), hOldBmp(NULL), hProc(NULL)
 , radius(r), dradius(r), width(r * 3 /  5), maxaddr(0x1000000u)
+, next_update(0.0)
 {
 	hBrush = CreateSolidBrush(RGB(255, 0, 0));
 	hWBrush = CreateSolidBrush(RGB(255, 255, 255));
@@ -22,10 +23,21 @@ MMPainter::MMPainter(int r)
 	rsize.top = 0;
 	rsize.right = radius << 1;
 	rsize.bottom = radius + 180 + 16;
+
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+
+	maxaddr = (size_t)sysinfo.lpMaximumApplicationAddress;
+	processor_count = (double)sysinfo.dwNumberOfProcessors;
 }
 
 MMPainter::~MMPainter()
 {
+	if (hProc != NULL)
+	{
+		CloseHandle(hProc);
+	}
+
 	if (hBmp != NULL)
 	{
 		if (hMemDC != NULL)
@@ -66,15 +78,15 @@ void MMPainter::Paint(HDC hdc, PAINTSTRUCT* ps)
 void MMPainter::MemPaint(HDC hdc) const
 {
 	FillRect(hdc, &rsize, hWBrush);
-	DisplayGauge(hdc);
-	HGDIOBJ oldPen = SelectObject(hdc, hPen);
-	HGDIOBJ oldBrush = SelectObject(hdc, hWBrush);
-	int ww = (radius << 1) - width;
-	Pie(hdc, width, width, ww, ww, ww, radius, width, radius);
-	SelectObject(hdc, oldPen);
-	Arc(hdc, width, width, ww, ww, ww, radius, width, radius);
-	Arc(hdc, 0, 0, radius << 1, radius << 1, radius << 1, radius, 0, radius);
-	SelectObject(hdc, oldBrush);
+	DisplayGauge(hdc, false);
+	//HGDIOBJ oldPen = SelectObject(hdc, hPen);
+	//HGDIOBJ oldBrush = SelectObject(hdc, hWBrush);
+	//int ww = (radius << 1) - width;
+	//Pie(hdc, width, width, ww, ww, ww, radius, width, radius);
+	//SelectObject(hdc, oldPen);
+	//Arc(hdc, width, width, ww, ww, ww, radius, width, radius);
+	//Arc(hdc, 0, 0, radius << 1, radius << 1, radius << 1, radius, 0, radius);
+	//SelectObject(hdc, oldBrush);
 	DisplayBlobs(hdc);
 	DisplayTotals(hdc, 280);
 }
@@ -128,36 +140,69 @@ COLORREF MMPainter::GetColour(std::vector<Mem::Region>::const_iterator& reg
 	return c;
 }
 
-void MMPainter::DisplayGauge(HDC hdc) const
+void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 {
 	double pi = acos(-1.0);
-	double dstart = pi;
-	double ddiff = dstart / (dradius*2.0);
-	double dnext;
 
-	double addrmax = double(maxaddr);
-
-	vector<Mem::Region>::const_iterator pReg = mem.blocklist.begin();
-
-	HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
-	HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
-	for (double d = dstart; d > ddiff; d = dnext)
+	if (!bQuick)
 	{
-		dnext = d - ddiff;
+		double dstart = pi;
+		double ddiff = dstart / (dradius*2.0);
+		double dnext;
 
-		size_t base = size_t((pi - d) * addrmax / pi);
-		size_t end = size_t((pi - dnext) * addrmax / pi);
+		double addrmax = double(maxaddr);
 
-		COLORREF c = GetColour(pReg, mem.blocklist.end(), base, end);
-		SetDCBrushColor(hdc, c);
-		SetDCPenColor(hdc, c);
-		int x1 = radius + int(dradius * cos(dnext));
-		int y1 = radius - int(dradius * sin(dnext));
-		int x2 = radius + int(dradius * cos(d));
-		int y2 = radius - int(dradius * sin(d));
-		Pie(hdc, 0, 0, radius << 1, radius << 1, x1, y1, x2, y2);
+		vector<Mem::Region>::const_iterator pReg = mem.blocklist.begin();
 
+		HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
+		HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
+		for (double d = dstart; d > ddiff; d = dnext)
+		{
+			dnext = d - ddiff;
+
+			size_t base = size_t((pi - d) * addrmax / pi);
+			size_t end = size_t((pi - dnext) * addrmax / pi);
+
+			COLORREF c = GetColour(pReg, mem.blocklist.end(), base, end);
+			SetDCBrushColor(hdc, c);
+			SetDCPenColor(hdc, c);
+			int x1 = radius + int(dradius * cos(dnext));
+			int y1 = radius - int(dradius * sin(dnext));
+			int x2 = radius + int(dradius * cos(d));
+			int y2 = radius - int(dradius * sin(d));
+			Pie(hdc, 0, 0, radius << 1, radius << 1, x1, y1, x2, y2);
+
+		}
+		SelectObject(hdc, hOldPen);
+		SelectObject(hdc, hOldBrush);
 	}
+	//
+	HGDIOBJ hOldPen = SelectObject(hdc, hPen);
+	HGDIOBJ hOldBrush = SelectObject(hdc, hWBrush);
+	int ww = (radius << 1) - width;
+	Pie(hdc, width, width, ww, ww, ww, radius, width, radius + 1);
+	SelectObject(hdc, hOldPen);
+	Arc(hdc, width, width, ww, ww, ww, radius, width, radius + 1);
+	Arc(hdc, 0, 0, radius << 1, radius << 1, radius << 1, radius, 0, radius + 1);
+	//SelectObject(hdc, oldBrush);
+	//
+
+	double dpos = cpup.GetPos() * pi / processor_count;
+
+	SelectObject(hdc, GetStockObject(DC_BRUSH));
+	SelectObject(hdc, GetStockObject(DC_PEN));
+	SetDCBrushColor(hdc, RGB(127, 0, 0));
+	SetDCPenColor(hdc, RGB(127, 0, 0));
+	
+	int x1 = radius - int(dradius * cos(dpos));
+	int y1 = radius - int(dradius * sin(dpos));
+	int x2 = 0;
+	int y2 = radius;
+
+	if (y1 == radius) y1 -= 1;
+
+	Pie(hdc, width + 3, width + 3, ww - 3, ww - 3, x1, y1, x2, y2);
+	
 	SelectObject(hdc, hOldPen);
 	SelectObject(hdc, hOldBrush);
 }
@@ -342,12 +387,39 @@ void MMPainter::DisplayTotals(HDC hdc, int offset) const
 */
 }
 
+void MMPainter::SetProcessId(int p)
+{
+	if (hProc != NULL)
+	{
+		CloseHandle(hProc);
+	}
+	hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, p);
+}
+
 void MMPainter::Update()
 {
-	maxaddr = mem.Populate(procid);
-	if (hMemDC != NULL)
+	//HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, procid);
+	if (hProc != NULL)
 	{
-		MemPaint(hMemDC);
+		double ctime = cpup.Poll(hProc);
+
+		if (ctime > next_update)
+		{
+			maxaddr = mem.Populate(hProc);
+
+			if (hMemDC != NULL)
+			{
+				MemPaint(hMemDC);
+			}
+			next_update = ctime + 0.999;
+		}
+		else
+		{
+			if (hMemDC != NULL)
+			{
+				DisplayGauge(hMemDC, true);
+			}
+		}
 	}
 }
 
@@ -359,7 +431,7 @@ MMPainter::Mem::~Mem()
 {
 }
 
-size_t MMPainter::Mem::Populate(int pid)
+size_t MMPainter::Mem::Populate(HANDLE hProc)
 {
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
@@ -389,93 +461,144 @@ size_t MMPainter::Mem::Populate(int pid)
 
 	MEMORY_BASIC_INFORMATION meminfo;
 
-	HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
-	if (hProc != NULL)
+	for (char* p = (char*)sysinfo.lpMinimumApplicationAddress;
+		p < (char*)sysinfo.lpMaximumApplicationAddress;
+		p += sysinfo.dwPageSize)
 	{
-		for (char* p = (char*)sysinfo.lpMinimumApplicationAddress;
-			p < (char*)sysinfo.lpMaximumApplicationAddress;
-			p += sysinfo.dwPageSize)
+		VirtualQueryEx(hProc, p, &meminfo, sizeof(meminfo));
+
+		if (p != meminfo.BaseAddress) break;
+
+		r.base = (size_t)meminfo.BaseAddress;
+		r.size = meminfo.RegionSize;
+		switch (meminfo.State)
 		{
-			VirtualQueryEx(hProc, p, &meminfo, sizeof(meminfo));
-
-			if (p != meminfo.BaseAddress) break;
-
-			r.base = (size_t)meminfo.BaseAddress;
-			r.size = meminfo.RegionSize;
-			switch (meminfo.State)
+		case MEM_FREE:
+			r.type = 0;
+			total_free += r.size;
+			break;
+		case MEM_RESERVE:
+			r.type = 1;
+			switch (meminfo.Type)
 			{
-			case MEM_FREE:
-				r.type = 0;
-				total_free += r.size;
+			case MEM_IMAGE:
+				total_reserve[0] += r.size;
 				break;
-			case MEM_RESERVE:
-				r.type = 1;
-				switch (meminfo.Type)
-				{
-				case MEM_IMAGE:
-					total_reserve[0] += r.size;
-					break;
-				case MEM_MAPPED:
-					total_reserve[1] += r.size;
-					break;
-				case MEM_PRIVATE:
-					total_reserve[2] += r.size;
-					break;
-				default:
-					total_reserve[3] += r.size;
-					break;
-				}
+			case MEM_MAPPED:
+				total_reserve[1] += r.size;
 				break;
-			case MEM_COMMIT:
+			case MEM_PRIVATE:
+				total_reserve[2] += r.size;
+				break;
 			default:
-				r.type = 2;
-				switch (meminfo.Type)
-				{
-				case MEM_IMAGE:
-					total_commit[0] += r.size;
-					break;
-				case MEM_MAPPED:
-					total_commit[1] += r.size;
-					break;
-				case MEM_PRIVATE:
-					total_commit[2] += r.size;
-					break;
-				default:
-					total_commit[3] += r.size;
-					break;
-				}
+				total_reserve[3] += r.size;
+				break;
 			}
-
-			blocklist.push_back(r);
-
-			if (meminfo.State == MEM_FREE)
+			break;
+		case MEM_COMMIT:
+		default:
+			r.type = 2;
+			switch (meminfo.Type)
 			{
-				if (freelist.back().size < meminfo.RegionSize)
-				{
-					int j;
-
-					for(j = int(freelist.size()) - 2; j >= 0; --j)
-					{
-						if (freelist[j].size >= meminfo.RegionSize) break;
-						freelist[j+1].size = freelist[j].size;
-						freelist[j+1].base = freelist[j].base;
-					}
-
-					freelist[j+1].size = meminfo.RegionSize;
-					freelist[j+1].base = size_t(meminfo.BaseAddress);
-				}
-			}
-
-			if (meminfo.RegionSize > 0)
-			{
-				p += (meminfo.RegionSize - sysinfo.dwPageSize);
+			case MEM_IMAGE:
+				total_commit[0] += r.size;
+				break;
+			case MEM_MAPPED:
+				total_commit[1] += r.size;
+				break;
+			case MEM_PRIVATE:
+				total_commit[2] += r.size;
+				break;
+			default:
+				total_commit[3] += r.size;
+				break;
 			}
 		}
 
-		CloseHandle(hProc);
+		blocklist.push_back(r);
 
-		max_addr = (size_t)meminfo.BaseAddress + meminfo.RegionSize;
+		if (meminfo.State == MEM_FREE)
+		{
+			if (freelist.back().size < meminfo.RegionSize)
+			{
+				int j;
+
+				for(j = int(freelist.size()) - 2; j >= 0; --j)
+				{
+					if (freelist[j].size >= meminfo.RegionSize) break;
+					freelist[j+1].size = freelist[j].size;
+					freelist[j+1].base = freelist[j].base;
+				}
+
+				freelist[j+1].size = meminfo.RegionSize;
+				freelist[j+1].base = size_t(meminfo.BaseAddress);
+			}
+		}
+
+		if (meminfo.RegionSize > 0)
+		{
+			p += (meminfo.RegionSize - sysinfo.dwPageSize);
+		}
 	}
 
+	max_addr = (size_t)meminfo.BaseAddress + meminfo.RegionSize;
+
 	return max_addr;
+}
+
+MMPainter::CPUPerf::CPUPerf()
+: actual_u(0.0)
+, actual_k(0.0)
+, ind_pos(0.0)
+, ind_vel(0.0)
+, last_poll(0.0)
+{
+}
+
+inline double FT2dbl(LPFILETIME lpFt)
+{
+	__int64 tmp = (__int64(lpFt->dwHighDateTime) << 32) + __int64(lpFt->dwLowDateTime);
+	return double(tmp) / 10000000.0;
+}
+
+double MMPainter::CPUPerf::Poll(HANDLE hProc)
+{
+	const double k = 2.0;
+	const double delta_t = 0.1;
+	const double damping = k * 2.0;
+	FILETIME currtime;
+	FILETIME sysidle, syskernel, sysuser;
+	FILETIME proccreate, procexit, prockern, procuser;
+
+	GetSystemTimeAsFileTime(&currtime);
+	GetSystemTimes(&sysidle, &syskernel, &sysuser);
+	GetProcessTimes(hProc, &proccreate, &procexit, &prockern, &procuser);
+
+	double dtime = FT2dbl(&currtime);
+
+	double new_u = FT2dbl(&procuser);
+	double new_k = FT2dbl(&prockern);
+
+	double cpufrac = ((new_u - actual_u) + (new_k - actual_k)) / (dtime - last_poll);
+
+	if (last_poll > 0.0)
+	{
+		for (double time = last_poll; time < dtime; time += delta_t)
+		{
+			double daccel = k * (cpufrac - ind_pos) - damping * ind_vel;
+			ind_vel += daccel * delta_t;
+			ind_pos += ind_vel * delta_t;
+		}
+	}
+
+	actual_u = new_u;
+	actual_k = new_k;
+	last_poll = dtime;
+
+	return dtime;
+}
+
+double MMPainter::CPUPerf::GetPos() const
+{
+	return ind_pos;
 }

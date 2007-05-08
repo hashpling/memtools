@@ -14,7 +14,7 @@ public:
 
 	void Paint(HDC hdc, PAINTSTRUCT* ps);
 
-	void SetProcessId(int p) { procid = p; }
+	void SetProcessId(int p);
 	void Update();
 
 	const RECT& GetRect() const { return rsize; }
@@ -24,7 +24,7 @@ public:
 	public:
 		Mem();
 		~Mem();
-		size_t Populate(int pid);
+		size_t Populate(HANDLE hProc);
 
 		size_t min;
 		size_t max;
@@ -48,10 +48,28 @@ public:
 		size_t total_reserve[4];
 	};
 
+	class CPUPerf
+	{
+	public:
+		CPUPerf();
+
+		double Poll(HANDLE hProc);
+
+		double GetPos() const;
+
+	private:
+		double actual_u;
+		double actual_k;
+
+		double ind_pos;
+		double ind_vel;
+
+		double last_poll;
+	};
 
 private:
 
-	void DisplayGauge(HDC hdc) const;
+	void DisplayGauge(HDC hdc, bool bQuick) const;
 	void DisplayBlobs(HDC hdc) const;
 	void DisplayTotals(HDC hdc, int offset) const;
 
@@ -71,13 +89,18 @@ private:
 	HGDIOBJ hOldBmp;
 	RECT rsize;
 
-	int procid;
+	HANDLE hProc;
 
 	const int radius;
 	const double dradius;
 	const int width;
 
 	size_t maxaddr;
+
+	CPUPerf cpup;
+
+	double next_update;
+	double processor_count;
 };
 
 #endif//MMPAINTER_H

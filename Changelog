@@ -7,3 +7,10 @@ Changelog
 * memmon/memmon.cpp (WndProc): Used AdjustWindowRectEx to calculate the correct
   window size for a given client area.  Now also handles windows theme /
   appearance changes.
+
+2007-05-08 Charles Bailey
+
+* memtools.iss memmon/memmon.rc: Bumped to version 0.2
+
+* memmon/mmpainter.cpp memmon/mmpainter.h memmon/memmon.cpp: Added CPU usage
+  monitor.

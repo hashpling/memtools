@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=Address Space Monitor
-AppVerName=Address Space Monitor 0.1a
+AppVerName=Address Space Monitor 0.2a
 AppPublisher=Charles Bailey
 AppCopyright=Copyright (c) 2007 Charles Bailey
 AppPublisherURL=http://www.hashpling.org
@@ -18,7 +18,7 @@ SolidCompression=yes
 PrivilegesRequired=none
 ArchitecturesInstallIn64BitMode=x64
 LicenseFile=licence.txt
-VersionInfoVersion=0.1.3.0
+VersionInfoVersion=0.2.1.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -54,9 +54,9 @@ Source: "Changelog"; DestDir: "{app}"; Components: common
 
 [Icons]
 Name: "{group}\Address Space Monitor"; Filename: "{app}\bin\memmon.exe"; Comment: "Run Address Space Monitor"; Components: c32bitexe
-Name: "{commondesktop}\Address Space Monitor"; Filename: "{app}\bin\memmon.exe"; Tasks: desktopicon; Components: c32bitexe
+Name: "{commondesktop}\Address Space Monitor"; Filename: "{app}\bin\memmon.exe"; Comment: "Run Address Space Monitor"; Tasks: desktopicon; Components: c32bitexe
 Name: "{group}\Address Space Monitor (64-bit)"; Filename: "{app}\bin64\memmon.exe"; Comment: "Run Address Space Monitor (64-bit)"; Components: c64bitexe
-Name: "{commondesktop}\Address Space Monitor (64-bit)"; Filename: "{app}\bin64\memmon.exe"; Tasks: desktopicon; Components: c64bitexe
+Name: "{commondesktop}\Address Space Monitor (64-bit)"; Filename: "{app}\bin64\memmon.exe"; Comment: "Run Address Space Monitor (64-bit)"; Tasks: desktopicon; Components: c64bitexe
 Name: "{group}\ReadMe"; Filename: "{app}\readme.txt"; Comment: "View the readme file for Address Space Monitor"; Components: common
 Name: "{group}\Licence"; Filename: "{app}\licence.txt"; Comment: "View the licence for Address Space Monitor"; Components: common
 

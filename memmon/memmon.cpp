@@ -174,7 +174,7 @@ void RunAttachDialog(HWND hWnd)
 {
 	if (DialogBox(hInst, MAKEINTRESOURCE(IDD_ATTACH_DLOG), hWnd, AttachProc))
 	{
-		timerid = SetTimer(hWnd, 1, 1000, NULL);
+		timerid = SetTimer(hWnd, 1, 100, NULL);
 	}
 }
 
