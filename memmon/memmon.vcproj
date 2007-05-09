@@ -346,6 +346,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\mmprefs.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -393,6 +397,10 @@
 			</File>
 			<File
 				RelativePath=".\mmpainter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\mmprefs.h"
 				>
 			</File>
 			<File

@@ -194,6 +194,9 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 	SetDCBrushColor(hdc, RGB(127, 0, 0));
 	SetDCPenColor(hdc, RGB(127, 0, 0));
 	
+	if (dpos < 0.0) dpos = 0.0;
+	else if (dpos > 2 * pi) dpos = 2 * pi;
+
 	int x1 = radius - int(dradius * cos(dpos));
 	int y1 = radius - int(dradius * sin(dpos));
 	int x2 = 0;
