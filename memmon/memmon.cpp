@@ -4,16 +4,22 @@
 #include "stdafx.h"
 #include "memmon.h"
 #include "mmpainter.h"
+#include "mmprefs.h"
+
 #include <crtdbg.h>
 
 #define MAX_LOADSTRING 100
 
+namespace
+{
 // Global Variables:
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 MMPainter* pPaint;
+MMPrefs* pPrefs;
 UINT_PTR timerid = 0;
+}
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -43,7 +49,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	LoadString(hInstance, IDC_MEMMON, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
-	MMPainter painter(100);
+	MMPrefs prefs;
+	prefs.Load();
+
+	pPrefs = &prefs;
+
+	MMPainter painter(100, pPrefs);
 	pPaint = &painter;
 
 	// Perform application initialization:
@@ -64,6 +75,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		}
 	}
 	pPaint = NULL;
+	pPrefs = NULL;
 
 	return (int) msg.wParam;
 }
@@ -214,6 +226,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_FILE_ATTACH:
 			RunAttachDialog(hWnd);
+			break;
+		case IDM_EDIT_PREFERENCES:
+			pPrefs->RunDialog(hInst, hWnd);
+			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}

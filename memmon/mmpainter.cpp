@@ -4,16 +4,17 @@
 #include <vector>
 #include <algorithm>
 #include "hrfmt.h"
+#include "mmprefs.h"
 
 using std::cos;
 using std::sin;
 using std::vector;
 using std::copy;
 
-MMPainter::MMPainter(int r)
+MMPainter::MMPainter(int r, MMPrefs* p)
 : hMemDC(NULL), hBmp(NULL), hOldBmp(NULL), hProc(NULL)
 , radius(r), dradius(r), width(r * 3 /  5), maxaddr(0x1000000u)
-, next_update(0.0)
+, next_update(0.0), pPrefs(p)
 {
 	hBrush = CreateSolidBrush(RGB(255, 0, 0));
 	hWBrush = CreateSolidBrush(RGB(255, 255, 255));
@@ -187,7 +188,12 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 	//SelectObject(hdc, oldBrush);
 	//
 
-	double dpos = cpup.GetPos() * pi / processor_count;
+	double dpos = cpup.GetPos() * pi;
+
+	if (pPrefs != NULL && pPrefs->GetCPUPrefs().use_cpu_count)
+	{
+		dpos /= processor_count;
+	}
 
 	SelectObject(hdc, GetStockObject(DC_BRUSH));
 	SelectObject(hdc, GetStockObject(DC_PEN));
@@ -404,7 +410,7 @@ void MMPainter::Update()
 	//HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, procid);
 	if (hProc != NULL)
 	{
-		double ctime = cpup.Poll(hProc);
+		double ctime = cpup.Poll(hProc, pPrefs);
 
 		if (ctime > next_update)
 		{
@@ -564,14 +570,21 @@ inline double FT2dbl(LPFILETIME lpFt)
 	return double(tmp) / 10000000.0;
 }
 
-double MMPainter::CPUPerf::Poll(HANDLE hProc)
+double MMPainter::CPUPerf::Poll(HANDLE hProc, MMPrefs* pPrefs)
 {
-	const double k = 2.0;
+	double k = 2.0;
 	const double delta_t = 0.1;
-	const double damping = k * 2.0;
+	double damping = 4.0;
+
 	FILETIME currtime;
 	FILETIME sysidle, syskernel, sysuser;
 	FILETIME proccreate, procexit, prockern, procuser;
+
+	if (pPrefs != NULL)
+	{
+		k = pPrefs->GetCPUPrefs().k;
+		damping = pPrefs->GetCPUPrefs().damper;
+	}
 
 	GetSystemTimeAsFileTime(&currtime);
 	GetSystemTimes(&sysidle, &syskernel, &sysuser);

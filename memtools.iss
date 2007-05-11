@@ -11,14 +11,14 @@ AppSupportURL=http://www.hashpling.org
 AppUpdatesURL=http://www.hashpling.org
 DefaultDirName={pf}\memmon
 DefaultGroupName=Address Space Monitor
-OutputBaseFilename=asmsetup
+OutputBaseFilename=asmsetup-0_2
 OutputDir=installer
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=none
 ArchitecturesInstallIn64BitMode=x64
 LicenseFile=licence.txt
-VersionInfoVersion=0.2.1.0
+VersionInfoVersion=0.2.2.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -59,6 +59,10 @@ Name: "{group}\Address Space Monitor (64-bit)"; Filename: "{app}\bin64\memmon.ex
 Name: "{commondesktop}\Address Space Monitor (64-bit)"; Filename: "{app}\bin64\memmon.exe"; Comment: "Run Address Space Monitor (64-bit)"; Tasks: desktopicon; Components: c64bitexe
 Name: "{group}\ReadMe"; Filename: "{app}\readme.txt"; Comment: "View the readme file for Address Space Monitor"; Components: common
 Name: "{group}\Licence"; Filename: "{app}\licence.txt"; Comment: "View the licence for Address Space Monitor"; Components: common
+
+[Registry]
+Root: HKCU; SubKey: "SOFTWARE\hashpling.org\memon"; Flags: dontcreatekey uninsdeletekey
+Root: HKCU; SubKey: "SOFTWARE\hashpling.org"; Flags: dontcreatekey uninsdeletekeyifempty
 
 ;[Run]
 ;Filename: "{app}\memmon.exe"; Description: "{cm:LaunchProgram,memmon}"; Flags: nowait postinstall skipifsilent

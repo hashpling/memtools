@@ -14,3 +14,21 @@ Changelog
 
 * memmon/mmpainter.cpp memmon/mmpainter.h memmon/memmon.cpp: Added CPU usage
   monitor.
+
+2007-05-10 Charles Bailey
+
+* memmon/mmpainter.cpp: Capped the CPU meter so that it doesn't wrap around
+
+* memmon/mmprefs.h memmon/mmprefs.cpp memmon/memmon.rc: Added new preferences
+  dialog box.
+
+2007-05-11
+
+* memmon/memmon.cpp memmon/memmon.rc: Added prefereces menu item and linked it
+  to the preferences dialog box.
+
+* memmon/mmprefs.h memmon/mmprefs.cpp: Complete preferences serialization to and
+  from the registry and to and from the dialog box.
+
+* memmon/mmpainter.cpp memmon/mmpainter.h: Fixed the code to use preferences
+  where supplied.

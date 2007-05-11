@@ -3,13 +3,14 @@
 
 #include <windows.h>
 #include <vector>
+class MMPrefs;
 
 struct Mem;
 
 class MMPainter
 {
 public:
-	MMPainter(int r);
+	MMPainter(int r, MMPrefs* p);
 	~MMPainter();
 
 	void Paint(HDC hdc, PAINTSTRUCT* ps);
@@ -53,7 +54,7 @@ public:
 	public:
 		CPUPerf();
 
-		double Poll(HANDLE hProc);
+		double Poll(HANDLE hProc, MMPrefs* pPrefs);
 
 		double GetPos() const;
 
@@ -101,6 +102,8 @@ private:
 
 	double next_update;
 	double processor_count;
+
+	MMPrefs* pPrefs;
 };
 
 #endif//MMPAINTER_H

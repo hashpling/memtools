@@ -1,13 +1,29 @@
 #include "stdafx.h"
 #include "mmprefs.h"
 #include <windows.h>
+#include "resource.h"
+#include <sstream>
+#include <string>
 
+using std::wostringstream;
+using std::wistringstream;
+using std::wstring;
+using std::ios_base;
+	
 namespace
 {
 	const TCHAR prefs_subkey[] = _T("SOFTWARE\\hashpling.org\\memmon");
 	const TCHAR prefs_cpu_k[] = _T("k");
 	const TCHAR prefs_cpu_damper[] = _T("damper");
 	const TCHAR prefs_cpu_use_cpu_count[] = _T("use_cpu_count");
+}
+
+MMPrefs::CPUPrefs::CPUPrefs()
+// Global defaults
+: k(2.0)
+, damper(4.0)
+, use_cpu_count(true)
+{
 }
 
 void MMPrefs::Load()
@@ -50,3 +66,129 @@ void MMPrefs::Save() const
 		::RegSetValueEx(hk, prefs_cpu_use_cpu_count, 0, dwType, (const BYTE*)&cpuprf.use_cpu_count, dwcbData);
 	}
 }
+
+void MMPrefs::RunDialog(HINSTANCE hInst, HWND hWnd)
+{
+	if (DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_PREFS_DLOG), hWnd, DialogProc, (LPARAM)this) == IDOK)
+	{
+		Save();
+	}
+}
+
+INT_PTR CALLBACK MMPrefs::DialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	MMPrefs* pPrefs;
+	INT_PTR ret = (INT_PTR)FALSE;
+	switch (message)
+	{
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case IDOK:
+			pPrefs = reinterpret_cast<MMPrefs*>(GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
+			pPrefs->DoReadDialogData(hwndDlg);
+		case IDCANCEL:
+			EndDialog(hwndDlg, wParam);
+			ret = (INT_PTR)TRUE;
+		}
+		break;
+	case WM_INITDIALOG:
+		// Return true to set default focus
+		pPrefs = reinterpret_cast<MMPrefs*>(lParam);
+		pPrefs->DoSetDialogData(hwndDlg);
+		SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)pPrefs);
+		ret = (INT_PTR)TRUE;
+	}
+	return ret;
+}
+
+void MMPrefs::DoSetDialogData(HWND hwndDlg)
+{
+	HWND hItem;
+	wstring emptystring;
+	wostringstream oss;
+
+	hItem = GetDlgItem(hwndDlg, IDC_EDIT_K);
+
+	if (hItem != NULL)
+	{
+		oss << cpuprf.k;
+		SetWindowText( hItem, oss.str().c_str() );
+		oss.str(emptystring);
+	}
+
+	hItem = GetDlgItem(hwndDlg, IDC_EDIT_DAMPING);
+
+	if (hItem != NULL)
+	{
+		oss << cpuprf.damper;
+		SetWindowText( hItem, oss.str().c_str() );
+		oss.str(emptystring);
+	}
+
+	CheckDlgButton(hwndDlg, IDC_CHECK_CPUCOUNT, cpuprf.use_cpu_count ? BST_CHECKED : BST_UNCHECKED);
+}
+
+namespace
+{
+
+bool GetWindowTextIntoIstream(HWND hItem, wistringstream& iss)
+{
+	bool success = false;
+	if (hItem != NULL)
+	{
+		int n = GetWindowTextLength( hItem ) + 1;
+
+		// sanity 2048 is huge in this context
+		if (n > 0 && n < 2048)
+		{
+			TCHAR* tmp = new TCHAR[n];
+			GetWindowText( hItem, tmp, n );
+
+			// sanity - determined as not necessary
+			// tmp[n - 1] = 0;
+
+			iss.str( tmp );
+			iss.rdbuf()->pubseekpos(0, ios_base::in);
+			iss.clear();
+			delete[] tmp;
+
+			success = true;
+		}
+	}
+	return success;
+}
+
+}
+
+void MMPrefs::DoReadDialogData(HWND hwndDlg)
+{
+	HWND hItem;
+	wistringstream iss;
+
+	hItem = GetDlgItem(hwndDlg, IDC_EDIT_K);
+
+	if (hItem != NULL && GetWindowTextIntoIstream(hItem, iss))
+	{
+		iss >> cpuprf.k;
+	}
+
+	hItem = GetDlgItem(hwndDlg, IDC_EDIT_DAMPING);
+
+	if (hItem != NULL && GetWindowTextIntoIstream(hItem, iss))
+	{
+		iss >> cpuprf.damper;
+	}
+
+	UINT ischecked = IsDlgButtonChecked(hwndDlg, IDC_CHECK_CPUCOUNT);
+
+	if (ischecked == BST_CHECKED)
+	{
+		cpuprf.use_cpu_count = true;
+	}
+	else if (ischecked == BST_UNCHECKED)
+	{
+		cpuprf.use_cpu_count = false;
+	}
+}
+
