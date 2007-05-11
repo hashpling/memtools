@@ -17,7 +17,14 @@ public:
 		bool use_cpu_count;
 	};
 
+	struct UIPrefs
+	{
+		UIPrefs();
+		bool topmost;
+	};
+
 	const CPUPrefs& GetCPUPrefs() const { return cpuprf; }
+	const UIPrefs& GetUIPrefs() const { return uiprf; }
 
 	static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 	void RunDialog(HINSTANCE hInst, HWND hWnd);
@@ -26,6 +33,7 @@ public:
 	void DoReadDialogData(HWND hwndDlg);
 private:
 	CPUPrefs cpuprf;
+	UIPrefs uiprf;
 };
 
 #endif//MMPREFS_H

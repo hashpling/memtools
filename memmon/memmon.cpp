@@ -128,13 +128,21 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-	HWND hWnd;
+	HWND hWnd = NULL;
 
 	hInst = hInstance; // Store instance handle in our global variable
 
 
-	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+	if (pPrefs != NULL && pPrefs->GetUIPrefs().topmost)
+	{
+		hWnd = CreateWindowEx(WS_EX_TOPMOST, szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+	}
+	else
+	{
+		hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInstance, NULL);
+	}
 
 	if (!hWnd)
 	{
@@ -147,6 +155,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	//CreateShNotIcon(hWnd);
 	return TRUE;
 }
+
+namespace
+{
 
 void MyPaint(HDC hdc, PAINTSTRUCT* ps)
 {
@@ -190,6 +201,22 @@ void RunAttachDialog(HWND hWnd)
 	}
 }
 
+void CheckTopmostSetting(HWND hWnd, const MMPrefs::UIPrefs& uiprf)
+{
+	WINDOWINFO wi;
+	wi.cbSize = sizeof(wi);
+	if (::GetWindowInfo(hWnd, &wi))
+	{
+		bool bTopMost = ((wi.dwExStyle & WS_EX_TOPMOST) != 0);
+		if (bTopMost != uiprf.topmost)
+		{
+			::SetWindowPos(hWnd, uiprf.topmost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+		}
+	}
+}
+
+}
+
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -229,6 +256,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDM_EDIT_PREFERENCES:
 			pPrefs->RunDialog(hInst, hWnd);
+			CheckTopmostSetting(hWnd, pPrefs->GetUIPrefs());
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);

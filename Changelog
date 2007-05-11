@@ -32,3 +32,10 @@ Changelog
 
 * memmon/mmpainter.cpp memmon/mmpainter.h: Fixed the code to use preferences
   where supplied.
+
+2007-05-11
+
+* memtools.iss: Fixed installer to remove registry keys on uninstall
+
+* memmon/memmon.cpp memmon/memmon.rc memmon/mmprefs.cpp memmon/mmprefs.h: Added
+  and implemented an "always on top" option.

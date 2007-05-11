@@ -18,7 +18,7 @@ SolidCompression=yes
 PrivilegesRequired=none
 ArchitecturesInstallIn64BitMode=x64
 LicenseFile=licence.txt
-VersionInfoVersion=0.2.2.0
+VersionInfoVersion=0.2.3.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -61,8 +61,8 @@ Name: "{group}\ReadMe"; Filename: "{app}\readme.txt"; Comment: "View the readme 
 Name: "{group}\Licence"; Filename: "{app}\licence.txt"; Comment: "View the licence for Address Space Monitor"; Components: common
 
 [Registry]
-Root: HKCU; SubKey: "SOFTWARE\hashpling.org\memon"; Flags: dontcreatekey uninsdeletekey
 Root: HKCU; SubKey: "SOFTWARE\hashpling.org"; Flags: dontcreatekey uninsdeletekeyifempty
+Root: HKCU; SubKey: "SOFTWARE\hashpling.org\memmon"; Flags: dontcreatekey uninsdeletekey
 
 ;[Run]
 ;Filename: "{app}\memmon.exe"; Description: "{cm:LaunchProgram,memmon}"; Flags: nowait postinstall skipifsilent
