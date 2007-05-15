@@ -5,11 +5,25 @@
 #include <algorithm>
 #include "hrfmt.h"
 #include "mmprefs.h"
+#include "shlobj.h"
+#include <fstream>
+#include <sstream>
+#include <cassert>
 
 using std::cos;
 using std::sin;
 using std::vector;
 using std::copy;
+using std::ofstream;
+using std::ifstream;
+using std::ios_base;
+using std::istream;
+using std::ostream;
+using std::basic_istream;
+using std::basic_ostream;
+using std::basic_streambuf;
+using std::stringbuf;
+using std::exception;
 
 MMPainter::MMPainter(int r, MMPrefs* p)
 : hMemDC(NULL), hBmp(NULL), hOldBmp(NULL), hProc(NULL)
@@ -93,8 +107,8 @@ void MMPainter::MemPaint(HDC hdc) const
 }
 
 
-COLORREF MMPainter::GetColour(std::vector<Mem::Region>::const_iterator& reg
-							, std::vector<Mem::Region>::const_iterator rend
+COLORREF MMPainter::GetColour(vector<Mem::Region>::const_iterator& reg
+							, vector<Mem::Region>::const_iterator rend
 							, size_t base, size_t end) const
 {
 	COLORREF c = RGB(0, 0, 0);
@@ -109,7 +123,7 @@ COLORREF MMPainter::GetColour(std::vector<Mem::Region>::const_iterator& reg
 		size_t tmp = 0, tmp2 = 0;
 		int max_type = 0;
 
-		std::vector<Mem::Region>::const_iterator oreg = reg;
+		vector<Mem::Region>::const_iterator oreg = reg;
 		while (reg != rend && reg->base < end)
 		{
 			size_t sbegin = max(base, reg->base);
@@ -320,14 +334,14 @@ void MMPainter::DisplayTotals(HDC hdc, int offset) const
 	rtmp.right = rsize.right / 4;
 	rtmp.bottom = rtmp.top + txtmet.tmHeight;
 
-	HRFormat::hr_format(buf, 100, mem.total_commit[0] + mem.total_commit[1] + mem.total_commit[2] + mem.total_commit[3]);
+	HRFormat::hr_format(buf, 100, mem.total_commit);
 	SetTextColor(hdc, colcomm);
 	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
 
 	rtmp.left = rtmp.right;
 	rtmp.right += rsize.right / 4;
 
-	HRFormat::hr_format(buf, 100, mem.total_reserve[0] + mem.total_reserve[1] + mem.total_reserve[2] + mem.total_reserve[3]);
+	HRFormat::hr_format(buf, 100, mem.total_reserve);
 	SetTextColor(hdc, colresv);
 	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
 
@@ -453,14 +467,8 @@ size_t MMPainter::Mem::Populate(HANDLE hProc)
 	blocklist.clear();
 
 	total_free = 0;
-	total_reserve[0] = 0;
-	total_commit[0] = 0;
-	total_reserve[1] = 0;
-	total_commit[1] = 0;
-	total_reserve[2] = 0;
-	total_commit[2] = 0;
-	total_reserve[3] = 0;
-	total_commit[3] = 0;
+	total_reserve = 0;
+	total_commit = 0;
 
 	for (vector<FreeRegion>::iterator i = freelist.begin();
 									i != freelist.end(); ++i)
@@ -488,40 +496,13 @@ size_t MMPainter::Mem::Populate(HANDLE hProc)
 			break;
 		case MEM_RESERVE:
 			r.type = 1;
-			switch (meminfo.Type)
-			{
-			case MEM_IMAGE:
-				total_reserve[0] += r.size;
-				break;
-			case MEM_MAPPED:
-				total_reserve[1] += r.size;
-				break;
-			case MEM_PRIVATE:
-				total_reserve[2] += r.size;
-				break;
-			default:
-				total_reserve[3] += r.size;
-				break;
-			}
+			total_reserve += r.size;
 			break;
 		case MEM_COMMIT:
 		default:
 			r.type = 2;
-			switch (meminfo.Type)
-			{
-			case MEM_IMAGE:
-				total_commit[0] += r.size;
-				break;
-			case MEM_MAPPED:
-				total_commit[1] += r.size;
-				break;
-			case MEM_PRIVATE:
-				total_commit[2] += r.size;
-				break;
-			default:
-				total_commit[3] += r.size;
-				break;
-			}
+			total_commit += r.size;
+			break;
 		}
 
 		blocklist.push_back(r);
@@ -617,4 +598,281 @@ double MMPainter::CPUPerf::Poll(HANDLE hProc, MMPrefs* pPrefs)
 double MMPainter::CPUPerf::GetPos() const
 {
 	return ind_pos;
+}
+
+template<typename charT, typename traits, typename intT>
+void MyIntPut( basic_streambuf<charT, traits>* sb, intT toput )
+{
+	for (int i = 0; i < sizeof(intT) - 1; ++i)
+	{
+		sb->sputc(charT(toput & 0xff));
+		toput >>= 8;
+	}
+	sb->sputc(charT(toput & 0xff));
+}
+
+template<typename charT, typename traits, typename intT>
+void MyIntGet( basic_streambuf<charT, traits>* sb, intT& toget )
+{
+	toget = 0;
+	for (int i = 0; i < sizeof(intT); ++i)
+	{
+		toget |= intT(sb->sbumpc()) << (i * 8);
+	}
+}
+
+template<typename charT, typename traits>
+void MMPainter::Mem::Write(basic_streambuf<charT, traits>* sb) const
+{
+	sb->sputn("V1", 3);
+	sb->sputc(charT(sizeof(size_t)));
+
+	size_t m = (size_t)-1;
+
+	for (vector<Region>::const_iterator i = blocklist.begin(); i != blocklist.end(); ++i)
+	{
+		if (m != i->base)
+		{
+			sb->sputc(i->type | 0x40);
+			MyIntPut(sb, i->base);
+		}
+		else
+		{
+			sb->sputc(i->type);
+		}
+
+		MyIntPut(sb, i->size);
+
+		m = i->base + i->size;
+	}
+
+	sb->sputc('\xf0');
+}
+
+template<typename charT, typename traits>
+void MMPainter::Mem::Read(basic_streambuf<charT, traits>* sb)
+{
+	stringbuf s;
+	charT t;
+	while ((t = sb->sbumpc()) != '\0' && t != traits::eof())
+	{
+		s.sputc(t);
+	}
+
+	if (s.str() != "V1")
+	{
+		throw ios_base::failure("This file is not a valid Address Space Monitor dump.");
+	}
+
+	if (sb->sbumpc() != sizeof(size_t))
+	{
+		throw ios_base::failure("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
+	}
+
+	total_free = 0;
+	total_reserve = 0;
+	total_commit = 0;
+
+	blocklist.clear();
+	freelist.resize(50);
+	for (vector<FreeRegion>::iterator i = freelist.begin();
+									i != freelist.end(); ++i)
+	{
+		i->size = 0;
+	}
+
+	size_t m = (size_t)-1;
+	while ((t = sb->sbumpc()) != '\xf0' && t != traits::eof())
+	{
+		Region r;
+		r.type = t & 0xf;
+
+		if ((t & 0x40) != 0)
+		{
+			MyIntGet(sb, r.base);
+		}
+		else
+		{
+			r.base = m;
+		}
+
+		MyIntGet(sb, r.size);
+
+		switch(r.type)
+		{
+		case 0:
+			total_free += r.size;
+			break;
+		case 1:
+			total_reserve += r.size;
+			break;
+		case 2:
+			total_commit += r.size;
+			break;
+		}
+
+		m = r.base + r.size;
+
+		blocklist.push_back(r);
+
+		if (r.type == 0 && freelist.back().size < r.size)
+		{
+			int j;
+
+			for(j = int(freelist.size()) - 2; j >= 0; --j)
+			{
+				if (freelist[j].size >= r.size) break;
+				freelist[j+1].size = freelist[j].size;
+				freelist[j+1].base = freelist[j].base;
+			}
+
+			freelist[j+1].size = r.size;
+			freelist[j+1].base = r.base;
+		}
+
+	}
+}
+
+template<typename charT, typename traits>
+inline basic_ostream<charT, traits>& operator<<( basic_ostream<charT, traits>& os,
+											   const MMPainter::Mem& mem)
+{
+	mem.Write(os.rdbuf());
+	return os;
+}
+
+template<typename charT, typename traitsT>
+inline basic_istream<charT, traitsT>& operator>>( basic_istream<charT, traitsT>& is,
+											   MMPainter::Mem& mem)
+{
+	mem.Read(is.rdbuf());
+	return is;
+}
+
+inline bool operator==(const MMPainter::Mem::Region& lhs, const MMPainter::Mem::Region& rhs)
+{
+	return lhs.base == rhs.base && lhs.size == rhs.size && lhs.type == rhs.type;
+}
+
+inline bool operator==(const MMPainter::Mem::FreeRegion& lhs, const MMPainter::Mem::FreeRegion& rhs)
+{
+	return lhs.size == rhs.size && (lhs.size == 0 || lhs.base == rhs.base);
+}
+
+inline bool operator==(const MMPainter::Mem& lhs, const MMPainter::Mem& rhs)
+{
+	return lhs.blocklist == rhs.blocklist && lhs.freelist == rhs.freelist;
+}
+
+void MMPainter::Snapshot(HWND hwnd) const
+{
+	char filename[MAX_PATH];
+	filename[0] = 0;
+
+	OPENFILENAMEA ofn;
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hwnd;
+	ofn.hInstance = NULL;
+	ofn.lpstrFilter = NULL;
+	ofn.lpstrCustomFilter = NULL;
+	ofn.nMaxCustFilter = 0;
+	ofn.nFilterIndex = 0;
+	ofn.lpstrFile = filename;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.lpstrTitle = NULL;
+	ofn.Flags = OFN_DONTADDTORECENT | OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT;
+	ofn.nFileOffset = 0;
+	ofn.nFileExtension = 0;
+	ofn.lpstrDefExt = NULL;
+	ofn.lCustData = 0;
+	ofn.lpfnHook = NULL;
+	ofn.lpTemplateName = NULL;
+	ofn.pvReserved = NULL;
+	ofn.dwReserved = NULL;
+	ofn.FlagsEx = 0;
+
+	if (GetSaveFileNameA(&ofn))
+	{
+		ofstream ofs(filename, ios_base::out | ios_base::binary);
+
+		try
+		{
+			ofs << mem;
+
+			if (ofs.fail())
+			{
+				MessageBox(hwnd, _T("There was an error writing out the dump."), _T("Write Error"), MB_ICONWARNING | MB_OK);
+			}
+		}
+		catch (exception& ex)
+		{
+			MessageBoxA(hwnd, ex.what(), "Write Error", MB_ICONINFORMATION | MB_OK);
+		}
+	}
+}
+
+void MMPainter::Read(HWND hwnd)
+{
+	char filename[MAX_PATH];
+	filename[0] = 0;
+
+	OPENFILENAMEA ofn;
+	ofn.lStructSize = sizeof(ofn);
+	ofn.hwndOwner = hwnd;
+	ofn.hInstance = NULL;
+	ofn.lpstrFilter = NULL;
+	ofn.lpstrCustomFilter = NULL;
+	ofn.nMaxCustFilter = 0;
+	ofn.nFilterIndex = 0;
+	ofn.lpstrFile = filename;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.lpstrFileTitle = NULL;
+	ofn.nMaxFileTitle = 0;
+	ofn.lpstrInitialDir = NULL;
+	ofn.lpstrTitle = NULL;
+	ofn.Flags = OFN_DONTADDTORECENT | OFN_NOTESTFILECREATE | OFN_FILEMUSTEXIST;
+	ofn.nFileOffset = 0;
+	ofn.nFileExtension = 0;
+	ofn.lpstrDefExt = NULL;
+	ofn.lCustData = 0;
+	ofn.lpfnHook = NULL;
+	ofn.lpTemplateName = NULL;
+	ofn.pvReserved = NULL;
+	ofn.dwReserved = NULL;
+	ofn.FlagsEx = 0;
+
+	if (GetOpenFileNameA(&ofn))
+	{
+		ifstream ifs(filename, ios_base::in | ios_base::binary);
+
+		try
+		{
+			ifs >> mem;
+
+			if (ifs.fail())
+			{
+				MessageBox(hwnd, _T("There was an error reading the dump."), _T("Read Error"), MB_ICONWARNING | MB_OK);
+			}
+			else
+			{
+				::CloseHandle(hProc);
+				hProc = NULL;
+
+				Mem::Region& r = mem.blocklist.back();
+				maxaddr = r.base + r.size;
+
+				if (hMemDC != NULL)
+				{
+					MemPaint(hMemDC);
+				}
+			}
+		}
+		catch (exception& ex)
+		{
+			MessageBoxA(hwnd, ex.what(), "Read Error", MB_ICONINFORMATION | MB_OK);
+		}
+	}
 }

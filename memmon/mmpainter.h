@@ -3,6 +3,8 @@
 
 #include <windows.h>
 #include <vector>
+#include <iosfwd>
+
 class MMPrefs;
 
 struct Mem;
@@ -20,6 +22,9 @@ public:
 
 	const RECT& GetRect() const { return rsize; }
 
+	void Snapshot(HWND hwnd) const;
+	void Read(HWND hwnd);
+
 	class Mem
 	{
 	public:
@@ -27,8 +32,11 @@ public:
 		~Mem();
 		size_t Populate(HANDLE hProc);
 
-		size_t min;
-		size_t max;
+		template<typename charT, typename traits>
+		void Write(std::basic_streambuf<charT, traits>*) const;
+
+		template<typename charT, typename traits>
+		void Read(std::basic_streambuf<charT, traits>*);
 
 		struct FreeRegion
 		{
@@ -45,8 +53,8 @@ public:
 		std::vector<FreeRegion> freelist;
 
 		size_t total_free;
-		size_t total_commit[4];
-		size_t total_reserve[4];
+		size_t total_commit;
+		size_t total_reserve;
 	};
 
 	class CPUPerf

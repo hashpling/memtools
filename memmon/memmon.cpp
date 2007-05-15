@@ -258,6 +258,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			pPrefs->RunDialog(hInst, hWnd);
 			CheckTopmostSetting(hWnd, pPrefs->GetUIPrefs());
 			break;
+		case ID_FILE_OPEN:
+			pPaint->Read(hWnd);
+			InvalidateRect(hWnd, &rect, TRUE);
+			break;
+		case ID_FILE_SAVEAS:
+			pPaint->Snapshot(hWnd);
+			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}

@@ -22,7 +22,7 @@ Changelog
 * memmon/mmprefs.h memmon/mmprefs.cpp memmon/memmon.rc: Added new preferences
   dialog box.
 
-2007-05-11
+2007-05-11 Charles Bailey
 
 * memmon/memmon.cpp memmon/memmon.rc: Added prefereces menu item and linked it
   to the preferences dialog box.
@@ -33,9 +33,14 @@ Changelog
 * memmon/mmpainter.cpp memmon/mmpainter.h: Fixed the code to use preferences
   where supplied.
 
-2007-05-11
+2007-05-11 Charles Bailey
 
 * memtools.iss: Fixed installer to remove registry keys on uninstall
 
 * memmon/memmon.cpp memmon/memmon.rc memmon/mmprefs.cpp memmon/mmprefs.h: Added
   and implemented an "always on top" option.
+
+2007-05-15 Charles Bailey
+
+memmon/memmon.cpp memmon/memmon.rc memmon/mmpainter.cpp memmon/mmpainter.h:
+  Added snapshot save and load functionality.

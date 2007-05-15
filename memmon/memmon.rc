@@ -42,7 +42,9 @@ IDC_MEMMON MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&Attach ...",                 ID_FILE_ATTACH
+        MENUITEM "&Attach...",                  ID_FILE_ATTACH
+        MENUITEM "&Open...",                    ID_FILE_OPEN
+        MENUITEM "&Save as...",                 ID_FILE_SAVEAS
         MENUITEM "E&xit",                       IDM_EXIT
     END
     POPUP "&Edit"
@@ -63,8 +65,8 @@ END
 
 IDC_MEMMON ACCELERATORS 
 BEGIN
-    "?",            IDM_ABOUT,              ASCII,  ALT
-    "/",            IDM_ABOUT,              ASCII,  ALT
+    "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
 END
 
 
@@ -79,7 +81,7 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     ICON            IDI_MEMMON,IDC_MYICON,14,9,20,20
-    LTEXT           "Address Space Monitor Version 0.2a",IDC_STATIC,49,10,119,8,SS_NOPREFIX
+    LTEXT           "Address Space Monitor Version 0.3a",IDC_STATIC,49,10,119,8,SS_NOPREFIX
     LTEXT           "Copyright (c) 2007 Charles Bailey",IDC_STATIC,49,20,119,8
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
@@ -173,8 +175,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,2,3,0
- PRODUCTVERSION 0,2,3,0
+ FILEVERSION 0,3,1,0
+ PRODUCTVERSION 0,3,1,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -190,12 +192,12 @@ BEGIN
         BLOCK "080904b0"
         BEGIN
             VALUE "FileDescription", "Address Space Monitor exe"
-            VALUE "FileVersion", "0.2"
+            VALUE "FileVersion", "0.3"
             VALUE "InternalName", "memmon"
             VALUE "LegalCopyright", "Copyright (c) 2007 Charles Bailey"
             VALUE "OriginalFilename", "memmon.exe"
             VALUE "ProductName", "Address Space Monitor"
-            VALUE "ProductVersion", "0.2"
+            VALUE "ProductVersion", "0.3"
         END
     END
     BLOCK "VarFileInfo"
