@@ -44,3 +44,7 @@ Changelog
 
 memmon/memmon.cpp memmon/memmon.rc memmon/mmpainter.cpp memmon/mmpainter.h:
   Added snapshot save and load functionality.
+
+2007-08-02 Charles Bailey
+memmon/memmon.cpp memmon/memmon.rc memmon/memmon.vcproj:
+  Added simple process browser.

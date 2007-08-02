@@ -81,20 +81,21 @@ CAPTION "About"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     ICON            IDI_MEMMON,IDC_MYICON,14,9,20,20
-    LTEXT           "Address Space Monitor Version 0.3a",IDC_STATIC,49,10,119,8,SS_NOPREFIX
+    LTEXT           "Address Space Monitor Version 0.4a",IDC_STATIC,49,10,119,8,SS_NOPREFIX
     LTEXT           "Copyright (c) 2007 Charles Bailey",IDC_STATIC,49,20,119,8
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
 
-IDD_ATTACH_DLOG DIALOGEX 0, 0, 186, 46
+IDD_ATTACH_DLOG DIALOGEX 0, 0, 350, 209
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Attach to process"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    EDITTEXT        IDC_EDIT1,7,25,102,14,ES_AUTOHSCROLL | ES_NUMBER
-    DEFPUSHBUTTON   "OK",IDOK,129,7,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,129,24,50,14
+    EDITTEXT        IDC_EDIT1,7,20,102,14,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,293,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,293,24,50,14
     LTEXT           "Process Id:",IDC_STATIC,7,7,37,8
+    LISTBOX         IDC_PROCLIST,7,48,336,154,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_PREFS_DLOG DIALOGEX 0, 0, 186, 177
@@ -153,9 +154,9 @@ BEGIN
     IDD_ATTACH_DLOG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 179
+        RIGHTMARGIN, 343
         TOPMARGIN, 7
-        BOTTOMMARGIN, 39
+        BOTTOMMARGIN, 202
     END
 
     IDD_PREFS_DLOG, DIALOG
@@ -175,8 +176,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,3,1,0
- PRODUCTVERSION 0,3,1,0
+ FILEVERSION 0,4,1,0
+ PRODUCTVERSION 0,4,1,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -192,12 +193,12 @@ BEGIN
         BLOCK "080904b0"
         BEGIN
             VALUE "FileDescription", "Address Space Monitor exe"
-            VALUE "FileVersion", "0.3"
+            VALUE "FileVersion", "0.4"
             VALUE "InternalName", "memmon"
             VALUE "LegalCopyright", "Copyright (c) 2007 Charles Bailey"
             VALUE "OriginalFilename", "memmon.exe"
             VALUE "ProductName", "Address Space Monitor"
-            VALUE "ProductVersion", "0.3"
+            VALUE "ProductVersion", "0.4"
         END
     END
     BLOCK "VarFileInfo"
