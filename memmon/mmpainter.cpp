@@ -1,3 +1,5 @@
+// Copyright (c) 2007 Charles Bailey
+
 #include "stdafx.h"
 #include "mmpainter.h"
 #include <cmath>

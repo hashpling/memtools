@@ -1,6 +1,8 @@
 #ifndef HRFMT_H
 #define HRFMT_H
 
+// Copyright (c) 2007 Charles Bailey
+
 namespace HRFormat
 {
 

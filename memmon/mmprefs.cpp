@@ -1,3 +1,5 @@
+// Copyright (c) 2007 Charles Bailey
+
 #include "stdafx.h"
 #include "mmprefs.h"
 #include <windows.h>

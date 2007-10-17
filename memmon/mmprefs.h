@@ -1,6 +1,8 @@
 #ifndef MMPREFS_H
 #define MMPREFS_H
 
+// Copyright (c) 2007 Charles Bailey
+
 #include <windows.h>
 
 class MMPrefs

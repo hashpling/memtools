@@ -48,3 +48,9 @@ memmon/memmon.cpp memmon/memmon.rc memmon/mmpainter.cpp memmon/mmpainter.h:
 2007-08-02 Charles Bailey
 memmon/memmon.cpp memmon/memmon.rc memmon/memmon.vcproj:
   Added simple process browser.
+
+2007-10-17 Charles Bailey
+licence.txt memmon/memmon.cpp memtools.iss
+  Changed the sorting of the process browser to be more useful.
+  Updated to use the MIT licence.
+  Added the source code to the installer.

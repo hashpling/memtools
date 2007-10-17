@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=Address Space Monitor
-AppVerName=Address Space Monitor 0.4a
+AppVerName=Address Space Monitor 0.5a
 AppPublisher=Charles Bailey
 AppCopyright=Copyright (c) 2007 Charles Bailey
 AppPublisherURL=http://www.hashpling.org
@@ -11,14 +11,14 @@ AppSupportURL=http://www.hashpling.org
 AppUpdatesURL=http://www.hashpling.org
 DefaultDirName={pf}\memmon
 DefaultGroupName=Address Space Monitor
-OutputBaseFilename=asmsetup-0_4
+OutputBaseFilename=asmsetup-0_5
 OutputDir=installer
 Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=none
 ArchitecturesInstallIn64BitMode=x64
 LicenseFile=licence.txt
-VersionInfoVersion=0.4.1.0
+VersionInfoVersion=0.5.1.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -27,11 +27,13 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: full; Description: "Install win32 and x64 versions"; Check: Is64BitInstallMode
 Name: t64bitonly; Description: "Install x64 version"; Check: Is64BitInstallMode
 Name: t32bitonly; Description: "Install win32 version"
+Name: custom; Description: "Custom"; Flags: iscustom
 
 [Components]
-Name: "c32bitexe"; Description: "win32 program files"; Types: full t32bitonly
+Name: "common"; Description: "common files"; Types: full t32bitonly t64bitonly custom; Flags: fixed
+Name: "c32bitexe"; Description: "win32 program files"; Types: full t32bitonly custom
 Name: "c64bitexe"; Description: "x64 program files"; Types: full t64bitonly; Check: Is64BitInstallMode
-Name: "common"; Description: "common files"; Types: full t32bitonly t64bitonly
+Name: "source"; Description: "source files"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -50,6 +52,14 @@ Source: "redist\amd64\Microsoft.VC80.CRT\msvcp80.dll"; DestDir: "{app}\bin64"; C
 Source: "readme.txt"; DestDir: "{app}"; Flags: isreadme; Components: common
 Source: "licence.txt"; DestDir: "{app}"; Components: common
 Source: "Changelog"; DestDir: "{app}"; Components: common
+Source: "readme.txt"; DestDir: "{app}\src"; Components: source
+Source: "licence.txt"; DestDir: "{app}\src"; Components: source
+Source: "Changelog"; DestDir: "{app}\src"; Components: source
+Source: "memtools.sln"; DestDir: "{app}\src"; Components: source
+Source: "memtools.iss"; DestDir: "{app}\src"; Components: source
+Source: "no_deprecate.vsprops"; DestDir: "{app}\src"; Components: source
+Source: "memmon\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\memmon"; Components: source
+Source: "fmtlib\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\fmtlib"; Components: source
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

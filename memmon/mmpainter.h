@@ -1,6 +1,8 @@
 #ifndef MMPAINTER_H
 #define MMPAINTER_H
 
+// Copyright (c) 2007 Charles Bailey
+
 #include <windows.h>
 #include <vector>
 #include <iosfwd>

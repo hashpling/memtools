@@ -1,9 +1,8 @@
+// Copyright (c) 2007 Charles Bailey
 #include "stdafx.h"
 #include "hrfmt.h"
 #include <cstdio>
 #include <cstdarg>
-
-using std::sprintf;
 
 namespace
 {

@@ -1,3 +1,5 @@
+// Copyright (c) 2007 Charles Bailey
+
 // memmon.cpp : Defines the entry point for the application.
 //
 
@@ -180,7 +182,7 @@ void PopulateProcessList(HWND listBox)
 		HANDLE hProc;
 		TCHAR procname[1024];
 
-		for (size_t i = 0; i < (pids_ret_size / sizeof(DWORD)); ++i)
+		for (size_t i = (pids_ret_size / sizeof(DWORD)) - 1; i != (size_t)-1; --i)
 		{
 			hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pids[i]);
 			if (hProc != NULL)
