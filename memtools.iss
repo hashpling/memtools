@@ -7,8 +7,8 @@ AppVerName=Address Space Monitor 0.5a
 AppPublisher=Charles Bailey
 AppCopyright=Copyright (c) 2007 Charles Bailey
 AppPublisherURL=http://www.hashpling.org
-AppSupportURL=http://www.hashpling.org
-AppUpdatesURL=http://www.hashpling.org
+AppSupportURL=http://www.hashpling.org/asm/
+AppUpdatesURL=http://www.hashpling.org/asm/
 DefaultDirName={pf}\memmon
 DefaultGroupName=Address Space Monitor
 OutputBaseFilename=asmsetup-0_5
@@ -18,7 +18,7 @@ SolidCompression=yes
 PrivilegesRequired=none
 ArchitecturesInstallIn64BitMode=x64
 LicenseFile=licence.txt
-VersionInfoVersion=0.5.1.0
+VersionInfoVersion=0.5.1.1
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
