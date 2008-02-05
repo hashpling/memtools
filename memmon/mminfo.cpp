@@ -10,90 +10,9 @@ using std::streambuf;
 using std::stringbuf;
 using std::ios_base;
 
-namespace MMInfo
+namespace MemMon
 {
 
-size_t MemoryMap::Populate(HANDLE hProc)
-{
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-
-	size_t max_addr = (size_t)sysinfo.lpMaximumApplicationAddress;
-
-	Region r;
-
-	freelist.resize(50);
-	blocklist.clear();
-
-	total_free = 0;
-	total_reserve = 0;
-	total_commit = 0;
-
-	for (vector<FreeRegion>::iterator i = freelist.begin();
-									i != freelist.end(); ++i)
-	{
-		i->size = 0;
-	}
-
-	MEMORY_BASIC_INFORMATION meminfo;
-
-	for (char* p = (char*)sysinfo.lpMinimumApplicationAddress;
-		p < (char*)sysinfo.lpMaximumApplicationAddress;
-		p += sysinfo.dwPageSize)
-	{
-		VirtualQueryEx(hProc, p, &meminfo, sizeof(meminfo));
-
-		if (p != meminfo.BaseAddress) break;
-
-		r.base = (size_t)meminfo.BaseAddress;
-		r.size = meminfo.RegionSize;
-		switch (meminfo.State)
-		{
-		case MEM_FREE:
-			r.type = 0;
-			total_free += r.size;
-			break;
-		case MEM_RESERVE:
-			r.type = 1;
-			total_reserve += r.size;
-			break;
-		case MEM_COMMIT:
-		default:
-			r.type = 2;
-			total_commit += r.size;
-			break;
-		}
-
-		blocklist.push_back(r);
-
-		if (meminfo.State == MEM_FREE)
-		{
-			if (freelist.back().size < meminfo.RegionSize)
-			{
-				int j;
-
-				for(j = int(freelist.size()) - 2; j >= 0; --j)
-				{
-					if (freelist[j].size >= meminfo.RegionSize) break;
-					freelist[j+1].size = freelist[j].size;
-					freelist[j+1].base = freelist[j].base;
-				}
-
-				freelist[j+1].size = meminfo.RegionSize;
-				freelist[j+1].base = size_t(meminfo.BaseAddress);
-			}
-		}
-
-		if (meminfo.RegionSize > 0)
-		{
-			p += (meminfo.RegionSize - sysinfo.dwPageSize);
-		}
-	}
-
-	max_addr = (size_t)meminfo.BaseAddress + meminfo.RegionSize;
-
-	return max_addr;
-}
 
 template<typename charT, typename traits, typename intT>
 void MyIntPut( basic_streambuf<charT, traits>* sb, intT toput )

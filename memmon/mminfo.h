@@ -5,7 +5,7 @@
 #include <vector>
 #include <utility>
 
-namespace MMInfo
+namespace MemMon
 {
 
 struct FreeRegion
@@ -22,8 +22,6 @@ struct Region : public FreeRegion
 class MemoryMap
 {
 public:
-	size_t Populate(HANDLE hProc);
-
 	template<typename charT, typename traits>
 	void Write(std::basic_streambuf<charT, traits>*) const;
 

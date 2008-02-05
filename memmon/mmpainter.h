@@ -6,7 +6,9 @@
 #include <windows.h>
 #include <vector>
 #include <iosfwd>
+#include <memory>
 #include "mminfo.h"
+#include "mmsource.h"
 
 class MMPrefs;
 
@@ -26,16 +28,21 @@ public:
 	void Snapshot(HWND hwnd) const;
 	void Read(HWND hwnd);
 
-	class CPUPerf
+private:
+
+	class ProcessSource : public MemMon::Source
 	{
 	public:
-		CPUPerf();
+		ProcessSource( int pid );
+		~ProcessSource();
 
-		double Poll(HANDLE hProc, MMPrefs* pPrefs);
-
+		size_t Update( MemMon::MemoryMap& );
+		double Poll( MMPrefs* pPrefs );
 		double GetPos() const;
 
 	private:
+		HANDLE _proc;
+
 		double actual_u;
 		double actual_k;
 
@@ -45,20 +52,18 @@ public:
 		double last_poll;
 	};
 
-private:
-
 	void DisplayGauge(HDC hdc, bool bQuick) const;
 	void DisplayBlobs(HDC hdc) const;
 	void DisplayTotals(HDC hdc, int offset) const;
 
 	void MemPaint(HDC hdc) const;
-	COLORREF GetColour(std::vector<MMInfo::Region>::const_iterator& preg
-		, std::vector<MMInfo::Region>::const_iterator rend, size_t base
+	COLORREF GetColour(std::vector<MemMon::Region>::const_iterator& preg
+		, std::vector<MemMon::Region>::const_iterator rend, size_t base
 		, size_t end) const;
 
-	COLORREF GetBlobColour(const MMInfo::FreeRegion& reg) const;
-	
-	MMInfo::MemoryMap mem;
+	COLORREF GetBlobColour(const MemMon::FreeRegion& reg) const;
+
+	MemMon::MemoryMap mem;
 	HBRUSH hBrush;
 	HBRUSH hWBrush;
 	HPEN hPen;
@@ -67,20 +72,18 @@ private:
 	HGDIOBJ hOldBmp;
 	RECT rsize;
 
-	HANDLE hProc;
-
 	const int radius;
 	const double dradius;
 	const int width;
 
 	size_t maxaddr;
 
-	CPUPerf cpup;
-
 	double next_update;
 	double processor_count;
 
 	MMPrefs* pPrefs;
+
+	std::auto_ptr< MemMon::Source > _source;
 };
 
 #endif//MMPAINTER_H
