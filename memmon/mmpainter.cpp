@@ -109,8 +109,8 @@ void MMPainter::MemPaint(HDC hdc) const
 }
 
 
-COLORREF MMPainter::GetColour(vector<Mem::Region>::const_iterator& reg
-							, vector<Mem::Region>::const_iterator rend
+COLORREF MMPainter::GetColour(vector<MMInfo::Region>::const_iterator& reg
+							, vector<MMInfo::Region>::const_iterator rend
 							, size_t base, size_t end) const
 {
 	COLORREF c = RGB(0, 0, 0);
@@ -125,7 +125,7 @@ COLORREF MMPainter::GetColour(vector<Mem::Region>::const_iterator& reg
 		size_t tmp = 0, tmp2 = 0;
 		int max_type = 0;
 
-		vector<Mem::Region>::const_iterator oreg = reg;
+		vector<MMInfo::Region>::const_iterator oreg = reg;
 		while (reg != rend && reg->base < end)
 		{
 			size_t sbegin = max(base, reg->base);
@@ -169,7 +169,7 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 
 		double addrmax = double(maxaddr);
 
-		vector<Mem::Region>::const_iterator pReg = mem.blocklist.begin();
+		vector<MMInfo::Region>::const_iterator pReg = mem.blocklist.begin();
 
 		HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
 		HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
@@ -232,7 +232,7 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 	SelectObject(hdc, hOldBrush);
 }
 
-COLORREF MMPainter::GetBlobColour(const Mem::FreeRegion& reg) const
+COLORREF MMPainter::GetBlobColour(const MMInfo::FreeRegion& reg) const
 {
 	int c = int(511.0 * double(reg.size + reg.base)/double(maxaddr));
 	int r, g, b;
@@ -288,7 +288,7 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 	HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
 	SetDCPenColor(hdc, RGB(0, 0, 0));
 
-	for (vector<Mem::FreeRegion>::const_iterator k = mem.freelist.begin();
+	for (vector<MMInfo::FreeRegion>::const_iterator k = mem.freelist.begin();
 			k != mem.freelist.end(); ++k)
 	{
 		double width = dradius * 8.0 * double(k->size) / double(maxaddr);
@@ -356,7 +356,7 @@ void MMPainter::DisplayTotals(HDC hdc, int offset) const
 
 	if (!mem.freelist.empty())
 	{
-		const Mem::FreeRegion& fr = mem.freelist.front();
+		const MMInfo::FreeRegion& fr = mem.freelist.front();
 
 		rtmp.left = rtmp.right;
 		rtmp.right += rsize.right / 4;
@@ -448,96 +448,6 @@ void MMPainter::Update()
 	}
 }
 
-MMPainter::Mem::Mem()
-{
-}
-
-MMPainter::Mem::~Mem()
-{
-}
-
-size_t MMPainter::Mem::Populate(HANDLE hProc)
-{
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-
-	size_t max_addr = (size_t)sysinfo.lpMaximumApplicationAddress;
-
-	Region r;
-
-	freelist.resize(50);
-	blocklist.clear();
-
-	total_free = 0;
-	total_reserve = 0;
-	total_commit = 0;
-
-	for (vector<FreeRegion>::iterator i = freelist.begin();
-									i != freelist.end(); ++i)
-	{
-		i->size = 0;
-	}
-
-	MEMORY_BASIC_INFORMATION meminfo;
-
-	for (char* p = (char*)sysinfo.lpMinimumApplicationAddress;
-		p < (char*)sysinfo.lpMaximumApplicationAddress;
-		p += sysinfo.dwPageSize)
-	{
-		VirtualQueryEx(hProc, p, &meminfo, sizeof(meminfo));
-
-		if (p != meminfo.BaseAddress) break;
-
-		r.base = (size_t)meminfo.BaseAddress;
-		r.size = meminfo.RegionSize;
-		switch (meminfo.State)
-		{
-		case MEM_FREE:
-			r.type = 0;
-			total_free += r.size;
-			break;
-		case MEM_RESERVE:
-			r.type = 1;
-			total_reserve += r.size;
-			break;
-		case MEM_COMMIT:
-		default:
-			r.type = 2;
-			total_commit += r.size;
-			break;
-		}
-
-		blocklist.push_back(r);
-
-		if (meminfo.State == MEM_FREE)
-		{
-			if (freelist.back().size < meminfo.RegionSize)
-			{
-				int j;
-
-				for(j = int(freelist.size()) - 2; j >= 0; --j)
-				{
-					if (freelist[j].size >= meminfo.RegionSize) break;
-					freelist[j+1].size = freelist[j].size;
-					freelist[j+1].base = freelist[j].base;
-				}
-
-				freelist[j+1].size = meminfo.RegionSize;
-				freelist[j+1].base = size_t(meminfo.BaseAddress);
-			}
-		}
-
-		if (meminfo.RegionSize > 0)
-		{
-			p += (meminfo.RegionSize - sysinfo.dwPageSize);
-		}
-	}
-
-	max_addr = (size_t)meminfo.BaseAddress + meminfo.RegionSize;
-
-	return max_addr;
-}
-
 MMPainter::CPUPerf::CPUPerf()
 : actual_u(0.0)
 , actual_k(0.0)
@@ -600,170 +510,6 @@ double MMPainter::CPUPerf::Poll(HANDLE hProc, MMPrefs* pPrefs)
 double MMPainter::CPUPerf::GetPos() const
 {
 	return ind_pos;
-}
-
-template<typename charT, typename traits, typename intT>
-void MyIntPut( basic_streambuf<charT, traits>* sb, intT toput )
-{
-	for (int i = 0; i < sizeof(intT) - 1; ++i)
-	{
-		sb->sputc(charT(toput & 0xff));
-		toput >>= 8;
-	}
-	sb->sputc(charT(toput & 0xff));
-}
-
-template<typename charT, typename traits, typename intT>
-void MyIntGet( basic_streambuf<charT, traits>* sb, intT& toget )
-{
-	toget = 0;
-	for (int i = 0; i < sizeof(intT); ++i)
-	{
-		toget |= intT(sb->sbumpc()) << (i * 8);
-	}
-}
-
-template<typename charT, typename traits>
-void MMPainter::Mem::Write(basic_streambuf<charT, traits>* sb) const
-{
-	sb->sputn("V1", 3);
-	sb->sputc(charT(sizeof(size_t)));
-
-	size_t m = (size_t)-1;
-
-	for (vector<Region>::const_iterator i = blocklist.begin(); i != blocklist.end(); ++i)
-	{
-		if (m != i->base)
-		{
-			sb->sputc(i->type | 0x40);
-			MyIntPut(sb, i->base);
-		}
-		else
-		{
-			sb->sputc(i->type);
-		}
-
-		MyIntPut(sb, i->size);
-
-		m = i->base + i->size;
-	}
-
-	sb->sputc('\xf0');
-}
-
-template<typename charT, typename traits>
-void MMPainter::Mem::Read(basic_streambuf<charT, traits>* sb)
-{
-	stringbuf s;
-	charT t;
-	while ((t = sb->sbumpc()) != '\0' && t != traits::eof())
-	{
-		s.sputc(t);
-	}
-
-	if (s.str() != "V1")
-	{
-		throw ios_base::failure("This file is not a valid Address Space Monitor dump.");
-	}
-
-	if (sb->sbumpc() != sizeof(size_t))
-	{
-		throw ios_base::failure("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
-	}
-
-	total_free = 0;
-	total_reserve = 0;
-	total_commit = 0;
-
-	blocklist.clear();
-	freelist.resize(50);
-	for (vector<FreeRegion>::iterator i = freelist.begin();
-									i != freelist.end(); ++i)
-	{
-		i->size = 0;
-	}
-
-	size_t m = (size_t)-1;
-	while ((t = sb->sbumpc()) != '\xf0' && t != traits::eof())
-	{
-		Region r;
-		r.type = t & 0xf;
-
-		if ((t & 0x40) != 0)
-		{
-			MyIntGet(sb, r.base);
-		}
-		else
-		{
-			r.base = m;
-		}
-
-		MyIntGet(sb, r.size);
-
-		switch(r.type)
-		{
-		case 0:
-			total_free += r.size;
-			break;
-		case 1:
-			total_reserve += r.size;
-			break;
-		case 2:
-			total_commit += r.size;
-			break;
-		}
-
-		m = r.base + r.size;
-
-		blocklist.push_back(r);
-
-		if (r.type == 0 && freelist.back().size < r.size)
-		{
-			int j;
-
-			for(j = int(freelist.size()) - 2; j >= 0; --j)
-			{
-				if (freelist[j].size >= r.size) break;
-				freelist[j+1].size = freelist[j].size;
-				freelist[j+1].base = freelist[j].base;
-			}
-
-			freelist[j+1].size = r.size;
-			freelist[j+1].base = r.base;
-		}
-
-	}
-}
-
-template<typename charT, typename traits>
-inline basic_ostream<charT, traits>& operator<<( basic_ostream<charT, traits>& os,
-											   const MMPainter::Mem& mem)
-{
-	mem.Write(os.rdbuf());
-	return os;
-}
-
-template<typename charT, typename traitsT>
-inline basic_istream<charT, traitsT>& operator>>( basic_istream<charT, traitsT>& is,
-											   MMPainter::Mem& mem)
-{
-	mem.Read(is.rdbuf());
-	return is;
-}
-
-inline bool operator==(const MMPainter::Mem::Region& lhs, const MMPainter::Mem::Region& rhs)
-{
-	return lhs.base == rhs.base && lhs.size == rhs.size && lhs.type == rhs.type;
-}
-
-inline bool operator==(const MMPainter::Mem::FreeRegion& lhs, const MMPainter::Mem::FreeRegion& rhs)
-{
-	return lhs.size == rhs.size && (lhs.size == 0 || lhs.base == rhs.base);
-}
-
-inline bool operator==(const MMPainter::Mem& lhs, const MMPainter::Mem& rhs)
-{
-	return lhs.blocklist == rhs.blocklist && lhs.freelist == rhs.freelist;
 }
 
 void MMPainter::Snapshot(HWND hwnd) const
@@ -863,7 +609,7 @@ void MMPainter::Read(HWND hwnd)
 				::CloseHandle(hProc);
 				hProc = NULL;
 
-				Mem::Region& r = mem.blocklist.back();
+				MMInfo::Region& r = mem.blocklist.back();
 				maxaddr = r.base + r.size;
 
 				if (hMemDC != NULL)

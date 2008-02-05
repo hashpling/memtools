@@ -6,10 +6,9 @@
 #include <windows.h>
 #include <vector>
 #include <iosfwd>
+#include "mminfo.h"
 
 class MMPrefs;
-
-struct Mem;
 
 class MMPainter
 {
@@ -26,38 +25,6 @@ public:
 
 	void Snapshot(HWND hwnd) const;
 	void Read(HWND hwnd);
-
-	class Mem
-	{
-	public:
-		Mem();
-		~Mem();
-		size_t Populate(HANDLE hProc);
-
-		template<typename charT, typename traits>
-		void Write(std::basic_streambuf<charT, traits>*) const;
-
-		template<typename charT, typename traits>
-		void Read(std::basic_streambuf<charT, traits>*);
-
-		struct FreeRegion
-		{
-			size_t base;
-			size_t size;
-		};
-
-		struct Region : public FreeRegion
-		{
-			int type;
-		};
-
-		std::vector<Region> blocklist;
-		std::vector<FreeRegion> freelist;
-
-		size_t total_free;
-		size_t total_commit;
-		size_t total_reserve;
-	};
 
 	class CPUPerf
 	{
@@ -85,13 +52,13 @@ private:
 	void DisplayTotals(HDC hdc, int offset) const;
 
 	void MemPaint(HDC hdc) const;
-	COLORREF GetColour(std::vector<Mem::Region>::const_iterator& preg
-		, std::vector<Mem::Region>::const_iterator rend, size_t base
+	COLORREF GetColour(std::vector<MMInfo::Region>::const_iterator& preg
+		, std::vector<MMInfo::Region>::const_iterator rend, size_t base
 		, size_t end) const;
 
-	COLORREF GetBlobColour(const Mem::FreeRegion& reg) const;
+	COLORREF GetBlobColour(const MMInfo::FreeRegion& reg) const;
 	
-	Mem mem;
+	MMInfo::MemoryMap mem;
 	HBRUSH hBrush;
 	HBRUSH hWBrush;
 	HPEN hPen;
