@@ -37,6 +37,7 @@ public:
 	size_t total_commit;
 	size_t total_reserve;
 };
+
 template<typename charT, typename traits>
 inline std::basic_ostream<charT, traits>& operator<<( std::basic_ostream<charT, traits>& os,
 											   const MemoryMap& mem)

@@ -28,6 +28,8 @@ using std::stringbuf;
 using std::exception;
 
 using MemMon::MemoryMap;
+using MemMon::FreeRegion;
+using MemMon::Region;
 
 MMPainter::MMPainter(int r, MMPrefs* p)
 : hMemDC(NULL), hBmp(NULL), hOldBmp(NULL)
@@ -106,8 +108,8 @@ void MMPainter::MemPaint(HDC hdc) const
 }
 
 
-COLORREF MMPainter::GetColour(vector<MemMon::Region>::const_iterator& reg
-							, vector<MemMon::Region>::const_iterator rend
+COLORREF MMPainter::GetColour(vector<Region>::const_iterator& reg
+							, vector<Region>::const_iterator rend
 							, size_t base, size_t end) const
 {
 	COLORREF c = RGB(0, 0, 0);
@@ -122,7 +124,7 @@ COLORREF MMPainter::GetColour(vector<MemMon::Region>::const_iterator& reg
 		size_t tmp = 0, tmp2 = 0;
 		int max_type = 0;
 
-		vector<MemMon::Region>::const_iterator oreg = reg;
+		vector<Region>::const_iterator oreg = reg;
 		while (reg != rend && reg->base < end)
 		{
 			size_t sbegin = max(base, reg->base);
@@ -166,7 +168,7 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 
 		double addrmax = double(maxaddr);
 
-		vector<MemMon::Region>::const_iterator pReg = mem.blocklist.begin();
+		vector<Region>::const_iterator pReg = mem.blocklist.begin();
 
 		HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
 		HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
@@ -232,7 +234,7 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 	}
 }
 
-COLORREF MMPainter::GetBlobColour(const MemMon::FreeRegion& reg) const
+COLORREF MMPainter::GetBlobColour(const FreeRegion& reg) const
 {
 	int c = int(511.0 * double(reg.size + reg.base)/double(maxaddr));
 	int r, g, b;
@@ -288,7 +290,7 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 	HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
 	SetDCPenColor(hdc, RGB(0, 0, 0));
 
-	for (vector<MemMon::FreeRegion>::const_iterator k = mem.freelist.begin();
+	for (vector<FreeRegion>::const_iterator k = mem.freelist.begin();
 			k != mem.freelist.end(); ++k)
 	{
 		double width = dradius * 8.0 * double(k->size) / double(maxaddr);
@@ -356,7 +358,7 @@ void MMPainter::DisplayTotals(HDC hdc, int offset) const
 
 	if (!mem.freelist.empty())
 	{
-		const MemMon::FreeRegion& fr = mem.freelist.front();
+		const FreeRegion& fr = mem.freelist.front();
 
 		rtmp.left = rtmp.right;
 		rtmp.right += rsize.right / 4;
@@ -446,14 +448,14 @@ void MMPainter::SetProcessId(int p)
 	}
 }
 
-size_t MMPainter::ProcessSource::Update( MemMon::MemoryMap& m )
+size_t MMPainter::ProcessSource::Update( MemoryMap& m )
 {
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
 
 	size_t max_addr = (size_t)sysinfo.lpMaximumApplicationAddress;
 
-	MemMon::Region r;
+	Region r;
 
 	m.freelist.resize(50);
 	m.blocklist.clear();
@@ -462,7 +464,7 @@ size_t MMPainter::ProcessSource::Update( MemMon::MemoryMap& m )
 	m.total_reserve = 0;
 	m.total_commit = 0;
 
-	for (vector<MemMon::FreeRegion>::iterator i = m.freelist.begin();
+	for (vector<FreeRegion>::iterator i = m.freelist.begin();
 									i != m.freelist.end(); ++i)
 	{
 		i->size = 0;
@@ -705,7 +707,7 @@ void MMPainter::Read(HWND hwnd)
 			{
 				_source.reset();
 
-				MemMon::Region& r = mem.blocklist.back();
+				Region& r = mem.blocklist.back();
 				maxaddr = r.base + r.size;
 
 				if (hMemDC != NULL)

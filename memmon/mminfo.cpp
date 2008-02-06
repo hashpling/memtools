@@ -15,11 +15,13 @@ using std::ios_base;
 namespace MemMon
 {
 
+namespace
+{
 
 template<typename charT, typename traits, typename intT>
 void MyIntPut( basic_streambuf<charT, traits>* sb, intT toput )
 {
-	for (int i = 0; i < sizeof(intT) - 1; ++i)
+	for (unsigned i = 0; i < sizeof(intT) - 1; ++i)
 	{
 		sb->sputc(charT(toput & 0xff));
 		toput >>= 8;
@@ -31,10 +33,12 @@ template<typename charT, typename traits, typename intT>
 void MyIntGet( basic_streambuf<charT, traits>* sb, intT& toget )
 {
 	toget = 0;
-	for (int i = 0; i < sizeof(intT); ++i)
+	for (unsigned i = 0; i < sizeof(intT); ++i)
 	{
 		toget |= intT(sb->sbumpc()) << (i * 8);
 	}
+}
+
 }
 
 template<typename charT, typename traits>
