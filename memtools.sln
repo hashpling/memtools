@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmtlib", "fmtlib\fmtlib.vcp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memlib", "memlib\memlib.vcproj", "{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memtest", "memtest\memtest.vcproj", "{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -41,6 +43,12 @@ Global
 		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Release|Win32.ActiveCfg = Release|Win32
 		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Release|Win32.Build.0 = Release|Win32
 		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Release|x64.ActiveCfg = Release|x64
+		{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}.Debug|Win32.Build.0 = Debug|Win32
+		{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}.Debug|x64.ActiveCfg = Debug|x64
+		{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}.Release|Win32.ActiveCfg = Release|Win32
+		{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}.Release|Win32.Build.0 = Release|Win32
+		{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
