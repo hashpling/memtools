@@ -4,9 +4,12 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memmon", "memmon\memmon.vcproj", "{940EA588-998B-4547-8518-A4BB25CBF91F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178} = {ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}
+		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmtlib", "fmtlib\fmtlib.vcproj", "{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memlib", "memlib\memlib.vcproj", "{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +35,12 @@ Global
 		{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}.Release|Win32.Build.0 = Release|Win32
 		{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}.Release|x64.ActiveCfg = Release|x64
 		{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}.Release|x64.Build.0 = Release|x64
+		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Debug|Win32.Build.0 = Debug|Win32
+		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Debug|x64.ActiveCfg = Debug|x64
+		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Release|Win32.ActiveCfg = Release|Win32
+		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Release|Win32.Build.0 = Release|Win32
+		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

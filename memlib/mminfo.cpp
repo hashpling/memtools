@@ -1,6 +1,5 @@
 // Copyright (c) 2008 Charles Bailey
 
-#include "stdafx.h"
 #include "mminfo.h"
 #include <sstream>
 
