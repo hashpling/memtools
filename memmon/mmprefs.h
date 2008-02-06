@@ -4,6 +4,7 @@
 // Copyright (c) 2007 Charles Bailey
 
 #include <windows.h>
+#include "mmsource.h"
 
 class MMPrefs
 {
@@ -11,21 +12,13 @@ public:
 	void Load();
 	void Save() const;
 
-	struct CPUPrefs
-	{
-		CPUPrefs();
-		double k;
-		double damper;
-		bool use_cpu_count;
-	};
-
 	struct UIPrefs
 	{
 		UIPrefs();
 		bool topmost;
 	};
 
-	const CPUPrefs& GetCPUPrefs() const { return cpuprf; }
+	const MemMon::CPUPrefs& GetCPUPrefs() const { return cpuprf; }
 	const UIPrefs& GetUIPrefs() const { return uiprf; }
 
 	static INT_PTR CALLBACK DialogProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -34,7 +27,7 @@ public:
 	void DoSetDialogData(HWND hwndDlg);
 	void DoReadDialogData(HWND hwndDlg);
 private:
-	CPUPrefs cpuprf;
+	MemMon::CPUPrefs cpuprf;
 	UIPrefs uiprf;
 };
 

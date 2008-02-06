@@ -501,7 +501,7 @@ void MMPainter::Update()
 {
 	if (_source.get() != NULL)
 	{
-		double ctime = _source->Poll( pPrefs );
+		double ctime = _source->Poll( pPrefs->GetCPUPrefs() );
 
 		if (ctime > next_update)
 		{
@@ -529,21 +529,15 @@ inline double FT2dbl(LPFILETIME lpFt)
 	return double(tmp) / 10000000.0;
 }
 
-double MMPainter::ProcessSource::Poll( MMPrefs* pPrefs )
+double MMPainter::ProcessSource::Poll( const MemMon::CPUPrefs& prefs )
 {
-	double k = 2.0;
+	double k = prefs.k;
 	const double delta_t = 0.1;
-	double damping = 4.0;
+	double damping = prefs.damper;
 
 	FILETIME currtime;
 	FILETIME sysidle, syskernel, sysuser;
 	FILETIME proccreate, procexit, prockern, procuser;
-
-	if (pPrefs != NULL)
-	{
-		k = pPrefs->GetCPUPrefs().k;
-		damping = pPrefs->GetCPUPrefs().damper;
-	}
 
 	GetSystemTimeAsFileTime(&currtime);
 	GetSystemTimes(&sysidle, &syskernel, &sysuser);

@@ -37,7 +37,7 @@ private:
 		~ProcessSource();
 
 		size_t Update( MemMon::MemoryMap& );
-		double Poll( MMPrefs* pPrefs );
+		double Poll( const MemMon::CPUPrefs& prefs );
 		double GetPos() const;
 
 	private:

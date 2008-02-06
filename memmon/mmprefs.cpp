@@ -21,14 +21,6 @@ namespace
 	const TCHAR prefs_ui_topmost[] = _T("top_most");
 }
 
-MMPrefs::CPUPrefs::CPUPrefs()
-// Global defaults
-: k(2.0)
-, damper(4.0)
-, use_cpu_count(true)
-{
-}
-
 MMPrefs::UIPrefs::UIPrefs()
 // Global defaults
 : topmost(false)

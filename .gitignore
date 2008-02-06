@@ -1,6 +1,7 @@
 *.vcproj.*.user
 *.ncb
 *.aps
+*.suo
 win32
 Win32
 x64
