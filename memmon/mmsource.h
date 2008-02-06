@@ -1,6 +1,8 @@
 #ifndef MMSOURCE_H
 #define MMSOURCE_H
 
+// Copyright (c) 2008 Charles Bailey
+
 class MMPrefs;
 
 namespace MemMon

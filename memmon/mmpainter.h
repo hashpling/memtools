@@ -1,7 +1,7 @@
 #ifndef MMPAINTER_H
 #define MMPAINTER_H
 
-// Copyright (c) 2007 Charles Bailey
+// Copyright (c) 2007,2008 Charles Bailey
 
 #include <windows.h>
 #include <vector>

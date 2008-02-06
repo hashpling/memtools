@@ -1,6 +1,8 @@
 #ifndef MMINFO_H
 #define MMINFO_H
 
+// Copyright (c) 2008 Charles Bailey
+
 #include <streambuf>
 #include <vector>
 #include <utility>
