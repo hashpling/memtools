@@ -74,37 +74,27 @@ void MemoryMap::Read(basic_streambuf<charT, traits>* sb)
 {
 	stringbuf s;
 	charT t;
-	while ((t = sb->sbumpc()) != '\0' && t != traits::eof())
-	{
+	while( (t = sb->sbumpc()) != '\0' && t != traits::eof() )
 		s.sputc(t);
-	}
 
 	if (s.str() != "V1")
-	{
 		throw ios_base::failure("This file is not a valid Address Space Monitor dump.");
-	}
 
 	if (sb->sbumpc() != sizeof(size_t))
-	{
 		throw ios_base::failure("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
-	}
 
 	Clear();
 
 	size_t m = (size_t)-1;
-	while ((t = sb->sbumpc()) != '\xf0' && t != traits::eof())
+	while( (t = sb->sbumpc()) != '\xf0' && t != traits::eof() )
 	{
 		Region r;
 		r.type = static_cast< Region::Type >( t & 0xf );
 
-		if ((t & 0x40) != 0)
-		{
+		if( (t & 0x40) != 0 )
 			MyIntGet(sb, r.base);
-		}
 		else
-		{
 			r.base = m;
-		}
 
 		MyIntGet(sb, r.size);
 
@@ -117,21 +107,19 @@ void MemoryMap::Read(basic_streambuf<charT, traits>* sb)
 template void MemoryMap::Read(streambuf* sb);
 template void MemoryMap::Write(streambuf* sb) const;
 
-void MemoryMap::Clear()
+void MemoryMap::Clear( size_t freecount )
 {
-	_freelist.resize(50);
+	_freelist.resize( freecount );
 	_blocklist.clear();
 
 	_total_free = 0;
 	_total_reserve = 0;
 	_total_commit = 0;
 
-	for (FreeList::iterator i = _freelist.begin();
-									i != _freelist.end(); ++i)
+	for( FreeList::iterator i = _freelist.begin(); i != _freelist.end(); ++i )
 	{
 		i->size = 0;
 	}
-
 }
 
 void MemoryMap::AddBlock( const Region& r )
@@ -152,6 +140,9 @@ void MemoryMap::AddBlock( const Region& r )
 		_total_commit += r.size;
 		break;
 	}
+
+	if( _freelist.empty() )
+		return;
 
 	if( r.type == 0 && _freelist.back().size < r.size)
 	{

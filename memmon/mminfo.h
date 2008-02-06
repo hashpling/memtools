@@ -48,7 +48,7 @@ public:
 	size_t GetCommitTotal() const { return _total_commit; }
 	size_t GetReserveTotal() const { return _total_reserve; }
 
-	void Clear();
+	void Clear( size_t freecount = 50 );
 	void AddBlock( const Region& r );
 
 private:
