@@ -49,7 +49,7 @@ void MemoryMap::Write(basic_streambuf<charT, traits>* sb) const
 
 	size_t m = (size_t)-1;
 
-	for (vector<Region>::const_iterator i = blocklist.begin(); i != blocklist.end(); ++i)
+	for (RegionList::const_iterator i = _blocklist.begin(); i != _blocklist.end(); ++i)
 	{
 		if (m != i->base)
 		{
@@ -89,17 +89,7 @@ void MemoryMap::Read(basic_streambuf<charT, traits>* sb)
 		throw ios_base::failure("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
 	}
 
-	total_free = 0;
-	total_reserve = 0;
-	total_commit = 0;
-
-	blocklist.clear();
-	freelist.resize(50);
-	for (vector<FreeRegion>::iterator i = freelist.begin();
-									i != freelist.end(); ++i)
-	{
-		i->size = 0;
-	}
+	Clear();
 
 	size_t m = (size_t)-1;
 	while ((t = sb->sbumpc()) != '\xf0' && t != traits::eof())
@@ -118,42 +108,65 @@ void MemoryMap::Read(basic_streambuf<charT, traits>* sb)
 
 		MyIntGet(sb, r.size);
 
-		switch(r.type)
-		{
-		case 0:
-			total_free += r.size;
-			break;
-		case 1:
-			total_reserve += r.size;
-			break;
-		case 2:
-			total_commit += r.size;
-			break;
-		}
-
 		m = r.base + r.size;
 
-		blocklist.push_back(r);
-
-		if (r.type == 0 && freelist.back().size < r.size)
-		{
-			int j;
-
-			for(j = int(freelist.size()) - 2; j >= 0; --j)
-			{
-				if (freelist[j].size >= r.size) break;
-				freelist[j+1].size = freelist[j].size;
-				freelist[j+1].base = freelist[j].base;
-			}
-
-			freelist[j+1].size = r.size;
-			freelist[j+1].base = r.base;
-		}
-
+		AddBlock( r );
 	}
 }
 
 template void MemoryMap::Read(streambuf* sb);
 template void MemoryMap::Write(streambuf* sb) const;
+
+void MemoryMap::Clear()
+{
+	_freelist.resize(50);
+	_blocklist.clear();
+
+	_total_free = 0;
+	_total_reserve = 0;
+	_total_commit = 0;
+
+	for (FreeList::iterator i = _freelist.begin();
+									i != _freelist.end(); ++i)
+	{
+		i->size = 0;
+	}
+
+}
+
+void MemoryMap::AddBlock( const Region& r )
+{
+	_blocklist.push_back( r );
+
+	switch( r.type )
+	{
+	case 0:
+		_total_free += r.size;
+		break;
+
+	case 1:
+		_total_reserve += r.size;
+		break;
+
+	default:
+		_total_commit += r.size;
+		break;
+	}
+
+	if( r.type == 0 && _freelist.back().size < r.size)
+	{
+		int j;
+
+		for(j = int(_freelist.size()) - 2; j >= 0; --j)
+		{
+			if (_freelist[j].size >= r.size) break;
+			_freelist[j+1].size = _freelist[j].size;
+			_freelist[j+1].base = _freelist[j].base;
+		}
+
+		_freelist[j+1].size = r.size;
+		_freelist[j+1].base = r.base;
+	}
+}
 
 }

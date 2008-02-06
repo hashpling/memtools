@@ -168,7 +168,7 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 
 		double addrmax = double(maxaddr);
 
-		vector<Region>::const_iterator pReg = mem.blocklist.begin();
+		vector<Region>::const_iterator pReg = mem.GetBlockList().begin();
 
 		HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
 		HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
@@ -179,7 +179,7 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 			size_t base = size_t((pi - d) * addrmax / pi);
 			size_t end = size_t((pi - dnext) * addrmax / pi);
 
-			COLORREF c = GetColour(pReg, mem.blocklist.end(), base, end);
+			COLORREF c = GetColour(pReg, mem.GetBlockList().end(), base, end);
 			SetDCBrushColor(hdc, c);
 			SetDCPenColor(hdc, c);
 			int x1 = radius + int(dradius * cos(dnext));
@@ -290,8 +290,8 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 	HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
 	SetDCPenColor(hdc, RGB(0, 0, 0));
 
-	for (vector<FreeRegion>::const_iterator k = mem.freelist.begin();
-			k != mem.freelist.end(); ++k)
+	for (vector<FreeRegion>::const_iterator k = mem.GetFreeList().begin();
+			k != mem.GetFreeList().end(); ++k)
 	{
 		double width = dradius * 8.0 * double(k->size) / double(maxaddr);
 		int nwidth = int(width);
@@ -338,27 +338,27 @@ void MMPainter::DisplayTotals(HDC hdc, int offset) const
 	rtmp.right = rsize.right / 4;
 	rtmp.bottom = rtmp.top + txtmet.tmHeight;
 
-	HRFormat::hr_format(buf, 100, mem.total_commit);
+	HRFormat::hr_format(buf, 100, mem.GetCommitTotal());
 	SetTextColor(hdc, colcomm);
 	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
 
 	rtmp.left = rtmp.right;
 	rtmp.right += rsize.right / 4;
 
-	HRFormat::hr_format(buf, 100, mem.total_reserve);
+	HRFormat::hr_format(buf, 100, mem.GetReserveTotal());
 	SetTextColor(hdc, colresv);
 	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
 
 	rtmp.left = rtmp.right;
 	rtmp.right += rsize.right / 4;
 
-	HRFormat::hr_format(buf, 100, mem.total_free);
+	HRFormat::hr_format(buf, 100, mem.GetFreeTotal());
 	SetTextColor(hdc, colfree);
 	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
 
-	if (!mem.freelist.empty())
+	if (!mem.GetFreeList().empty())
 	{
-		const FreeRegion& fr = mem.freelist.front();
+		const FreeRegion& fr = mem.GetFreeList().front();
 
 		rtmp.left = rtmp.right;
 		rtmp.right += rsize.right / 4;
@@ -456,19 +456,7 @@ size_t MMPainter::ProcessSource::Update( MemoryMap& m )
 	size_t max_addr = (size_t)sysinfo.lpMaximumApplicationAddress;
 
 	Region r;
-
-	m.freelist.resize(50);
-	m.blocklist.clear();
-
-	m.total_free = 0;
-	m.total_reserve = 0;
-	m.total_commit = 0;
-
-	for (vector<FreeRegion>::iterator i = m.freelist.begin();
-									i != m.freelist.end(); ++i)
-	{
-		i->size = 0;
-	}
+	m.Clear();
 
 	MEMORY_BASIC_INFORMATION meminfo;
 
@@ -486,38 +474,17 @@ size_t MMPainter::ProcessSource::Update( MemoryMap& m )
 		{
 		case MEM_FREE:
 			r.type = 0;
-			m.total_free += r.size;
 			break;
 		case MEM_RESERVE:
 			r.type = 1;
-			m.total_reserve += r.size;
 			break;
 		case MEM_COMMIT:
 		default:
 			r.type = 2;
-			m.total_commit += r.size;
 			break;
 		}
 
-		m.blocklist.push_back(r);
-
-		if (meminfo.State == MEM_FREE)
-		{
-			if (m.freelist.back().size < meminfo.RegionSize)
-			{
-				int j;
-
-				for(j = int(m.freelist.size()) - 2; j >= 0; --j)
-				{
-					if (m.freelist[j].size >= meminfo.RegionSize) break;
-					m.freelist[j+1].size = m.freelist[j].size;
-					m.freelist[j+1].base = m.freelist[j].base;
-				}
-
-				m.freelist[j+1].size = meminfo.RegionSize;
-				m.freelist[j+1].base = size_t(meminfo.BaseAddress);
-			}
-		}
+		m.AddBlock( r );
 
 		if (meminfo.RegionSize > 0)
 		{
@@ -707,7 +674,7 @@ void MMPainter::Read(HWND hwnd)
 			{
 				_source.reset();
 
-				Region& r = mem.blocklist.back();
+				const Region& r = mem.GetBlockList().back();
 				maxaddr = r.base + r.size;
 
 				if (hMemDC != NULL)

@@ -24,18 +24,34 @@ struct Region : public FreeRegion
 class MemoryMap
 {
 public:
+	typedef std::vector< Region > RegionList;
+	typedef std::vector< FreeRegion > FreeList;
+
 	template<typename charT, typename traits>
 	void Write(std::basic_streambuf<charT, traits>*) const;
 
 	template<typename charT, typename traits>
 	void Read(std::basic_streambuf<charT, traits>*);
 
-	std::vector<Region> blocklist;
-	std::vector<FreeRegion> freelist;
+	bool operator==( const MemoryMap& other ) const;
 
-	size_t total_free;
-	size_t total_commit;
-	size_t total_reserve;
+	const RegionList& GetBlockList() const { return _blocklist; }
+	const FreeList& GetFreeList() const { return _freelist; }
+
+	size_t GetFreeTotal() const { return _total_free; }
+	size_t GetCommitTotal() const { return _total_commit; }
+	size_t GetReserveTotal() const { return _total_reserve; }
+
+	void Clear();
+	void AddBlock( const Region& r );
+
+private:
+	RegionList _blocklist;
+	FreeList _freelist;
+
+	size_t _total_free;
+	size_t _total_commit;
+	size_t _total_reserve;
 };
 
 template<typename charT, typename traits>
@@ -64,9 +80,9 @@ inline bool operator==(const FreeRegion& lhs, const FreeRegion& rhs)
 	return lhs.size == rhs.size && (lhs.size == 0 || lhs.base == rhs.base);
 }
 
-inline bool operator==(const MemoryMap& lhs, const MemoryMap& rhs)
+inline bool MemoryMap::operator==( const MemoryMap& other ) const
 {
-	return lhs.blocklist == rhs.blocklist && lhs.freelist == rhs.freelist;
+	return _blocklist == other._blocklist && _freelist == other._freelist;
 }
 
 class MemoryDiff
