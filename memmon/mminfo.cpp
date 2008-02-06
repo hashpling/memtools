@@ -95,7 +95,7 @@ void MemoryMap::Read(basic_streambuf<charT, traits>* sb)
 	while ((t = sb->sbumpc()) != '\xf0' && t != traits::eof())
 	{
 		Region r;
-		r.type = t & 0xf;
+		r.type = static_cast< Region::Type >( t & 0xf );
 
 		if ((t & 0x40) != 0)
 		{

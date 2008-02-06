@@ -473,14 +473,14 @@ size_t MMPainter::ProcessSource::Update( MemoryMap& m )
 		switch (meminfo.State)
 		{
 		case MEM_FREE:
-			r.type = 0;
+			r.type = Region::free;
 			break;
 		case MEM_RESERVE:
-			r.type = 1;
+			r.type = Region::reserved;
 			break;
 		case MEM_COMMIT:
 		default:
-			r.type = 2;
+			r.type = Region::committed;
 			break;
 		}
 

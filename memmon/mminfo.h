@@ -18,7 +18,13 @@ struct FreeRegion
 
 struct Region : public FreeRegion
 {
-	int type;
+	enum Type
+	{
+		  free
+		, reserved
+		, committed
+	};
+	Type type;
 };
 
 class MemoryMap
