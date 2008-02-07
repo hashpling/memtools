@@ -95,7 +95,9 @@ inline bool MemoryMap::operator==( const MemoryMap& other ) const
 class MemoryDiff
 {
 public:
+	MemoryDiff() {}
 	MemoryDiff( const MemoryMap& before, const MemoryMap& after );
+
 	void Apply( MemoryMap& target ) const;
 	void ReverseApply( MemoryMap& target ) const;
 

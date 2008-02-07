@@ -237,4 +237,8 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 	}
 }
 
+void MemoryDiff::Apply( MemoryMap& target ) const
+{
+}
+
 }
