@@ -92,6 +92,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="$(TargetPath)"
 			/>
 		</Configuration>
 		<Configuration
@@ -168,6 +169,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="$(TargetPath)"
 			/>
 		</Configuration>
 		<Configuration
@@ -244,6 +246,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="$(TargetPath)"
 			/>
 		</Configuration>
 		<Configuration
@@ -320,6 +323,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="$(TargetPath)"
 			/>
 		</Configuration>
 	</Configurations>
@@ -341,6 +345,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\hshgtest.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

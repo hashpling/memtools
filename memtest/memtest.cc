@@ -1,8 +1,13 @@
 #include <iostream>
 #include "mminfo.h"
+#include "hshgtest.h"
 
-int main()
+namespace
 {
+
+void DiffAddMid()
+{
+	// Add new block in the middle
 	MemMon::MemoryMap m1, m2;
 
 	m1.Clear( 10 );
@@ -31,5 +36,156 @@ int main()
 
 	const MemMon::MemoryDiff::Changes& c = d.GetChanges();
 
-	return 0;
+	HSHG_ASSERT( c.size() == 1 );
+
+	MemMon::MemoryDiff::Changes::const_iterator cit = c.begin();
+
+	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::addition );
+
+	const MemMon::Region* rr = &cit->second.second;
+
+	HSHG_ASSERT( rr->base == 10 );
+	HSHG_ASSERT( rr->size == 10 );
+	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+
+	MemMon::MemoryDiff drev( m2, m1 );
+
+	const MemMon::MemoryDiff::Changes& crev = drev.GetChanges();
+
+	HSHG_ASSERT( crev.size() == 1 );
+
+	cit = crev.begin();
+
+	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::removal );
+
+	rr = &cit->second.first;
+
+	HSHG_ASSERT( rr->base == 10 );
+	HSHG_ASSERT( rr->size == 10 );
+	HSHG_ASSERT( rr->type == MemMon::Region::committed );
 }
+
+void DiffAddStart()
+{
+	// Add new block in the middle
+	MemMon::MemoryMap m1, m2;
+
+	m1.Clear( 10 );
+	m2.Clear( 10 );
+
+	MemMon::Region r;
+
+	r.base = 0;
+	r.type = MemMon::Region::free;
+	r.size = 30;
+
+	m1.AddBlock( r );
+
+	r.size = 10;
+	r.type = MemMon::Region::committed;
+	m2.AddBlock( r );
+
+	r.size = 20;
+	r.base = 10;
+	r.type = MemMon::Region::free;
+	m2.AddBlock( r );
+
+	MemMon::MemoryDiff d( m1, m2 );
+
+	const MemMon::MemoryDiff::Changes& c = d.GetChanges();
+
+	HSHG_ASSERT( c.size() == 1 );
+
+	MemMon::MemoryDiff::Changes::const_iterator cit = c.begin();
+
+	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::addition );
+
+	const MemMon::Region* rr = &cit->second.second;
+
+	HSHG_ASSERT( rr->base == 0 );
+	HSHG_ASSERT( rr->size == 10 );
+	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+
+	MemMon::MemoryDiff drev( m2, m1 );
+
+	const MemMon::MemoryDiff::Changes& crev = drev.GetChanges();
+
+	HSHG_ASSERT( crev.size() == 1 );
+
+	cit = crev.begin();
+
+	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::removal );
+
+	rr = &cit->second.first;
+
+	HSHG_ASSERT( rr->base == 0 );
+	HSHG_ASSERT( rr->size == 10 );
+	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+}
+
+void DiffAddEnd()
+{
+	// Add new block in the middle
+	MemMon::MemoryMap m1, m2;
+
+	m1.Clear( 10 );
+	m2.Clear( 10 );
+
+	MemMon::Region r;
+
+	r.base = 0;
+	r.type = MemMon::Region::free;
+	r.size = 30;
+
+	m1.AddBlock( r );
+
+	r.size = 20;
+	m2.AddBlock( r );
+
+	r.size = 10;
+	r.base = 20;
+	r.type = MemMon::Region::committed;
+	m2.AddBlock( r );
+
+	MemMon::MemoryDiff d( m1, m2 );
+
+	const MemMon::MemoryDiff::Changes& c = d.GetChanges();
+
+	HSHG_ASSERT( c.size() == 1 );
+
+	MemMon::MemoryDiff::Changes::const_iterator cit = c.begin();
+
+	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::addition );
+
+	const MemMon::Region* rr = &cit->second.second;
+
+	HSHG_ASSERT( rr->base == 20 );
+	HSHG_ASSERT( rr->size == 10 );
+	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+
+	MemMon::MemoryDiff drev( m2, m1 );
+
+	const MemMon::MemoryDiff::Changes& crev = drev.GetChanges();
+
+	HSHG_ASSERT( crev.size() == 1 );
+
+	cit = crev.begin();
+
+	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::removal );
+
+	rr = &cit->second.first;
+
+	HSHG_ASSERT( rr->base == 20 );
+	HSHG_ASSERT( rr->size == 10 );
+	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+}
+
+}
+
+HSHG_BEGIN_TESTS
+HSHG_TEST_ENTRY( DiffAddMid )
+HSHG_TEST_ENTRY( DiffAddStart )
+HSHG_TEST_ENTRY( DiffAddEnd )
+HSHG_END_TESTS
+
+HSHG_TEST_MAIN

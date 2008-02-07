@@ -161,6 +161,80 @@ void MemoryMap::AddBlock( const Region& r )
 
 MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 {
+	RegionList::const_iterator bit = before.GetBlockList().begin();
+	RegionList::const_iterator ait = after.GetBlockList().begin();
+	const RegionList::const_iterator bend = before.GetBlockList().end();
+	const RegionList::const_iterator aend = after.GetBlockList().end();
+
+	while( ait != aend || bit != bend )
+	{
+		if( bit == bend )
+		{
+			while( ait != aend )
+				AppendAddition( *ait++ );
+			break;
+		}
+
+		if( ait == aend )
+		{
+			while( bit != bend )
+				AppendRemoval( *bit++ );
+			break;
+		}
+
+		// If we get here we have two non-ends
+		if( ait->base < bit->base )
+			AppendAddition( *ait++ );
+		else if( ait->base > bit->base )
+			AppendRemoval( *bit++ );
+		else
+		{
+			if( ait->size < bit->size )
+			{
+				bool bOriginalPreserved = false;
+
+				do
+				{
+					if( ait->type == bit->type )
+						bOriginalPreserved = true;
+					else
+						AppendAddition( *ait );
+				} while( ++ait != aend && ait->base < bit->base + bit->size );
+
+				if( !bOriginalPreserved )
+				{
+					_changes.back().first = change;
+					_changes.back().second.first = *bit;
+				}
+
+				++bit;
+			}
+			else if ( ait->size > bit->size )
+			{
+				bool bNewPreserved = false;
+
+				do
+				{
+					if( ait->type == bit->type )
+						bNewPreserved = true;
+					else
+						AppendRemoval( *bit );
+				} while( ++bit != bend && bit->base < ait->base + ait->size );
+
+				if( !bNewPreserved )
+				{
+					_changes.back().first = change;
+					_changes.back().second.second = *ait;
+				}
+
+				++ait;
+			}
+			else if ( ait->type != bit->type )
+			{
+				AppendChange( *bit++, *ait++ );
+			}
+		}
+	}
 }
 
 }

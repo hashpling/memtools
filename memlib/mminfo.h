@@ -117,6 +117,19 @@ public:
 
 	const Changes& GetChanges() const { return _changes; }
 
+	void AppendAddition( const Region& r )
+	{
+		_changes.push_back( std::make_pair( MemoryDiff::addition, std::make_pair( Region(), r ) ) );
+	}
+	void AppendRemoval( const Region& r )
+	{
+		_changes.push_back( std::make_pair( MemoryDiff::removal, std::make_pair( r, Region() ) ) );
+	}
+	void AppendChange( const Region& r1, const Region& r2 )
+	{
+		_changes.push_back( std::make_pair( MemoryDiff::change, std::make_pair( r1, r2 ) ) );
+	}
+
 private:
 	Changes _changes;
 };
