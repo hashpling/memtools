@@ -159,4 +159,8 @@ void MemoryMap::AddBlock( const Region& r )
 	}
 }
 
+MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
+{
+}
+
 }

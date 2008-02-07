@@ -27,11 +27,12 @@ struct Region : public FreeRegion
 	Type type;
 };
 
+typedef std::vector< Region > RegionList;
+typedef std::vector< FreeRegion > FreeList;
+
 class MemoryMap
 {
 public:
-	typedef std::vector< Region > RegionList;
-	typedef std::vector< FreeRegion > FreeList;
 
 	template<typename charT, typename traits>
 	void Write(std::basic_streambuf<charT, traits>*) const;
@@ -104,10 +105,20 @@ public:
 	template<typename charT, typename traits>
 	void Read( std::basic_streambuf< charT, traits >*);
 
+	enum ChangeType
+	{
+		  addition
+		, removal
+		, change
+	};
+
+	typedef std::pair< ChangeType, std::pair< Region, Region > > Change;
+	typedef std::vector< Change > Changes;
+
+	const Changes& GetChanges() const { return _changes; }
+
 private:
-	std::vector< Region > additions;
-	std::vector< std::pair< size_t, std::pair< int, int > > > changes;
-	std::vector< Region > removals;
+	Changes _changes;
 };
 
 }

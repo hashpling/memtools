@@ -3,8 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memmon", "memmon\memmon.vcproj", "{940EA588-998B-4547-8518-A4BB25CBF91F}"
 	ProjectSection(ProjectDependencies) = postProject
-		{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178} = {ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}
 		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
+		{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178} = {ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmtlib", "fmtlib\fmtlib.vcproj", "{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}"
@@ -12,6 +12,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memlib", "memlib\memlib.vcproj", "{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memtest", "memtest\memtest.vcproj", "{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
