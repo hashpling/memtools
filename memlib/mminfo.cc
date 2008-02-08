@@ -255,6 +255,104 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 	}
 }
 
+namespace
+{
+
+class PatchFailed
+{
+public:
+	enum Reason
+	{
+		  AdditionOverwrites
+		, NoMatchForChange
+		, AdditionBeyondLast
+	};
+
+	PatchFailed( Reason r ) : _reason( r ) {}
+
+private:
+	Reason _reason;
+};
+
+void DoAdd( RegionList& blocklist, RegionList::iterator& i, const Region& r )
+{
+	while( i != blocklist.end() && i->base + i->size <= r.base )
+		++i;
+
+	if( i == blocklist.end() )
+		throw PatchFailed( PatchFailed::AdditionBeyondLast );
+
+	if( i->base == r.base )
+	{
+		// Insertion at start of existing region
+		if( i->size <= r.size )
+			throw PatchFailed( PatchFailed::AdditionOverwrites );
+
+		i->base += r.size;
+		i->size -= r.size;
+
+		i = blocklist.insert( i, r );
+		++i;
+	}
+	else
+	{
+		Region x;
+		x.size = 0;
+
+		if( i->base + i->size > r.base + r.size )
+		{
+			// Existing region wholly encloses addition
+			// Split original into two
+			x.base = r.base + r.size;
+			x.size = i->base + i->size - x.base;
+			x.type = i->type;
+		}
+
+		// Shrink preceding region
+		i->size = r.base - i->base;
+
+		if( x.size != 0 )
+			i = blocklist.insert( ++i, x );
+		else
+			++i;
+
+		i = blocklist.insert( i, r );
+		++i;
+
+		// If new region encroaches into next region, then shrink it
+		if( i != blocklist.end() && i->base < r.base + r.size )
+		{
+			i->size -= r.base + r.size - i->base;
+			i->base = r.base + r.size;
+		}
+	}
+}
+
+void DoRemove( RegionList& blocklist, RegionList::iterator& i, const Region& r )
+{
+	size_t change_base = r.base;
+
+	while( i != blocklist.end() && i->base + i->size <= change_base )
+		++i;
+
+	i = blocklist.erase( i );
+}
+
+void DoChange( RegionList& blocklist, RegionList::iterator& i, const Region& r )
+{
+	size_t change_base = r.base;
+
+	while( i != blocklist.end() && i->base + i->size <= change_base )
+		++i;
+
+	if( i == blocklist.end() )
+		throw PatchFailed( PatchFailed::NoMatchForChange );
+
+	*i = r;
+}
+
+}
+
 void MemoryDiff::Apply( MemoryMap& target ) const
 {
 	RegionList& blocklist = target.GetBlockListRef();
@@ -262,43 +360,16 @@ void MemoryDiff::Apply( MemoryMap& target ) const
 
 	for( Changes::const_iterator cit = _changes.begin(); cit != _changes.end(); ++cit )
 	{
-		size_t change_base = cit->first == addition ? cit->second.second.base : cit->second.first.base;
-
-		while( i != blocklist.end() && i->base + i->size <= change_base )
-			++i;
-
 		switch( cit->first )
 		{
 		case change:
-			*i = cit->second.second;
+			DoChange( blocklist, i, cit->second.second );
 			break;
 		case removal:
-			i = blocklist.erase( i );
+			DoRemove( blocklist, i, cit->second.first );
 			break;
 		case addition:
-			if( i->base + i->size > cit->second.second.base )
-			{
-				Region x;
-				x.size = 0;
-				if( i->base + i->size > cit->second.second.base + cit->second.second.size )
-				{
-					x.base = cit->second.second.base + cit->second.second.size;
-					x.size = i->base + i->size - x.base;
-					x.type = i->type;
-				}
-				i->size = cit->second.second.base - i->base;
-				if( x.size != 0 )
-					i = blocklist.insert( ++i, x );
-				else
-					++i;
-			}
-			i = blocklist.insert( i, cit->second.second );
-			++i;
-			if( i != blocklist.end() && i->base < cit->second.second.base + cit->second.second.size )
-			{
-				i->size -= cit->second.second.base + cit->second.second.size - i->base;
-				i->base = cit->second.second.base + cit->second.second.size;
-			}
+			DoAdd( blocklist, i, cit->second.second );
 			break;
 		}
 	}

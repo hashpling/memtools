@@ -12,6 +12,9 @@ namespace MemMon
 
 struct FreeRegion
 {
+	FreeRegion( size_t b, size_t s ) : base( b ), size( s ) {}
+	FreeRegion() {}
+
 	size_t base;
 	size_t size;
 };
@@ -24,6 +27,10 @@ struct Region : public FreeRegion
 		, reserved
 		, committed
 	};
+
+	Region( size_t b, size_t s, Type t ) : FreeRegion( b , s ), type( t ) {}
+	Region() {}
+
 	Type type;
 };
 

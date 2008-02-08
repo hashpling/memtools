@@ -218,6 +218,99 @@ void PatchAddMid()
 	HSHG_ASSERT( m1 == m2 );
 }
 
+void PatchAddStart()
+{
+	// Add new block in the start
+	MemMon::MemoryMap m1, m2;
+
+	m1.Clear( 10 );
+	m2.Clear( 10 );
+
+	MemMon::Region r;
+
+	r.base = 0;
+	r.type = MemMon::Region::free;
+	r.size = 30;
+
+	m1.AddBlock( r );
+
+	r.type = MemMon::Region::committed;
+	r.size = 10;
+	m2.AddBlock( r );
+
+	r.base = 10;
+	r.size = 20;
+	r.type = MemMon::Region::free;
+	m2.AddBlock( r );
+
+	r.base = 0;
+	r.type = MemMon::Region::committed;
+	r.size = 10;
+	MemMon::MemoryDiff d;
+	d.AppendAddition( r );
+
+	d.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void PatchAddEnd()
+{
+	// Add new block in the end
+	MemMon::MemoryMap m1, m2;
+
+	m1.Clear( 10 );
+	m2.Clear( 10 );
+
+	MemMon::Region r;
+
+	r.base = 0;
+	r.type = MemMon::Region::free;
+	r.size = 30;
+
+	m1.AddBlock( r );
+
+	r.size = 20;
+	m2.AddBlock( r );
+
+	r.base = 20;
+	r.type = MemMon::Region::committed;
+	r.size = 10;
+	m2.AddBlock( r );
+
+	r.base = 20;
+	r.type = MemMon::Region::committed;
+	r.size = 10;
+	MemMon::MemoryDiff d;
+	d.AppendAddition( r );
+
+	d.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void PatchAddSplit()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.Clear( 10 );
+	m2.Clear( 10 );
+
+	m1.AddBlock( MemMon::Region( 0, 15, MemMon::Region::free ) );
+	m1.AddBlock( MemMon::Region( 15, 15, MemMon::Region::reserved ) );
+
+	m2.AddBlock( MemMon::Region( 0, 10, MemMon::Region::free ) );
+	m2.AddBlock( MemMon::Region( 10, 10, MemMon::Region::committed ) );
+	m2.AddBlock( MemMon::Region( 20, 10, MemMon::Region::reserved ) );
+
+	MemMon::MemoryDiff d;
+	d.AppendAddition( MemMon::Region( 10, 10, MemMon::Region::committed ) );
+
+	d.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
 }
 
 HSHG_BEGIN_TESTS
@@ -225,6 +318,9 @@ HSHG_TEST_ENTRY( DiffAddMid )
 HSHG_TEST_ENTRY( DiffAddStart )
 HSHG_TEST_ENTRY( DiffAddEnd )
 HSHG_TEST_ENTRY( PatchAddMid )
+HSHG_TEST_ENTRY( PatchAddStart )
+HSHG_TEST_ENTRY( PatchAddEnd )
+HSHG_TEST_ENTRY( PatchAddSplit )
 HSHG_END_TESTS
 
 HSHG_TEST_MAIN
