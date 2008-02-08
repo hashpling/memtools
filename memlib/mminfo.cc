@@ -106,11 +106,8 @@ void MemoryMap::Read(basic_streambuf<charT, traits>* sb)
 template void MemoryMap::Read(streambuf* sb);
 template void MemoryMap::Write(streambuf* sb) const;
 
-void MemoryMap::Clear( size_t freecount )
+void MemoryMap::PartialClear()
 {
-	_freelist.resize( freecount );
-	_blocklist.clear();
-
 	_total_free = 0;
 	_total_reserve = 0;
 	_total_commit = 0;
@@ -121,10 +118,16 @@ void MemoryMap::Clear( size_t freecount )
 	}
 }
 
-void MemoryMap::AddBlock( const Region& r )
+void MemoryMap::Clear( size_t freecount )
 {
-	_blocklist.push_back( r );
+	_freelist.resize( freecount );
+	_blocklist.clear();
 
+	PartialClear();
+}
+
+void MemoryMap::UpdateFreeList( const Region& r )
+{
 	switch( r.type )
 	{
 	case 0:
@@ -156,6 +159,21 @@ void MemoryMap::AddBlock( const Region& r )
 
 		_freelist[j+1].size = r.size;
 		_freelist[j+1].base = r.base;
+	}
+}
+
+void MemoryMap::AddBlock( const Region& r )
+{
+	_blocklist.push_back( r );
+	UpdateFreeList( r );
+}
+
+void MemoryMap::RecalcFreeList()
+{
+	PartialClear();
+	for( RegionList::iterator i = _blocklist.begin(); i != _blocklist.end(); ++i )
+	{
+		UpdateFreeList( *i );
 	}
 }
 
@@ -239,6 +257,53 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 
 void MemoryDiff::Apply( MemoryMap& target ) const
 {
+	RegionList& blocklist = target.GetBlockListRef();
+	RegionList::iterator i = blocklist.begin();
+
+	for( Changes::const_iterator cit = _changes.begin(); cit != _changes.end(); ++cit )
+	{
+		size_t change_base = cit->first == addition ? cit->second.second.base : cit->second.first.base;
+
+		while( i != blocklist.end() && i->base + i->size <= change_base )
+			++i;
+
+		switch( cit->first )
+		{
+		case change:
+			*i = cit->second.second;
+			break;
+		case removal:
+			i = blocklist.erase( i );
+			break;
+		case addition:
+			if( i->base + i->size > cit->second.second.base )
+			{
+				Region x;
+				x.size = 0;
+				if( i->base + i->size > cit->second.second.base + cit->second.second.size )
+				{
+					x.base = cit->second.second.base + cit->second.second.size;
+					x.size = i->base + i->size - x.base;
+					x.type = i->type;
+				}
+				i->size = cit->second.second.base - i->base;
+				if( x.size != 0 )
+					i = blocklist.insert( ++i, x );
+				else
+					++i;
+			}
+			i = blocklist.insert( i, cit->second.second );
+			++i;
+			if( i != blocklist.end() && i->base < cit->second.second.base + cit->second.second.size )
+			{
+				i->size -= cit->second.second.base + cit->second.second.size - i->base;
+				i->base = cit->second.second.base + cit->second.second.size;
+			}
+			break;
+		}
+	}
+
+	target.RecalcFreeList();
 }
 
 }

@@ -52,7 +52,14 @@ public:
 	void Clear( size_t freecount = 50 );
 	void AddBlock( const Region& r );
 
+	void RecalcFreeList();
+
+	RegionList& GetBlockListRef() { return _blocklist; }
+
 private:
+	void UpdateFreeList( const Region& r );
+	void PartialClear();
+
 	RegionList _blocklist;
 	FreeList _freelist;
 

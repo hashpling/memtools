@@ -6,3 +6,4 @@ win32
 Win32
 x64
 build
+build_rel
