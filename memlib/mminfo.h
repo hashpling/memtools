@@ -34,6 +34,16 @@ struct Region : public FreeRegion
 	Type type;
 };
 
+inline bool operator==(const Region& lhs, const Region& rhs)
+{
+	return lhs.base == rhs.base && lhs.size == rhs.size && lhs.type == rhs.type;
+}
+
+inline bool operator==(const FreeRegion& lhs, const FreeRegion& rhs)
+{
+	return lhs.size == rhs.size && (lhs.size == 0 || lhs.base == rhs.base);
+}
+
 typedef std::vector< Region > RegionList;
 typedef std::vector< FreeRegion > FreeList;
 
@@ -47,7 +57,11 @@ public:
 	template<typename charT, typename traits>
 	void Read(std::basic_streambuf<charT, traits>*);
 
-	bool operator==( const MemoryMap& other ) const;
+	bool operator==( const MemoryMap& other ) const
+	{
+		return _blocklist == other._blocklist && _freelist == other._freelist;
+	}
+	bool operator!=( const MemoryMap& other ) const { return !(*this == other); }
 
 	const RegionList& GetBlockList() const { return _blocklist; }
 	const FreeList& GetFreeList() const { return _freelist; }
@@ -91,21 +105,6 @@ inline std::basic_istream<charT, traitsT>& operator>>( std::basic_istream<charT,
 	return is;
 }
 
-inline bool operator==(const Region& lhs, const Region& rhs)
-{
-	return lhs.base == rhs.base && lhs.size == rhs.size && lhs.type == rhs.type;
-}
-
-inline bool operator==(const FreeRegion& lhs, const FreeRegion& rhs)
-{
-	return lhs.size == rhs.size && (lhs.size == 0 || lhs.base == rhs.base);
-}
-
-inline bool MemoryMap::operator==( const MemoryMap& other ) const
-{
-	return _blocklist == other._blocklist && _freelist == other._freelist;
-}
-
 class MemoryDiff
 {
 public:
@@ -128,23 +127,51 @@ public:
 		, change
 	};
 
-	typedef std::pair< ChangeType, std::pair< Region, Region > > Change;
+	struct Change
+	{
+		Change() {}
+		Change( ChangeType ct, const std::pair< Region, Region >& rp ) : first( ct ), second( rp ) {}
+		ChangeType first;
+		std::pair< Region, Region > second;
+		bool operator==( const Change& other ) const
+		{
+			switch( first )
+			{
+			case addition:
+				return other.first == addition && second.second == other.second.second;
+			case removal:
+				return other.first == removal && second.first == other.second.first;
+			case change:
+				return other.first == change && second.first == other.second.first && second.second == other.second.second;
+			}
+			return false;
+		}
+		bool operator!=( const Change& other ) const { return !(*this == other); }
+	};
+
 	typedef std::vector< Change > Changes;
 
 	const Changes& GetChanges() const { return _changes; }
 
 	void AppendAddition( const Region& r )
 	{
-		_changes.push_back( std::make_pair( MemoryDiff::addition, std::make_pair( Region(), r ) ) );
+		_changes.push_back( Change( MemoryDiff::addition, std::make_pair( Region(), r ) ) );
 	}
 	void AppendRemoval( const Region& r )
 	{
-		_changes.push_back( std::make_pair( MemoryDiff::removal, std::make_pair( r, Region() ) ) );
+		_changes.push_back( Change( MemoryDiff::removal, std::make_pair( r, Region() ) ) );
 	}
 	void AppendChange( const Region& r1, const Region& r2 )
 	{
-		_changes.push_back( std::make_pair( MemoryDiff::change, std::make_pair( r1, r2 ) ) );
+		_changes.push_back( Change( MemoryDiff::change, std::make_pair( r1, r2 ) ) );
 	}
+
+	bool operator==( const MemoryDiff& other ) const
+	{
+		return _changes == other._changes;
+	}
+
+	bool operator!=( const MemoryDiff& other ) const { return !(*this == other); }
 
 private:
 	Changes _changes;

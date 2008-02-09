@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include "mminfo.h"
 #include "hshgtest.h"
 
@@ -232,6 +233,25 @@ void PatchAddSplit()
 	HSHG_ASSERT( m1 == m2 );
 }
 
+void DiffIoTrip()
+{
+	MemMon::MemoryDiff d;
+	d.AppendAddition( Region( 10, 10, Region::committed ) );
+	d.AppendChange( Region( 30, 10, Region::free ), Region( 30, 10, Region::reserved ) );
+	d.AppendRemoval( Region( 50, 10, Region::committed ) );
+
+	std::stringbuf buf;
+
+	d.Write( &buf );
+	buf.pubsync();
+
+	MemMon::MemoryDiff d2;
+
+	d2.Read( &buf );
+
+	HSHG_ASSERT( d == d2 );
+}
+
 }
 
 HSHG_BEGIN_TESTS
@@ -242,6 +262,7 @@ HSHG_TEST_ENTRY( PatchAddMid )
 HSHG_TEST_ENTRY( PatchAddStart )
 HSHG_TEST_ENTRY( PatchAddEnd )
 HSHG_TEST_ENTRY( PatchAddSplit )
+HSHG_TEST_ENTRY( DiffIoTrip )
 HSHG_END_TESTS
 
 HSHG_TEST_MAIN

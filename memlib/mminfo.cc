@@ -377,4 +377,82 @@ void MemoryDiff::Apply( MemoryMap& target ) const
 	target.RecalcFreeList();
 }
 
+template< typename charT, typename traits >
+void MemoryDiff::Write( std::basic_streambuf< charT, traits >* sb ) const
+{
+	for( Changes::const_iterator i = _changes.begin(); i != _changes.end(); ++i )
+	{
+		switch( i->first )
+		{
+		case addition:
+			sb->sputc( 0 );
+			MyIntPut( sb, i->second.second.base );
+			MyIntPut( sb, i->second.second.size );
+			sb->sputc( i->second.second.type );
+			break;
+
+		case removal:
+			sb->sputc( 1 );
+			MyIntPut( sb, i->second.first.base );
+			MyIntPut( sb, i->second.first.size );
+			sb->sputc( i->second.first.type );
+			break;
+
+		case change:
+			sb->sputc( 2 );
+			MyIntPut( sb, i->second.first.base );
+			MyIntPut( sb, i->second.first.size );
+			sb->sputc( i->second.first.type );
+			MyIntPut( sb, i->second.second.base );
+			MyIntPut( sb, i->second.second.size );
+			sb->sputc( i->second.second.type );
+			break;
+		}
+	}
+	sb->sputc('\xf0');
+}
+
+template<typename charT, typename traits>
+void MemoryDiff::Read( std::basic_streambuf< charT, traits >* sb )
+{
+	Change c;
+
+	typename std::basic_streambuf< charT, traits >::int_type j;
+
+	while( (j = sb->sbumpc()) != std::basic_streambuf< charT, traits >::traits_type::eof() && j != std::basic_streambuf< charT, traits >::traits_type::to_int_type( '\xf0' ) )
+	{
+		switch( j )
+		{
+		case 0:
+			c.first = addition;
+			MyIntGet( sb, c.second.second.base );
+			MyIntGet( sb, c.second.second.size );
+			c.second.second.type = static_cast< Region::Type >( sb->sbumpc() );
+			break;
+
+		case 1:
+			c.first = removal;
+			MyIntGet( sb, c.second.first.base );
+			MyIntGet( sb, c.second.first.size );
+			c.second.first.type = static_cast< Region::Type >( sb->sbumpc() );
+			break;
+
+		case 2:
+			c.first = change;
+			MyIntGet( sb, c.second.first.base );
+			MyIntGet( sb, c.second.first.size );
+			c.second.first.type = static_cast< Region::Type >( sb->sbumpc() );
+			MyIntGet( sb, c.second.second.base );
+			MyIntGet( sb, c.second.second.size );
+			c.second.second.type = static_cast< Region::Type >( sb->sbumpc() );
+			break;
+		}
+
+		_changes.push_back( c );
+	}
+}
+
+template void MemoryDiff::Write( std::streambuf* ) const;
+template void MemoryDiff::Read( std::streambuf* );
+
 }
