@@ -5,6 +5,8 @@
 namespace
 {
 
+using MemMon::Region;
+
 void DiffAddMid()
 {
 	// Add new block in the middle
@@ -13,24 +15,11 @@ void DiffAddMid()
 	m1.Clear( 10 );
 	m2.Clear( 10 );
 
-	MemMon::Region r;
+	m1.AddBlock( Region( 0, 30, Region::free ) );
 
-	r.base = 0;
-	r.type = MemMon::Region::free;
-	r.size = 30;
-
-	m1.AddBlock( r );
-
-	r.size = 10;
-	m2.AddBlock( r );
-
-	r.base = 10;
-	r.type = MemMon::Region::committed;
-	m2.AddBlock( r );
-
-	r.base = 20;
-	r.type = MemMon::Region::free;
-	m2.AddBlock( r );
+	m2.AddBlock( Region( 0, 10, Region::free ) );
+	m2.AddBlock( Region( 10, 10, Region::committed ) );
+	m2.AddBlock( Region( 20, 10, Region::free ) );
 
 	MemMon::MemoryDiff d( m1, m2 );
 
@@ -42,11 +31,11 @@ void DiffAddMid()
 
 	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::addition );
 
-	const MemMon::Region* rr = &cit->second.second;
+	const Region* rr = &cit->second.second;
 
 	HSHG_ASSERT( rr->base == 10 );
 	HSHG_ASSERT( rr->size == 10 );
-	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+	HSHG_ASSERT( rr->type == Region::committed );
 
 	MemMon::MemoryDiff drev( m2, m1 );
 
@@ -62,7 +51,7 @@ void DiffAddMid()
 
 	HSHG_ASSERT( rr->base == 10 );
 	HSHG_ASSERT( rr->size == 10 );
-	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+	HSHG_ASSERT( rr->type == Region::committed );
 }
 
 void DiffAddStart()
@@ -73,22 +62,10 @@ void DiffAddStart()
 	m1.Clear( 10 );
 	m2.Clear( 10 );
 
-	MemMon::Region r;
+	m1.AddBlock( Region( 0, 30, Region::free ) );
 
-	r.base = 0;
-	r.type = MemMon::Region::free;
-	r.size = 30;
-
-	m1.AddBlock( r );
-
-	r.size = 10;
-	r.type = MemMon::Region::committed;
-	m2.AddBlock( r );
-
-	r.size = 20;
-	r.base = 10;
-	r.type = MemMon::Region::free;
-	m2.AddBlock( r );
+	m2.AddBlock( Region( 0, 10, Region::committed ) );
+	m2.AddBlock( Region( 10, 20, Region::free ) );
 
 	MemMon::MemoryDiff d( m1, m2 );
 
@@ -100,11 +77,11 @@ void DiffAddStart()
 
 	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::addition );
 
-	const MemMon::Region* rr = &cit->second.second;
+	const Region* rr = &cit->second.second;
 
 	HSHG_ASSERT( rr->base == 0 );
 	HSHG_ASSERT( rr->size == 10 );
-	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+	HSHG_ASSERT( rr->type == Region::committed );
 
 	MemMon::MemoryDiff drev( m2, m1 );
 
@@ -120,7 +97,7 @@ void DiffAddStart()
 
 	HSHG_ASSERT( rr->base == 0 );
 	HSHG_ASSERT( rr->size == 10 );
-	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+	HSHG_ASSERT( rr->type == Region::committed );
 }
 
 void DiffAddEnd()
@@ -131,21 +108,10 @@ void DiffAddEnd()
 	m1.Clear( 10 );
 	m2.Clear( 10 );
 
-	MemMon::Region r;
+	m1.AddBlock( Region( 0, 30, Region::free ) );
 
-	r.base = 0;
-	r.type = MemMon::Region::free;
-	r.size = 30;
-
-	m1.AddBlock( r );
-
-	r.size = 20;
-	m2.AddBlock( r );
-
-	r.size = 10;
-	r.base = 20;
-	r.type = MemMon::Region::committed;
-	m2.AddBlock( r );
+	m2.AddBlock( Region( 0, 20, Region::free ) );
+	m2.AddBlock( Region( 20, 10, Region::committed ) );
 
 	MemMon::MemoryDiff d( m1, m2 );
 
@@ -157,11 +123,11 @@ void DiffAddEnd()
 
 	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::addition );
 
-	const MemMon::Region* rr = &cit->second.second;
+	const Region* rr = &cit->second.second;
 
 	HSHG_ASSERT( rr->base == 20 );
 	HSHG_ASSERT( rr->size == 10 );
-	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+	HSHG_ASSERT( rr->type == Region::committed );
 
 	MemMon::MemoryDiff drev( m2, m1 );
 
@@ -177,7 +143,7 @@ void DiffAddEnd()
 
 	HSHG_ASSERT( rr->base == 20 );
 	HSHG_ASSERT( rr->size == 10 );
-	HSHG_ASSERT( rr->type == MemMon::Region::committed );
+	HSHG_ASSERT( rr->type == Region::committed );
 }
 
 void PatchAddMid()
@@ -188,30 +154,14 @@ void PatchAddMid()
 	m1.Clear( 10 );
 	m2.Clear( 10 );
 
-	MemMon::Region r;
+	m1.AddBlock( Region( 0, 30, Region::free ) );
 
-	r.base = 0;
-	r.type = MemMon::Region::free;
-	r.size = 30;
+	m2.AddBlock( Region( 0, 10, Region::free ) );
+	m2.AddBlock( Region( 10, 10, Region::committed ) );
+	m2.AddBlock( Region( 20, 10, Region::free ) );
 
-	m1.AddBlock( r );
-
-	r.size = 10;
-	m2.AddBlock( r );
-
-	r.base = 10;
-	r.type = MemMon::Region::committed;
-	m2.AddBlock( r );
-
-	r.base = 20;
-	r.type = MemMon::Region::free;
-	m2.AddBlock( r );
-
-	r.base = 10;
-	r.type = MemMon::Region::committed;
-	r.size = 10;
 	MemMon::MemoryDiff d;
-	d.AppendAddition( r );
+	d.AppendAddition( Region( 10, 10, Region::committed ) );
 
 	d.Apply( m1 );
 
@@ -226,28 +176,13 @@ void PatchAddStart()
 	m1.Clear( 10 );
 	m2.Clear( 10 );
 
-	MemMon::Region r;
+	m1.AddBlock( Region( 0, 30, Region::free ) );
 
-	r.base = 0;
-	r.type = MemMon::Region::free;
-	r.size = 30;
+	m2.AddBlock( Region( 0, 10, Region::committed ) );
+	m2.AddBlock( Region( 10, 20, Region::free ) );
 
-	m1.AddBlock( r );
-
-	r.type = MemMon::Region::committed;
-	r.size = 10;
-	m2.AddBlock( r );
-
-	r.base = 10;
-	r.size = 20;
-	r.type = MemMon::Region::free;
-	m2.AddBlock( r );
-
-	r.base = 0;
-	r.type = MemMon::Region::committed;
-	r.size = 10;
 	MemMon::MemoryDiff d;
-	d.AppendAddition( r );
+	d.AppendAddition( Region( 0, 10, Region::committed ) );
 
 	d.Apply( m1 );
 
@@ -262,27 +197,13 @@ void PatchAddEnd()
 	m1.Clear( 10 );
 	m2.Clear( 10 );
 
-	MemMon::Region r;
+	m1.AddBlock( Region( 0, 30, Region::free ) );
 
-	r.base = 0;
-	r.type = MemMon::Region::free;
-	r.size = 30;
+	m2.AddBlock( Region( 0, 20, Region::free ) );
+	m2.AddBlock( Region( 20, 10, Region::committed ) );
 
-	m1.AddBlock( r );
-
-	r.size = 20;
-	m2.AddBlock( r );
-
-	r.base = 20;
-	r.type = MemMon::Region::committed;
-	r.size = 10;
-	m2.AddBlock( r );
-
-	r.base = 20;
-	r.type = MemMon::Region::committed;
-	r.size = 10;
 	MemMon::MemoryDiff d;
-	d.AppendAddition( r );
+	d.AppendAddition( Region( 20, 10, Region::committed ) );
 
 	d.Apply( m1 );
 
@@ -296,15 +217,15 @@ void PatchAddSplit()
 	m1.Clear( 10 );
 	m2.Clear( 10 );
 
-	m1.AddBlock( MemMon::Region( 0, 15, MemMon::Region::free ) );
-	m1.AddBlock( MemMon::Region( 15, 15, MemMon::Region::reserved ) );
+	m1.AddBlock( Region( 0, 15, Region::free ) );
+	m1.AddBlock( Region( 15, 15, Region::reserved ) );
 
-	m2.AddBlock( MemMon::Region( 0, 10, MemMon::Region::free ) );
-	m2.AddBlock( MemMon::Region( 10, 10, MemMon::Region::committed ) );
-	m2.AddBlock( MemMon::Region( 20, 10, MemMon::Region::reserved ) );
+	m2.AddBlock( Region( 0, 10, Region::free ) );
+	m2.AddBlock( Region( 10, 10, Region::committed ) );
+	m2.AddBlock( Region( 20, 10, Region::reserved ) );
 
 	MemMon::MemoryDiff d;
-	d.AppendAddition( MemMon::Region( 10, 10, MemMon::Region::committed ) );
+	d.AppendAddition( Region( 10, 10, Region::committed ) );
 
 	d.Apply( m1 );
 
