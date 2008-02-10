@@ -11,6 +11,10 @@
 #include "mminfo.h"
 #include "mmsource.h"
 
+#ifdef _DEBUG
+#define MEMMON_DEBUG
+#endif
+
 class MMPrefs;
 
 class MMPainter
@@ -71,6 +75,10 @@ private:
 
 	private:
 		std::filebuf _buf;
+#ifdef MEMMON_DEBUG
+		std::string _fname;
+		int _count;
+#endif
 	};
 
 	class PlaybackSource : public MemMon::Source

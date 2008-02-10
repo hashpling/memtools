@@ -645,6 +645,10 @@ bool MMPainter::Record(HWND hwnd)
 }
 
 MMPainter::FStreamRecorder::FStreamRecorder( const char* fname, const MemoryMap& mm )
+#ifdef MEMMON_DEBUG
+: _fname( fname )
+, _count( 0 )
+#endif
 {
 	_buf.open( fname, std::ios_base::out | std::ios_base::binary );
 
@@ -662,4 +666,10 @@ void MMPainter::FStreamRecorder::Record( const MemoryMap& l, const MemoryMap& r 
 {
 	MemMon::MemoryDiff d( l, r );
 	d.Write( &_buf );
+#ifdef MEMMON_DEBUG
+	std::ostringstream tmpname;
+	tmpname << _fname << "_DEBUG_" << ++_count;
+	ofstream fstmp( tmpname.str().c_str(), std::ios_base::out | std::ios_base::binary );
+	fstmp << r;
+#endif
 }
