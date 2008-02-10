@@ -17,6 +17,6 @@ else
 $(TARGET): $(memlib_TARGET)
 endif
 
-memtest_cleanall: mem_cleanall
+memtest_cleanall: memlib_cleanall
 
 memtest: $(TARGET)
