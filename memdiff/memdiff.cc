@@ -46,7 +46,15 @@ int main( int argc, char* argv[] )
 
 	if( mm1 != mm2 )
 	{
+		size_t s = std::min( mm1.GetBlockList().size(), mm2.GetBlockList().size() );
+		std::pair< MemMon::RegionList::const_iterator, MemMon::RegionList::const_iterator > p =
+			std::mismatch( mm1.GetBlockList().begin(), mm1.GetBlockList().begin() + s, mm2.GetBlockList().begin() );
+
 		std::cerr << "Patch applied incorrectly\n";
+
+		std::cerr << "Region base = " << p.second->base << " size = " << p.second->size << '\n';
+		std::cerr << "Region base = " << p.first->base << " size = " << p.first->size << '\n';
+
 		return EXIT_FAILURE;
 	}
 

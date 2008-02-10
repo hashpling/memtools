@@ -138,13 +138,19 @@ void DiffAddEnd()
 
 	cit = crev.begin();
 
-	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::removal );
+	HSHG_ASSERT( cit->first == MemMon::MemoryDiff::change );
 
 	rr = &cit->second.first;
 
 	HSHG_ASSERT( rr->base == 20 );
 	HSHG_ASSERT( rr->size == 10 );
 	HSHG_ASSERT( rr->type == Region::committed );
+
+	rr = &cit->second.second;
+
+	HSHG_ASSERT( rr->base == 20 );
+	HSHG_ASSERT( rr->size == 10 );
+	HSHG_ASSERT( rr->type == Region::free );
 }
 
 void PatchAddMid()

@@ -282,7 +282,41 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 			}
 			else if ( ait->size > bit->size )
 			{
-				bool bNewPreserved = false;
+				RegionList toremove;
+
+				if( ait->type != bit->type )
+					toremove.push_back( *bit );
+
+				while( ++bit != bend && bit->base <= ait->base + ait->size )
+				{
+					if( bit->type != ait->type )
+					{
+						toremove.push_back( *bit );
+					}
+					else if( !toremove.empty() )
+					{
+						size_t base = toremove.front().base;
+						for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
+							AppendRemoval( Region( base, i->base + i->size - base, i->type ) );
+						toremove.clear();
+					}
+				}
+
+				if( !toremove.empty() )
+				{
+					size_t base = toremove.front().base;
+//					const RegionList::iterator lastbutone =  - 1;
+
+					for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
+						AppendRemoval( Region( base, i->base + i->size - base, i->type ) );
+
+					if( !_changes.empty() )
+					{
+						_changes.back().first = change;
+						_changes.back().second.second = Region( base, ait->base + ait->size - base, ait->type );
+					}
+				}
+				/*bool bNewPreserved = false;
 
 				do
 				{
@@ -296,7 +330,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 				{
 					_changes.back().first = change;
 					_changes.back().second.second = *ait;
-				}
+				}*/
 
 				++ait;
 			}
@@ -388,12 +422,26 @@ void DoAdd( RegionList& blocklist, RegionList::iterator& i, const Region& r )
 
 void DoRemove( RegionList& blocklist, RegionList::iterator& i, const Region& r )
 {
-	size_t change_base = r.base;
-
-	while( i != blocklist.end() && i->base + i->size <= change_base )
+	while( i != blocklist.end() && i->base + i->size <= r.base )
 		++i;
 
 	i = blocklist.erase( i );
+
+	if( i != blocklist.end() )
+	{
+		i->base -= r.size;
+		i->size += r.size;
+
+		if( i != blocklist.begin() )
+		{
+			RegionList::iterator j = i - 1;
+			if( j->type == i->type && j->base + j->size == i->base )
+			{
+				j->size += i->size;
+				i = blocklist.erase( i );
+			}
+		}
+	}
 }
 
 void DoChange( RegionList& blocklist, RegionList::iterator& i, const Region& r )
