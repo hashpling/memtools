@@ -252,6 +252,36 @@ void DiffIoTrip()
 	HSHG_ASSERT( d == d2 );
 }
 
+void MergeAdjacentFree()
+{
+	MemMon::MemoryMap m;
+	m.Clear( 3 );
+
+	m.AddBlock( Region( 0, 5, Region::free ) );
+	m.AddBlock( Region( 5, 5, Region::committed ) );
+	m.AddBlock( Region( 10, 7, Region::free ) );
+	m.AddBlock( Region( 17, 3, Region::committed ) );
+	m.AddBlock( Region( 20, 6, Region::free ) );
+	m.AddBlock( Region( 26, 4, Region::free ) );
+
+	const MemMon::FreeList& fl = m.GetFreeList();
+
+	HSHG_ASSERT( fl.size() == 3 );
+	HSHG_ASSERT( fl[0].base == 20 && fl[0].size == 10 );
+	HSHG_ASSERT( fl[1].base == 10 && fl[1].size == 7 );
+	HSHG_ASSERT( fl[2].base == 0 && fl[2].size == 5 );
+
+	m.AddBlock( Region( 30, 10, Region::committed ) );
+	m.AddBlock( Region( 40, 4, Region::free ) );
+
+	HSHG_ASSERT( fl[2].base == 0 && fl[2].size == 5 );
+
+	m.AddBlock( Region( 44, 4, Region::free ) );
+
+	HSHG_ASSERT( fl[2].base == 10 && fl[2].size == 7 );
+	HSHG_ASSERT( fl[1].base == 40 && fl[1].size == 8 );
+}
+
 }
 
 HSHG_BEGIN_TESTS
@@ -263,6 +293,7 @@ HSHG_TEST_ENTRY( PatchAddStart )
 HSHG_TEST_ENTRY( PatchAddEnd )
 HSHG_TEST_ENTRY( PatchAddSplit )
 HSHG_TEST_ENTRY( DiffIoTrip )
+HSHG_TEST_ENTRY( MergeAdjacentFree )
 HSHG_END_TESTS
 
 HSHG_TEST_MAIN

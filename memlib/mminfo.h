@@ -84,7 +84,7 @@ private:
 	MemoryMap( const MemoryMap& );
 	MemoryMap& operator=( const MemoryMap& );
 
-	void UpdateFreeList( const Region& r );
+	void UpdateFreeList( const Region& r, const Region* modified );
 	void PartialClear();
 
 	RegionList _blocklist;

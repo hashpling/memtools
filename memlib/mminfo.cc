@@ -126,7 +126,7 @@ void MemoryMap::Clear( size_t freecount )
 	PartialClear();
 }
 
-void MemoryMap::UpdateFreeList( const Region& r )
+void MemoryMap::UpdateFreeList( const Region& r, const Region* modified )
 {
 	switch( r.type )
 	{
@@ -146,26 +146,70 @@ void MemoryMap::UpdateFreeList( const Region& r )
 	if( _freelist.empty() )
 		return;
 
-	if( r.type == 0 && _freelist.back().size < r.size)
+	if( r.type == 0 )
 	{
-		int j;
+		const size_t wraparound = static_cast< size_t >( -1 );
 
-		for(j = int(_freelist.size()) - 2; j >= 0; --j)
+		size_t j;
+
+		if( modified == NULL )
 		{
-			if (_freelist[j].size >= r.size) break;
+			if( _freelist.back().size >= r.size )
+				return;
+
+			modified = &r;
+			j = _freelist.size() - 1U;
+		}
+		else
+		{
+			if( _freelist.back().size >= modified->size )
+				return;
+
+			size_t oldsize = modified->size - r.size;
+
+			bool moveold = false;
+
+			for(j = _freelist.size() - 1U; j != wraparound; --j)
+			{
+				if( _freelist[j].size > oldsize ) break;
+				if( _freelist[j].base == modified->base )
+				{
+					moveold = true;
+					_freelist[j].size = modified->size;
+					break;
+				}
+			}
+
+			if( !moveold )
+				j = _freelist.size() - 1U;
+		}
+
+		while( --j != wraparound )
+		{
+			if (_freelist[j].size >= modified->size) break;
 			_freelist[j+1].size = _freelist[j].size;
 			_freelist[j+1].base = _freelist[j].base;
 		}
 
-		_freelist[j+1].size = r.size;
-		_freelist[j+1].base = r.base;
+		_freelist[j+1].size = modified->size;
+		_freelist[j+1].base = modified->base;
 	}
 }
 
 void MemoryMap::AddBlock( const Region& r )
 {
-	_blocklist.push_back( r );
-	UpdateFreeList( r );
+	if( !_blocklist.empty()
+		&& _blocklist.back().type == r.type
+		&& _blocklist.back().base + _blocklist.back().size == r.base )
+	{
+		_blocklist.back().size += r.size;
+		UpdateFreeList( r, &_blocklist.back() );
+	}
+	else
+	{
+		_blocklist.push_back( r );
+		UpdateFreeList( r, NULL );
+	}
 }
 
 void MemoryMap::RecalcFreeList()
@@ -173,7 +217,7 @@ void MemoryMap::RecalcFreeList()
 	PartialClear();
 	for( RegionList::iterator i = _blocklist.begin(); i != _blocklist.end(); ++i )
 	{
-		UpdateFreeList( *i );
+		UpdateFreeList( *i, NULL );
 	}
 }
 
