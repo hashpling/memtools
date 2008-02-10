@@ -177,6 +177,15 @@ void MemoryMap::RecalcFreeList()
 	}
 }
 
+void MemoryMap::Swap( MemoryMap& other )
+{
+	std::swap( _blocklist, other._blocklist );
+	std::swap( _freelist, other._freelist );
+	std::swap( _total_free, other._total_free );
+	std::swap( _total_commit, other._total_commit );
+	std::swap( _total_reserve, other._total_reserve );
+}
+
 MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 {
 	RegionList::const_iterator bit = before.GetBlockList().begin();
@@ -250,6 +259,11 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 			else if ( ait->type != bit->type )
 			{
 				AppendChange( *bit++, *ait++ );
+			}
+			else
+			{
+				++ait;
+				++bit;
 			}
 		}
 	}

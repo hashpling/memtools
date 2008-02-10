@@ -293,6 +293,29 @@ void CheckTopmostSetting(HWND hWnd, const MMPrefs::UIPrefs& uiprf)
 	}
 }
 
+void DoCheckMenuItem( HWND hWnd, bool check )
+{
+	HMENU hMenu = GetMenu( hWnd );
+
+	if (!hMenu )
+		return;
+
+	MENUITEMINFO mii;
+	mii.cbSize = sizeof( mii );
+	mii.fMask = MIIM_STATE;
+
+	if( GetMenuItemInfo( hMenu, ID_FILE_RECORD, FALSE, &mii ) )
+	{
+		if( check )
+			mii.fState |= MFS_CHECKED;
+		else
+			mii.fState &= ~MFS_CHECKED;
+
+		SetMenuItemInfo( hMenu, ID_FILE_RECORD, FALSE, &mii );
+		DrawMenuBar( hWnd );
+	}
+}
+
 }
 
 //
@@ -342,6 +365,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_FILE_SAVEAS:
 			pPaint->Snapshot(hWnd);
+			break;
+		case ID_FILE_RECORD:
+			if( pPaint->Record( hWnd ) )
+				DoCheckMenuItem( hWnd, true );
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);

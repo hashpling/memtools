@@ -50,6 +50,7 @@ typedef std::vector< FreeRegion > FreeList;
 class MemoryMap
 {
 public:
+	MemoryMap() {}
 
 	template<typename charT, typename traits>
 	void Write(std::basic_streambuf<charT, traits>*) const;
@@ -77,7 +78,12 @@ public:
 
 	RegionList& GetBlockListRef() { return _blocklist; }
 
+	void Swap( MemoryMap& other );
+
 private:
+	MemoryMap( const MemoryMap& );
+	MemoryMap& operator=( const MemoryMap& );
+
 	void UpdateFreeList( const Region& r );
 	void PartialClear();
 
@@ -177,6 +183,11 @@ private:
 	Changes _changes;
 };
 
+}
+
+namespace std
+{
+	template<> inline void swap( MemMon::MemoryMap& l, MemMon::MemoryMap& r ) { l.Swap( r ); }
 }
 
 #endif//MMINFO_H
