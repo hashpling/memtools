@@ -7,8 +7,13 @@
 #include <vector>
 #include <iosfwd>
 #include <memory>
+#include <fstream>
 #include "mminfo.h"
 #include "mmsource.h"
+
+#ifdef _DEBUG
+#define MEMMON_DEBUG
+#endif
 
 class MMPrefs;
 
@@ -27,6 +32,8 @@ public:
 
 	void Snapshot(HWND hwnd) const;
 	void Read(HWND hwnd);
+
+	bool Record(HWND hwnd);
 
 private:
 
@@ -52,6 +59,42 @@ private:
 		double last_poll;
 	};
 
+	class Recorder
+	{
+	public:
+		virtual ~Recorder() {}
+		virtual void Record( const MemMon::MemoryMap&, const MemMon::MemoryMap& ) = 0;
+	};
+
+	class FStreamRecorder : public Recorder
+	{
+	public:
+		FStreamRecorder( const char* fname, const MemMon::MemoryMap& mm );
+		~FStreamRecorder();
+		void Record( const MemMon::MemoryMap&, const MemMon::MemoryMap& );
+
+	private:
+		std::filebuf _buf;
+#ifdef MEMMON_DEBUG
+		std::string _fname;
+		int _count;
+#endif
+	};
+
+	class PlaybackSource : public MemMon::Source
+	{
+	public:
+		PlaybackSource( const char* fname, MemMon::MemoryMap& mm );
+		~PlaybackSource();
+
+		size_t Update( MemMon::MemoryMap& );
+		double Poll( const MemMon::CPUPrefs& prefs );
+		double GetPos() const;
+
+	private:
+		std::filebuf _buf;
+	};
+
 	void DisplayGauge(HDC hdc, bool bQuick) const;
 	void DisplayBlobs(HDC hdc) const;
 	void DisplayTotals(HDC hdc, int offset) const;
@@ -64,6 +107,8 @@ private:
 	COLORREF GetBlobColour(const MemMon::FreeRegion& reg) const;
 
 	MemMon::MemoryMap mem;
+	MemMon::MemoryMap _memprev;
+
 	HBRUSH hBrush;
 	HBRUSH hWBrush;
 	HPEN hPen;
@@ -84,6 +129,7 @@ private:
 	MMPrefs* pPrefs;
 
 	std::auto_ptr< MemMon::Source > _source;
+	std::auto_ptr< Recorder > _recorder;
 };
 
 #endif//MMPAINTER_H

@@ -18,6 +18,16 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memmon", "memmon\memmon.vcp
 		{B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA} = {B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "splitrec", "splitrec\splitrec.vcproj", "{85900076-283B-4227-8F80-32F58E320447}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA} = {B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memdiff", "memdiff\memdiff.vcproj", "{8E735EB2-D062-45D9-A2AE-CADFFBDAE422}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA} = {B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -42,6 +52,14 @@ Global
 		{BE262559-2DC3-48FE-8864-B1E4048C1718}.Debug.Build.0 = Debug|Win32
 		{BE262559-2DC3-48FE-8864-B1E4048C1718}.Release.ActiveCfg = Release|Win32
 		{BE262559-2DC3-48FE-8864-B1E4048C1718}.Release.Build.0 = Release|Win32
+		{85900076-283B-4227-8F80-32F58E320447}.Debug.ActiveCfg = Debug|Win32
+		{85900076-283B-4227-8F80-32F58E320447}.Debug.Build.0 = Debug|Win32
+		{85900076-283B-4227-8F80-32F58E320447}.Release.ActiveCfg = Release|Win32
+		{85900076-283B-4227-8F80-32F58E320447}.Release.Build.0 = Release|Win32
+		{8E735EB2-D062-45D9-A2AE-CADFFBDAE422}.Debug.ActiveCfg = Debug|Win32
+		{8E735EB2-D062-45D9-A2AE-CADFFBDAE422}.Debug.Build.0 = Debug|Win32
+		{8E735EB2-D062-45D9-A2AE-CADFFBDAE422}.Release.ActiveCfg = Release|Win32
+		{8E735EB2-D062-45D9-A2AE-CADFFBDAE422}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection
