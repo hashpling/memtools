@@ -6,7 +6,7 @@ int main( int argc, char* argv[] )
 {
 	if( argc != 4 )
 	{
-		std::cerr << "Syntax: memdiff <before> <after> <output>";
+		std::cerr << "Syntax: memdiff <before> <after> <output>\n";
 		return EXIT_FAILURE;
 	}
 
