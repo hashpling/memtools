@@ -9,8 +9,6 @@ memdiff_LDLIBS := memlib
 
 include rules.mk
 
-TEST_FILES += $(TARGET)
-
 ifneq ($(findstring second-expansion,$(.FEATURES)),)
 $(TARGET): $$(memlib_TARGET)
 else
