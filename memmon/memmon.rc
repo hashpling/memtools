@@ -45,6 +45,7 @@ BEGIN
         MENUITEM "&Attach...",                  ID_FILE_ATTACH
         MENUITEM "&Open...",                    ID_FILE_OPEN
         MENUITEM "&Save as...",                 ID_FILE_SAVEAS
+        MENUITEM "&Record...",                  ID_FILE_RECORD
         MENUITEM "E&xit",                       IDM_EXIT
     END
     POPUP "&Edit"

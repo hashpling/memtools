@@ -27,6 +27,7 @@
 #define ID_FILE_SAVE                    32774
 #define ID_FILE_OPEN                    32775
 #define ID_FILE_SAVEAS                  32778
+#define ID_FILE_RECORD                  32779
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -35,7 +36,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         32779
+#define _APS_NEXT_COMMAND_VALUE         32780
 #define _APS_NEXT_CONTROL_VALUE         1007
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

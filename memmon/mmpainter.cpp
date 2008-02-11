@@ -95,14 +95,6 @@ void MMPainter::MemPaint(HDC hdc) const
 {
 	FillRect(hdc, &rsize, hWBrush);
 	DisplayGauge(hdc, false);
-	//HGDIOBJ oldPen = SelectObject(hdc, hPen);
-	//HGDIOBJ oldBrush = SelectObject(hdc, hWBrush);
-	//int ww = (radius << 1) - width;
-	//Pie(hdc, width, width, ww, ww, ww, radius, width, radius);
-	//SelectObject(hdc, oldPen);
-	//Arc(hdc, width, width, ww, ww, ww, radius, width, radius);
-	//Arc(hdc, 0, 0, radius << 1, radius << 1, radius << 1, radius, 0, radius);
-	//SelectObject(hdc, oldBrush);
 	DisplayBlobs(hdc);
 	DisplayTotals(hdc, 280);
 }
@@ -200,8 +192,6 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 	SelectObject(hdc, hOldPen);
 	Arc(hdc, width, width, ww, ww, ww, radius, width, radius + 1);
 	Arc(hdc, 0, 0, radius << 1, radius << 1, radius << 1, radius, 0, radius + 1);
-	//SelectObject(hdc, oldBrush);
-	//
 
 	if( _source.get() )
 	{
@@ -256,33 +246,6 @@ COLORREF MMPainter::GetBlobColour(const FreeRegion& reg) const
 
 void MMPainter::DisplayBlobs(HDC hdc) const
 {
-/*	if (!mem.freelist.empty())
-	{
-		HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
-		HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
-		const double scale = double(0x1000000);
-		const double scale2 = log(double(maxaddr) / scale);
-
-		SetDCPenColor(hdc, RGB(0, 0, 0));
-
-		for (int j = 0; j < int(mem.freelist.size()); ++j)
-		{
-			const Mem::FreeRegion& r = mem.freelist[j];
-			if (r.size == 0) break;
-			BYTE c = BYTE(255 * double(r.size + r.base)/double(maxaddr));
-			SetDCBrushColor(hdc, RGB(255 - c, c, 255));
-
-			int size = int(log(double(r.size) / scale) / scale2 * dradius);
-			if (size > 0)
-			{
-				Ellipse(hdc, radius - size, radius + 20 * j, radius + size
-													, radius + 20 * (j + 1));
-			}
-		}
-
-		SelectObject(hdc, hOldPen);
-		SelectObject(hdc, hOldBrush);
-	}*/
 	int currentline = 1;
 	int currentpos = 0;
 
@@ -306,7 +269,6 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 
 		if (nwidth > (radius << 2)) nwidth = radius << 2;
 
-		//BYTE c = BYTE(255 * double(k->size + k->base)/double(maxaddr));
 		SetDCBrushColor(hdc, GetBlobColour(*k));
 		Ellipse(hdc, currentpos, radius + 20 * currentline, currentpos + nwidth
 											, radius + 20 * (currentline + 1));
@@ -372,51 +334,12 @@ void MMPainter::DisplayTotals(HDC hdc, int offset) const
 	}
 
 	SetTextColor(hdc, txtcol);
-/*
-	rtmp.left = 0;
-	rtmp.top = rtmp.bottom;
-	rtmp.right = rsize.right / 4;
-	rtmp.bottom = rtmp.top + txtmet.tmHeight;
-
-	HRFormat::hr_format(buf, 100, mem.total_commit[0]);
-	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
-
-	rtmp.left = rtmp.right;
-	rtmp.right += rsize.right / 4;
-
-	HRFormat::hr_format(buf, 100, mem.total_reserve[0]);
-	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
-
-	rtmp.left = rtmp.right;
-	rtmp.right += rsize.right / 4;
-
-	HRFormat::hr_format(buf, 100, mem.total_commit[1]);
-	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
-
-	rtmp.left = rtmp.right;
-	rtmp.right += rsize.right / 4;
-
-	HRFormat::hr_format(buf, 100, mem.total_reserve[1]);
-	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
-	rtmp.left = 0;
-	rtmp.top = rtmp.bottom;
-	rtmp.right = rsize.right / 4;
-	rtmp.bottom = rtmp.top + txtmet.tmHeight;
-
-	HRFormat::hr_format(buf, 100, mem.total_commit[2]);
-	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
-
-	rtmp.left = rtmp.right;
-	rtmp.right += rsize.right / 4;
-
-	HRFormat::hr_format(buf, 100, mem.total_reserve[2]);
-	DrawText(hdc, buf, -1, &rtmp, DT_NOPREFIX);
-*/
 }
 
 namespace
 {
-	struct OpenProcessFailure {};
+	template< class T >
+	struct ConstructorFailure {};
 }
 
 MMPainter::ProcessSource::ProcessSource( int p )
@@ -429,7 +352,7 @@ MMPainter::ProcessSource::ProcessSource( int p )
 	_proc = ::OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, p );
 
 	if( _proc == NULL )
-		throw OpenProcessFailure();
+		throw ConstructorFailure< ProcessSource >();
 }
 
 MMPainter::ProcessSource::~ProcessSource()
@@ -443,7 +366,7 @@ void MMPainter::SetProcessId(int p)
 	{
 		_source.reset( new ProcessSource( p ) );
 	}
-	catch( OpenProcessFailure& )
+	catch( ConstructorFailure< ProcessSource >& )
 	{
 	}
 }
@@ -505,7 +428,13 @@ void MMPainter::Update()
 
 		if (ctime > next_update)
 		{
-			maxaddr = _source->Update( mem );
+			maxaddr = _source->Update( _memprev );
+			std::swap( mem, _memprev );
+
+			if( _recorder.get() )
+			{
+				_recorder->Record( _memprev, mem );
+			}
 
 			if (hMemDC != NULL)
 			{
@@ -572,9 +501,11 @@ double MMPainter::ProcessSource::GetPos() const
 	return ind_pos;
 }
 
-void MMPainter::Snapshot(HWND hwnd) const
+namespace
 {
-	char filename[MAX_PATH];
+
+bool DoSaveDialog( HWND hwnd, char* filename )
+{
 	filename[0] = 0;
 
 	OPENFILENAMEA ofn;
@@ -602,7 +533,16 @@ void MMPainter::Snapshot(HWND hwnd) const
 	ofn.dwReserved = NULL;
 	ofn.FlagsEx = 0;
 
-	if (GetSaveFileNameA(&ofn))
+	return GetSaveFileNameA(&ofn) == TRUE;
+}
+
+}
+
+void MMPainter::Snapshot(HWND hwnd) const
+{
+	char filename[MAX_PATH];
+
+	if (DoSaveDialog(hwnd, filename))
 	{
 		ofstream ofs(filename, ios_base::out | ios_base::binary);
 
@@ -654,6 +594,8 @@ void MMPainter::Read(HWND hwnd)
 
 	if (GetOpenFileNameA(&ofn))
 	{
+		_recorder.reset();
+
 		ifstream ifs(filename, ios_base::in | ios_base::binary);
 
 		try
@@ -682,4 +624,52 @@ void MMPainter::Read(HWND hwnd)
 			MessageBoxA(hwnd, ex.what(), "Read Error", MB_ICONINFORMATION | MB_OK);
 		}
 	}
+}
+
+bool MMPainter::Record(HWND hwnd)
+{
+	char filename[MAX_PATH];
+
+	if (DoSaveDialog(hwnd, filename))
+	{
+		try
+		{
+			_recorder.reset( new FStreamRecorder( filename, mem ) );
+			return true;
+		}
+		catch (...)
+		{
+		}
+	}
+	return false;
+}
+
+MMPainter::FStreamRecorder::FStreamRecorder( const char* fname, const MemoryMap& mm )
+#ifdef MEMMON_DEBUG
+: _fname( fname )
+, _count( 0 )
+#endif
+{
+	_buf.open( fname, std::ios_base::out | std::ios_base::binary );
+
+	if( !_buf.is_open() )
+		throw ConstructorFailure< FStreamRecorder >();
+
+	mm.Write( &_buf );
+}
+
+MMPainter::FStreamRecorder::~FStreamRecorder()
+{
+}
+
+void MMPainter::FStreamRecorder::Record( const MemoryMap& l, const MemoryMap& r )
+{
+	MemMon::MemoryDiff d( l, r );
+	d.Write( &_buf );
+#ifdef MEMMON_DEBUG
+	std::ostringstream tmpname;
+	tmpname << _fname << "_DEBUG_" << ++_count;
+	ofstream fstmp( tmpname.str().c_str(), std::ios_base::out | std::ios_base::binary );
+	fstmp << r;
+#endif
 }
