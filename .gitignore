@@ -7,3 +7,7 @@ Win32
 x64
 build
 build_rel
+.*.sw?
+core
+core.*
+build32

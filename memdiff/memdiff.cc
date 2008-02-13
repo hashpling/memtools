@@ -13,6 +13,7 @@ int main( int argc, char* argv[] )
 	MemMon::MemoryMap mm1, mm2;
 
 	std::filebuf buf;
+	std::streambuf* bufptr = &buf;
 
 	buf.open( argv[1], std::ios_base::in | std::ios_base::binary );
 	if( !buf.is_open() )
@@ -20,7 +21,7 @@ int main( int argc, char* argv[] )
 		std::cerr << "Failed to open " << argv[1] << '\n';
 		return EXIT_FAILURE;
 	}
-	mm1.Read( &buf );
+	mm1.Read( bufptr );
 	buf.close();
 
 	buf.open( argv[2], std::ios_base::in | std::ios_base::binary );
@@ -29,7 +30,7 @@ int main( int argc, char* argv[] )
 		std::cerr << "Failed to open " << argv[2] << '\n';
 		return EXIT_FAILURE;
 	}
-	mm2.Read( &buf );
+	mm2.Read( bufptr );
 	buf.close();
 
 	MemMon::MemoryDiff md( mm1, mm2 );
@@ -64,7 +65,7 @@ int main( int argc, char* argv[] )
 		std::cerr << "Failed to open " << argv[3] << '\n';
 		return EXIT_FAILURE;
 	}
-	md.Write( &buf );
+	md.Write( bufptr );
 	buf.close();
 
 	return EXIT_SUCCESS;

@@ -247,13 +247,14 @@ void DiffIoTrip()
 	d.AppendRemoval( Region( 50, 10, Region::committed ) );
 
 	std::stringbuf buf;
+	std::streambuf* bufptr = &buf;
 
-	d.Write( &buf );
+	d.Write( bufptr );
 	buf.pubsync();
 
 	MemMon::MemoryDiff d2;
 
-	d2.Read( &buf );
+	d2.Read( bufptr );
 
 	HSHG_ASSERT( d == d2 );
 }

@@ -52,11 +52,11 @@ class MemoryMap
 public:
 	MemoryMap() {}
 
-	template<typename charT, typename traits>
-	void Write(std::basic_streambuf<charT, traits>*) const;
+	template< class StreamBuf >
+	void Write( StreamBuf* ) const;
 
-	template<typename charT, typename traits>
-	void Read(std::basic_streambuf<charT, traits>*);
+	template< class StreamBuf >
+	void Read( StreamBuf* );
 
 	bool operator==( const MemoryMap& other ) const
 	{
@@ -95,19 +95,17 @@ private:
 	size_t _total_reserve;
 };
 
-template<typename charT, typename traits>
-inline std::basic_ostream<charT, traits>& operator<<( std::basic_ostream<charT, traits>& os,
-											   const MemoryMap& mem)
+template< class Stream >
+inline Stream& operator<<( Stream& os, const MemoryMap& mem )
 {
-	mem.Write(os.rdbuf());
+	mem.Write( os.rdbuf() );
 	return os;
 }
 
-template<typename charT, typename traitsT>
-inline std::basic_istream<charT, traitsT>& operator>>( std::basic_istream<charT, traitsT>& is,
-											   MemoryMap& mem)
+template< class Stream >
+inline Stream& operator>>( Stream& is, MemoryMap& mem)
 {
-	mem.Read(is.rdbuf());
+	mem.Read( is.rdbuf() );
 	return is;
 }
 
@@ -120,11 +118,11 @@ public:
 	void Apply( MemoryMap& target ) const;
 	void ReverseApply( MemoryMap& target ) const;
 
-	template< typename charT, typename traits >
-	void Write( std::basic_streambuf< charT, traits >* ) const;
+	template< class StreamBuf >
+	void Write( StreamBuf* ) const;
 
-	template<typename charT, typename traits>
-	void Read( std::basic_streambuf< charT, traits >*);
+	template< class StreamBuf >
+	void Read( StreamBuf* );
 
 	enum ChangeType
 	{

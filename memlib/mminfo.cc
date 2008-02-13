@@ -17,22 +17,22 @@ namespace MemMon
 namespace
 {
 
-template<typename charT, typename traits, typename intT>
-void MyIntPut( basic_streambuf<charT, traits>* sb, intT toput )
+template< class StreamBuf, class intT >
+void MyIntPut( StreamBuf* sb, intT toput )
 {
-	for (unsigned i = 0; i < sizeof(intT) - 1; ++i)
+	for (unsigned i = 0; i < sizeof toput - 1; ++i)
 	{
-		sb->sputc(charT(toput & 0xff));
+		sb->sputc( toput & 0xff );
 		toput >>= 8;
 	}
-	sb->sputc(charT(toput & 0xff));
+	sb->sputc( toput & 0xff );
 }
 
-template<typename charT, typename traits, typename intT>
-void MyIntGet( basic_streambuf<charT, traits>* sb, intT& toget )
+template< class StreamBuf, class intT >
+void MyIntGet( StreamBuf* sb, intT& toget )
 {
 	toget = 0;
-	for (unsigned i = 0; i < sizeof(intT); ++i)
+	for (unsigned i = 0; i < sizeof toget; ++i)
 	{
 		toget |= intT(sb->sbumpc()) << (i * 8);
 	}
@@ -40,13 +40,13 @@ void MyIntGet( basic_streambuf<charT, traits>* sb, intT& toget )
 
 }
 
-template<typename charT, typename traits>
-void MemoryMap::Write(basic_streambuf<charT, traits>* sb) const
+template< class StreamBuf >
+void MemoryMap::Write( StreamBuf* sb ) const
 {
-	sb->sputn("V1", 3);
-	sb->sputc(charT(sizeof(size_t)));
+	sb->sputn( "V1", 3 );
+	sb->sputc( sizeof( size_t ) );
 
-	size_t m = (size_t)-1;
+	size_t m = -1;
 
 	for (RegionList::const_iterator i = _blocklist.begin(); i != _blocklist.end(); ++i)
 	{
@@ -65,16 +65,17 @@ void MemoryMap::Write(basic_streambuf<charT, traits>* sb) const
 		m = i->base + i->size;
 	}
 
-	sb->sputc('\xf0');
+	sb->sputc( '\xf0' );
 }
 
-template<typename charT, typename traits>
-void MemoryMap::Read(basic_streambuf<charT, traits>* sb)
+template< class StreamBuf >
+void MemoryMap::Read( StreamBuf* sb )
 {
+	typedef typename StreamBuf::traits_type traits_type;
 	stringbuf s;
-	charT t;
-	while( (t = sb->sbumpc()) != '\0' && t != traits::eof() )
-		s.sputc(t);
+	typename traits_type::int_type t;
+	while( (t = sb->sbumpc()) != 0 && t != traits_type::eof() )
+		s.sputc( t );
 
 	if (s.str() != "V1")
 		throw ios_base::failure("This file is not a valid Address Space Monitor dump.");
@@ -85,7 +86,7 @@ void MemoryMap::Read(basic_streambuf<charT, traits>* sb)
 	Clear();
 
 	size_t m = (size_t)-1;
-	while( (t = sb->sbumpc()) != '\xf0' && t != traits::eof() )
+	while( (t = sb->sbumpc()) != 0xf0 && t != traits_type::eof() )
 	{
 		Region r;
 		r.type = static_cast< Region::Type >( t & 0xf );
@@ -483,29 +484,29 @@ void MemoryDiff::Apply( MemoryMap& target ) const
 	target.RecalcFreeList();
 }
 
-template< typename charT, typename traits >
-void MemoryDiff::Write( std::basic_streambuf< charT, traits >* sb ) const
+template< class StreamBuf >
+void MemoryDiff::Write( StreamBuf* sb ) const
 {
 	for( Changes::const_iterator i = _changes.begin(); i != _changes.end(); ++i )
 	{
 		switch( i->first )
 		{
 		case addition:
-			sb->sputc( 0 );
+			sb->sputc( '\0' );
 			MyIntPut( sb, i->second.second.base );
 			MyIntPut( sb, i->second.second.size );
 			sb->sputc( i->second.second.type );
 			break;
 
 		case removal:
-			sb->sputc( 1 );
+			sb->sputc( '\01' );
 			MyIntPut( sb, i->second.first.base );
 			MyIntPut( sb, i->second.first.size );
 			sb->sputc( i->second.first.type );
 			break;
 
 		case change:
-			sb->sputc( 2 );
+			sb->sputc( '\02' );
 			MyIntPut( sb, i->second.first.base );
 			MyIntPut( sb, i->second.first.size );
 			sb->sputc( i->second.first.type );
@@ -515,17 +516,18 @@ void MemoryDiff::Write( std::basic_streambuf< charT, traits >* sb ) const
 			break;
 		}
 	}
-	sb->sputc('\xf0');
+	sb->sputc( '\xf0' );
 }
 
-template<typename charT, typename traits>
-void MemoryDiff::Read( std::basic_streambuf< charT, traits >* sb )
+template< class StreamBuf >
+void MemoryDiff::Read( StreamBuf* sb )
 {
+	typedef typename StreamBuf::traits_type traits_type;
 	Change c;
 
-	typename std::basic_streambuf< charT, traits >::int_type j;
+	typename traits_type::int_type j;
 
-	while( (j = sb->sbumpc()) != std::basic_streambuf< charT, traits >::traits_type::eof() && j != std::basic_streambuf< charT, traits >::traits_type::to_int_type( '\xf0' ) )
+	while( (j = sb->sbumpc()) != traits_type::eof() && j != 0xf0 )
 	{
 		switch( j )
 		{
