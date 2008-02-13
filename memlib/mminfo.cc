@@ -245,22 +245,22 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 		if( bit == bend )
 		{
 			while( ait != aend )
-				AppendAddition( *ait++ );
+				_changes.push_back( Changes::value_type( new Addition( *ait++ ) ) );
 			break;
 		}
 
 		if( ait == aend )
 		{
 			while( bit != bend )
-				AppendRemoval( *bit++ );
+				_changes.push_back( Changes::value_type( new Removal( *bit++ ) ) );
 			break;
 		}
 
 		// If we get here we have two non-ends
 		if( ait->base < bit->base )
-			AppendAddition( *ait++ );
+			_changes.push_back( Changes::value_type( new Addition( *ait++ ) ) );
 		else if( ait->base > bit->base )
-			AppendRemoval( *bit++ );
+			_changes.push_back( Changes::value_type( new Removal( *bit++ ) ) );
 		else
 		{
 			if( ait->size < bit->size )
@@ -272,13 +272,13 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 					if( ait->type == bit->type )
 						bOriginalPreserved = true;
 					else
-						AppendAddition( *ait );
+						_changes.push_back( Changes::value_type( new Addition( *ait ) ) );
 				} while( ++ait != aend && ait->base < bit->base + bit->size );
 
 				if( !bOriginalPreserved )
 				{
-					_changes.back().first = change;
-					_changes.back().second.first = *bit;
+					Changes::value_type vt( new DetailChange( *bit, static_cast< Addition* >( _changes.back().get() )->GetRegion() ) );
+					std::swap( vt, _changes.back() );
 				}
 
 				++bit;
@@ -300,7 +300,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 					{
 						size_t base = toremove.front().base;
 						for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
-							AppendRemoval( Region( base, i->base + i->size - base, i->type ) );
+							_changes.push_back( Changes::value_type( new Removal( Region( base, i->base + i->size - base, i->type ) ) ) );
 						toremove.clear();
 					}
 				}
@@ -311,35 +311,20 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 //					const RegionList::iterator lastbutone =  - 1;
 
 					for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
-						AppendRemoval( Region( base, i->base + i->size - base, i->type ) );
+						_changes.push_back( Changes::value_type( new Removal( Region( base, i->base + i->size - base, i->type ) ) ) );
 
 					if( !_changes.empty() )
 					{
-						_changes.back().first = change;
-						_changes.back().second.second = Region( base, ait->base + ait->size - base, ait->type );
+						Changes::value_type vt( new DetailChange( static_cast< Removal* >( _changes.back().get() )->GetRegion(), Region( base, ait->base + ait->size - base, ait->type ) ) );
+						std::swap( vt, _changes.back() );
 					}
 				}
-				/*bool bNewPreserved = false;
-
-				do
-				{
-					if( ait->type == bit->type )
-						bNewPreserved = true;
-					else
-						AppendRemoval( *bit );
-				} while( ++bit != bend && bit->base < ait->base + ait->size );
-
-				if( !bNewPreserved )
-				{
-					_changes.back().first = change;
-					_changes.back().second.second = *ait;
-				}*/
 
 				++ait;
 			}
 			else if ( ait->type != bit->type )
 			{
-				AppendChange( *bit++, *ait++ );
+				_changes.push_back( Changes::value_type( new DetailChange( *bit++, *ait++ ) ) );
 			}
 			else
 			{
@@ -369,24 +354,26 @@ private:
 	Reason _reason;
 };
 
-void DoAdd( RegionList& blocklist, RegionList::iterator& i, const Region& r )
+}
+
+void MemoryDiff::Addition::Apply( RegionList& blocklist, RegionList::iterator& i ) const
 {
-	while( i != blocklist.end() && i->base + i->size <= r.base )
+	while( i != blocklist.end() && i->base + i->size <= _r.base )
 		++i;
 
 	if( i == blocklist.end() )
 		throw PatchFailed( PatchFailed::AdditionBeyondLast );
 
-	if( i->base == r.base )
+	if( i->base == _r.base )
 	{
 		// Insertion at start of existing region
-		if( i->size <= r.size )
+		if( i->size <= _r.size )
 			throw PatchFailed( PatchFailed::AdditionOverwrites );
 
-		i->base += r.size;
-		i->size -= r.size;
+		i->base += _r.size;
+		i->size -= _r.size;
 
-		i = blocklist.insert( i, r );
+		i = blocklist.insert( i, _r );
 		++i;
 	}
 	else
@@ -394,46 +381,46 @@ void DoAdd( RegionList& blocklist, RegionList::iterator& i, const Region& r )
 		Region x;
 		x.size = 0;
 
-		if( i->base + i->size > r.base + r.size )
+		if( i->base + i->size > _r.base + _r.size )
 		{
 			// Existing region wholly encloses addition
 			// Split original into two
-			x.base = r.base + r.size;
+			x.base = _r.base + _r.size;
 			x.size = i->base + i->size - x.base;
 			x.type = i->type;
 		}
 
 		// Shrink preceding region
-		i->size = r.base - i->base;
+		i->size = _r.base - i->base;
 
 		if( x.size != 0 )
 			i = blocklist.insert( ++i, x );
 		else
 			++i;
 
-		i = blocklist.insert( i, r );
+		i = blocklist.insert( i, _r );
 		++i;
 
 		// If new region encroaches into next region, then shrink it
-		if( i != blocklist.end() && i->base < r.base + r.size )
+		if( i != blocklist.end() && i->base < _r.base + _r.size )
 		{
-			i->size -= r.base + r.size - i->base;
-			i->base = r.base + r.size;
+			i->size -= _r.base + _r.size - i->base;
+			i->base = _r.base + _r.size;
 		}
 	}
 }
 
-void DoRemove( RegionList& blocklist, RegionList::iterator& i, const Region& r )
+void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i ) const
 {
-	while( i != blocklist.end() && i->base + i->size <= r.base )
+	while( i != blocklist.end() && i->base + i->size <= _r.base )
 		++i;
 
 	i = blocklist.erase( i );
 
 	if( i != blocklist.end() )
 	{
-		i->base -= r.size;
-		i->size += r.size;
+		i->base -= _r.size;
+		i->size += _r.size;
 
 		if( i != blocklist.begin() )
 		{
@@ -447,9 +434,9 @@ void DoRemove( RegionList& blocklist, RegionList::iterator& i, const Region& r )
 	}
 }
 
-void DoChange( RegionList& blocklist, RegionList::iterator& i, const Region& r )
+void MemoryDiff::DetailChange::Apply( RegionList& blocklist, RegionList::iterator& i ) const
 {
-	size_t change_base = r.base;
+	size_t change_base = _a.base;
 
 	while( i != blocklist.end() && i->base + i->size <= change_base )
 		++i;
@@ -457,9 +444,7 @@ void DoChange( RegionList& blocklist, RegionList::iterator& i, const Region& r )
 	if( i == blocklist.end() )
 		throw PatchFailed( PatchFailed::NoMatchForChange );
 
-	*i = r;
-}
-
+	*i = _a;
 }
 
 void MemoryDiff::Apply( MemoryMap& target ) const
@@ -469,18 +454,7 @@ void MemoryDiff::Apply( MemoryMap& target ) const
 
 	for( Changes::const_iterator cit = _changes.begin(); cit != _changes.end(); ++cit )
 	{
-		switch( cit->first )
-		{
-		case change:
-			DoChange( blocklist, i, cit->second.second );
-			break;
-		case removal:
-			DoRemove( blocklist, i, cit->second.first );
-			break;
-		case addition:
-			DoAdd( blocklist, i, cit->second.second );
-			break;
-		}
+		(*cit)->Apply( blocklist, i );
 	}
 
 	target.RecalcFreeList();
@@ -494,31 +468,30 @@ void MemoryDiff::Write( StreamBuf* sb ) const
 
 	for( Changes::const_iterator i = _changes.begin(); i != _changes.end(); ++i )
 	{
-		switch( i->first )
+		// HACK HACK HACK templates vs. virtual what to do?
+		if( const Addition* pa = dynamic_cast< const Addition* >( i->get() ) )
 		{
-		case addition:
 			sb->sputc( '\0' );
-			MyIntPut( sb, i->second.second.base );
-			MyIntPut( sb, i->second.second.size );
-			sb->sputc( i->second.second.type );
-			break;
-
-		case removal:
+			MyIntPut( sb, pa->GetRegion().base );
+			MyIntPut( sb, pa->GetRegion().size );
+			sb->sputc( pa->GetRegion().type );
+		}
+		else if ( const Removal* pr = dynamic_cast< const Removal* >( i->get() ) )
+		{
 			sb->sputc( '\01' );
-			MyIntPut( sb, i->second.first.base );
-			MyIntPut( sb, i->second.first.size );
-			sb->sputc( i->second.first.type );
-			break;
-
-		case change:
+			MyIntPut( sb, pr->GetRegion().base );
+			MyIntPut( sb, pr->GetRegion().size );
+			sb->sputc( pr->GetRegion().type );
+		}
+		else if ( const DetailChange* pc = dynamic_cast< const DetailChange* >( i->get() ) )
+		{
 			sb->sputc( '\02' );
-			MyIntPut( sb, i->second.first.base );
-			MyIntPut( sb, i->second.first.size );
-			sb->sputc( i->second.first.type );
-			MyIntPut( sb, i->second.second.base );
-			MyIntPut( sb, i->second.second.size );
-			sb->sputc( i->second.second.type );
-			break;
+			MyIntPut( sb, pc->GetBefore().base );
+			MyIntPut( sb, pc->GetBefore().size );
+			sb->sputc( pc->GetBefore().type );
+			MyIntPut( sb, pc->GetAfter().base );
+			MyIntPut( sb, pc->GetAfter().size );
+			sb->sputc( pc->GetAfter().type );
 		}
 	}
 	sb->sputc( '\xf0' );
@@ -528,7 +501,6 @@ template< class StreamBuf >
 void MemoryDiff::Read( StreamBuf* sb )
 {
 	typedef typename StreamBuf::traits_type traits_type;
-	Change c;
 
 	char b[4];
 
@@ -544,34 +516,34 @@ void MemoryDiff::Read( StreamBuf* sb )
 
 	while( (j = sb->sbumpc()) != traits_type::eof() && j != 0xf0 )
 	{
+		Region r1, r2;
+
 		switch( j )
 		{
 		case 0:
-			c.first = addition;
-			MyIntGet( sb, c.second.second.base, sz );
-			MyIntGet( sb, c.second.second.size );
-			c.second.second.type = static_cast< Region::Type >( sb->sbumpc() );
+			MyIntGet( sb, r2.base, sz );
+			MyIntGet( sb, r2.size );
+			r2.type = static_cast< Region::Type >( sb->sbumpc() );
+			_changes.push_back( Changes::value_type( new Addition( r2 ) ) );
 			break;
 
 		case 1:
-			c.first = removal;
-			MyIntGet( sb, c.second.first.base, sz );
-			MyIntGet( sb, c.second.first.size, sz );
-			c.second.first.type = static_cast< Region::Type >( sb->sbumpc() );
+			MyIntGet( sb, r1.base, sz );
+			MyIntGet( sb, r1.size );
+			r1.type = static_cast< Region::Type >( sb->sbumpc() );
+			_changes.push_back( Changes::value_type( new Removal( r1 ) ) );
 			break;
 
 		case 2:
-			c.first = change;
-			MyIntGet( sb, c.second.first.base, sz );
-			MyIntGet( sb, c.second.first.size, sz );
-			c.second.first.type = static_cast< Region::Type >( sb->sbumpc() );
-			MyIntGet( sb, c.second.second.base, sz );
-			MyIntGet( sb, c.second.second.size, sz );
-			c.second.second.type = static_cast< Region::Type >( sb->sbumpc() );
+			MyIntGet( sb, r1.base, sz );
+			MyIntGet( sb, r1.size );
+			r1.type = static_cast< Region::Type >( sb->sbumpc() );
+			MyIntGet( sb, r2.base, sz );
+			MyIntGet( sb, r2.size );
+			r2.type = static_cast< Region::Type >( sb->sbumpc() );
+			_changes.push_back( Changes::value_type( new DetailChange( r1, r2 ) ) );
 			break;
 		}
-
-		_changes.push_back( c );
 	}
 }
 
