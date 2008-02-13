@@ -18,9 +18,9 @@ namespace
 {
 
 template< class StreamBuf, class intT >
-void MyIntPut( StreamBuf* sb, intT toput )
+void MyIntPut( StreamBuf* sb, intT toput, size_t width = sizeof(intT) )
 {
-	for (unsigned i = 0; i < sizeof toput - 1; ++i)
+	for (unsigned i = 0; i < width - 1; ++i)
 	{
 		sb->sputc( toput & 0xff );
 		toput >>= 8;
@@ -29,10 +29,10 @@ void MyIntPut( StreamBuf* sb, intT toput )
 }
 
 template< class StreamBuf, class intT >
-void MyIntGet( StreamBuf* sb, intT& toget )
+void MyIntGet( StreamBuf* sb, intT& toget, size_t width = sizeof(intT) )
 {
 	toget = 0;
-	for (unsigned i = 0; i < sizeof toget; ++i)
+	for (unsigned i = 0; i < width; ++i)
 	{
 		toget |= intT(sb->sbumpc()) << (i * 8);
 	}
@@ -80,7 +80,9 @@ void MemoryMap::Read( StreamBuf* sb )
 	if (s.str() != "V1")
 		throw ios_base::failure("This file is not a valid Address Space Monitor dump.");
 
-	if (sb->sbumpc() != sizeof(size_t))
+	size_t sz = sb->sbumpc();
+
+	if( sz > sizeof(size_t))
 		throw ios_base::failure("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
 
 	Clear();
@@ -92,11 +94,11 @@ void MemoryMap::Read( StreamBuf* sb )
 		r.type = static_cast< Region::Type >( t & 0xf );
 
 		if( (t & 0x40) != 0 )
-			MyIntGet(sb, r.base);
+			MyIntGet( sb, r.base, sz );
 		else
 			r.base = m;
 
-		MyIntGet(sb, r.size);
+		MyIntGet( sb, r.size, sz );
 
 		m = r.base + r.size;
 
@@ -487,6 +489,9 @@ void MemoryDiff::Apply( MemoryMap& target ) const
 template< class StreamBuf >
 void MemoryDiff::Write( StreamBuf* sb ) const
 {
+	sb->sputn( "md", 3 );
+	sb->sputc( sizeof( size_t ) );
+
 	for( Changes::const_iterator i = _changes.begin(); i != _changes.end(); ++i )
 	{
 		switch( i->first )
@@ -525,6 +530,16 @@ void MemoryDiff::Read( StreamBuf* sb )
 	typedef typename StreamBuf::traits_type traits_type;
 	Change c;
 
+	char b[4];
+
+	if( sb->sgetn( b, 4 ) != 4 )
+		throw ReadError( "MemoryDiff signature is incomplete" );
+
+	if( memcmp( b, "md", 3) != 0 )
+		throw ReadError( "MemoryDiff signature is incorrect" );
+
+	size_t sz = b[3];
+
 	typename traits_type::int_type j;
 
 	while( (j = sb->sbumpc()) != traits_type::eof() && j != 0xf0 )
@@ -533,25 +548,25 @@ void MemoryDiff::Read( StreamBuf* sb )
 		{
 		case 0:
 			c.first = addition;
-			MyIntGet( sb, c.second.second.base );
+			MyIntGet( sb, c.second.second.base, sz );
 			MyIntGet( sb, c.second.second.size );
 			c.second.second.type = static_cast< Region::Type >( sb->sbumpc() );
 			break;
 
 		case 1:
 			c.first = removal;
-			MyIntGet( sb, c.second.first.base );
-			MyIntGet( sb, c.second.first.size );
+			MyIntGet( sb, c.second.first.base, sz );
+			MyIntGet( sb, c.second.first.size, sz );
 			c.second.first.type = static_cast< Region::Type >( sb->sbumpc() );
 			break;
 
 		case 2:
 			c.first = change;
-			MyIntGet( sb, c.second.first.base );
-			MyIntGet( sb, c.second.first.size );
+			MyIntGet( sb, c.second.first.base, sz );
+			MyIntGet( sb, c.second.first.size, sz );
 			c.second.first.type = static_cast< Region::Type >( sb->sbumpc() );
-			MyIntGet( sb, c.second.second.base );
-			MyIntGet( sb, c.second.second.size );
+			MyIntGet( sb, c.second.second.base, sz );
+			MyIntGet( sb, c.second.second.size, sz );
 			c.second.second.type = static_cast< Region::Type >( sb->sbumpc() );
 			break;
 		}

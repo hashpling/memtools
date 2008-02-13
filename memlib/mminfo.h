@@ -6,6 +6,7 @@
 #include <streambuf>
 #include <vector>
 #include <utility>
+#include <exception>
 
 namespace MemMon
 {
@@ -46,6 +47,17 @@ inline bool operator==(const FreeRegion& lhs, const FreeRegion& rhs)
 
 typedef std::vector< Region > RegionList;
 typedef std::vector< FreeRegion > FreeList;
+
+class ReadError : public std::exception
+{
+public:
+	ReadError( const char* msg ) : _msg( msg ) {}
+	virtual ~ReadError() throw() {}
+	virtual const char* what() const throw() { return _msg.c_str(); }
+
+private:
+	std::string _msg;
+};
 
 class MemoryMap
 {
