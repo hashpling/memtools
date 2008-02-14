@@ -31,7 +31,7 @@ void DiffAddMid()
 	MemMon::MemoryDiff::Changes::const_iterator cit = c.begin();
 
 	const MemMon::MemoryDiff::Addition* pAdd = dynamic_cast< const MemMon::MemoryDiff::Addition* >( cit->get() );
-	HSHG_ASSERT( pAdd );
+	HSHG_ASSERT( pAdd != NULL );
 
 	const Region* rr = &pAdd->GetRegion();
 
@@ -48,7 +48,7 @@ void DiffAddMid()
 	cit = crev.begin();
 
 	const MemMon::MemoryDiff::Removal* pRem = dynamic_cast< const MemMon::MemoryDiff::Removal* >( cit->get() );
-	HSHG_ASSERT( pRem );
+	HSHG_ASSERT( pRem != NULL);
 
 	rr = &pRem->GetRegion();
 
@@ -79,7 +79,7 @@ void DiffAddStart()
 	MemMon::MemoryDiff::Changes::const_iterator cit = c.begin();
 
 	const MemMon::MemoryDiff::Addition* pAdd = dynamic_cast< const MemMon::MemoryDiff::Addition* >( cit->get() );
-	HSHG_ASSERT( pAdd );
+	HSHG_ASSERT( pAdd != NULL );
 
 	const Region* rr = &pAdd->GetRegion();
 
@@ -96,7 +96,7 @@ void DiffAddStart()
 	cit = crev.begin();
 
 	const MemMon::MemoryDiff::Removal* pRem = dynamic_cast< const MemMon::MemoryDiff::Removal* >( cit->get() );
-	HSHG_ASSERT( pRem );
+	HSHG_ASSERT( pRem != NULL);
 
 	rr = &pRem->GetRegion();
 
@@ -127,7 +127,7 @@ void DiffAddEnd()
 	MemMon::MemoryDiff::Changes::const_iterator cit = c.begin();
 
 	const MemMon::MemoryDiff::Addition* pAdd = dynamic_cast< const MemMon::MemoryDiff::Addition* >( cit->get() );
-	HSHG_ASSERT( pAdd );
+	HSHG_ASSERT( pAdd != NULL );
 
 	const Region* rr = &pAdd->GetRegion();
 
@@ -144,7 +144,7 @@ void DiffAddEnd()
 	cit = crev.begin();
 
 	const MemMon::MemoryDiff::DetailChange* pChg = dynamic_cast< const MemMon::MemoryDiff::DetailChange* >( cit->get() );
-	HSHG_ASSERT( pChg );
+	HSHG_ASSERT( pChg != NULL );
 
 	rr = &pChg->GetBefore();
 
@@ -268,14 +268,14 @@ void DiffIoTrip()
 	HSHG_ASSERT( cit != cend );
 
 	const MemMon::MemoryDiff::Addition* pAdd = dynamic_cast< const MemMon::MemoryDiff::Addition* >( cit->get() );
-	HSHG_ASSERT( pAdd );
+	HSHG_ASSERT( pAdd != NULL );
 
 	HSHG_ASSERT( pAdd->GetRegion() == Region( 10, 10, Region::committed ) );
 
 	HSHG_ASSERT( ++cit != cend );
 
 	const MemMon::MemoryDiff::DetailChange* pChg = dynamic_cast< const MemMon::MemoryDiff::DetailChange* >( cit->get() );
-	HSHG_ASSERT( pChg );
+	HSHG_ASSERT( pChg != NULL );
 
 	HSHG_ASSERT( pChg->GetBefore() == Region( 30, 10, Region::free ) );
 	HSHG_ASSERT( pChg->GetAfter() == Region( 30, 10, Region::reserved ) );
@@ -283,7 +283,7 @@ void DiffIoTrip()
 	HSHG_ASSERT( ++cit != cend );
 
 	const MemMon::MemoryDiff::Removal* pRem = dynamic_cast< const MemMon::MemoryDiff::Removal* >( cit->get() );
-	HSHG_ASSERT( pRem );
+	HSHG_ASSERT( pRem != NULL );
 
 	HSHG_ASSERT( pRem->GetRegion() == Region( 50, 10, Region::committed ) );
 
@@ -320,6 +320,99 @@ void MergeAdjacentFree()
 	HSHG_ASSERT( fl[1].base == 40 && fl[1].size == 8 );
 }
 
+void MoveBoundary1()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 5, Region::free ) );
+	m1.AddBlock( Region( 5, 5, Region::committed ) );
+
+	m2.AddBlock( Region( 0, 7, Region::free ) );
+	m2.AddBlock( Region( 7, 3, Region::committed ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void MoveBoundary2()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 5, Region::free ) );
+	m1.AddBlock( Region( 5, 5, Region::committed ) );
+
+	m2.AddBlock( Region( 0, 3, Region::free ) );
+	m2.AddBlock( Region( 3, 7, Region::committed ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void ExpandBothEnds()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 4, Region::free ) );
+	m1.AddBlock( Region( 4, 2, Region::committed ) );
+	m1.AddBlock( Region( 6, 4, Region::free ) );
+
+	m2.AddBlock( Region( 0, 3, Region::free ) );
+	m2.AddBlock( Region( 3, 4, Region::committed ) );
+	m2.AddBlock( Region( 7, 3, Region::free ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void ContractBothEnds()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 3, Region::free ) );
+	m1.AddBlock( Region( 3, 4, Region::committed ) );
+	m1.AddBlock( Region( 7, 3, Region::free ) );
+
+	m2.AddBlock( Region( 0, 4, Region::free ) );
+	m2.AddBlock( Region( 4, 2, Region::committed ) );
+	m2.AddBlock( Region( 6, 4, Region::free ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void ContractRemove()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 4, Region::reserved ) );
+	m1.AddBlock( Region( 4, 2, Region::committed ) );
+	m1.AddBlock( Region( 6, 2, Region::reserved ) );
+	m1.AddBlock( Region( 8, 2, Region::committed ) );
+	//m1.AddBlock( Region( 10, 2, Region::free ) );
+
+	m2.AddBlock( Region( 0, 3, Region::reserved ) );
+	m2.AddBlock( Region( 3, 7, Region::committed ) );
+	//m2.AddBlock( Region( 10, 2, Region::free ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
 }
 
 HSHG_BEGIN_TESTS
@@ -332,6 +425,11 @@ HSHG_TEST_ENTRY( PatchAddEnd )
 HSHG_TEST_ENTRY( PatchAddSplit )
 HSHG_TEST_ENTRY( DiffIoTrip )
 HSHG_TEST_ENTRY( MergeAdjacentFree )
+HSHG_TEST_ENTRY( MoveBoundary1 )
+HSHG_TEST_ENTRY( MoveBoundary2 )
+HSHG_TEST_ENTRY( ExpandBothEnds )
+HSHG_TEST_ENTRY( ContractBothEnds )
+HSHG_TEST_ENTRY( ContractRemove )
 HSHG_END_TESTS
 
 HSHG_TEST_MAIN

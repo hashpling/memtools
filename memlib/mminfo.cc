@@ -241,6 +241,8 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 	const RegionList::const_iterator bend = before.GetBlockList().end();
 	const RegionList::const_iterator aend = after.GetBlockList().end();
 
+	size_t commonbase = 0;
+
 	while( ait != aend || bit != bend )
 	{
 		if( bit == bend )
@@ -257,78 +259,108 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 			break;
 		}
 
+		size_t bbase = std::max( commonbase, bit->base );
+		size_t abase = std::max( commonbase, ait->base );
+
 		// If we get here we have two non-ends
-		if( ait->base < bit->base )
+		if( abase < bbase )
 			_changes.push_back( Changes::value_type( new Addition( *ait++ ) ) );
-		else if( ait->base > bit->base )
+		else if( abase > bbase )
 			_changes.push_back( Changes::value_type( new Removal( *bit++ ) ) );
 		else
 		{
-			if( ait->size < bit->size )
+			size_t bsize = bit->base + bit->size - bbase;
+			size_t asize = ait->base + ait->size - abase;
+
+			if( asize < bsize )
 			{
-				bool bOriginalPreserved = false;
-
-				do
+				const RegionList::const_iterator a2it = ait + 1;
+				if( a2it != aend && ait->size + a2it->size > bit->size )
 				{
-					if( ait->type == bit->type )
-						bOriginalPreserved = true;
-					else
-						_changes.push_back( Changes::value_type( new Addition( *ait ) ) );
-				} while( ++ait != aend && ait->base < bit->base + bit->size );
-
-				if( !bOriginalPreserved )
-				{
-					Changes::value_type vt( new DetailChange( *bit, static_cast< Addition* >( _changes.back().get() )->GetRegion() ) );
-					std::swap( vt, _changes.back() );
+					commonbase = bit->base + bit->size;
+					_changes.push_back( Changes::value_type( new DetailChange( Region( ait->base, commonbase - ait->base, bit->type ), *ait ) ) );
+					++bit;
+					++ait;
 				}
-
-				++bit;
-			}
-			else if ( ait->size > bit->size )
-			{
-				RegionList toremove;
-
-				if( ait->type != bit->type )
-					toremove.push_back( *bit );
-
-				while( ++bit != bend && bit->base <= ait->base + ait->size )
+				else
 				{
-					if( bit->type != ait->type )
-					{
-						toremove.push_back( *bit );
-					}
-					else if( !toremove.empty() )
-					{
-						size_t base = toremove.front().base;
-						for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
-							_changes.push_back( Changes::value_type( new Removal( Region( base, i->base + i->size - base, i->type ) ) ) );
-						toremove.clear();
-					}
-				}
+					bool bOriginalPreserved = false;
 
-				if( !toremove.empty() )
-				{
-					size_t base = toremove.front().base;
-//					const RegionList::iterator lastbutone =  - 1;
-
-					for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
-						_changes.push_back( Changes::value_type( new Removal( Region( base, i->base + i->size - base, i->type ) ) ) );
-
-					if( !_changes.empty() )
+					do
 					{
-						Changes::value_type vt( new DetailChange( static_cast< Removal* >( _changes.back().get() )->GetRegion(), Region( base, ait->base + ait->size - base, ait->type ) ) );
+						if( ait->type == bit->type )
+							bOriginalPreserved = true;
+						else
+							_changes.push_back( Changes::value_type( new Addition( *ait ) ) );
+					} while( ++ait != aend && ait->base < bit->base + bit->size );
+
+					if( !bOriginalPreserved )
+					{
+						Changes::value_type vt( new DetailChange( *bit, static_cast< Addition* >( _changes.back().get() )->GetRegion() ) );
 						std::swap( vt, _changes.back() );
 					}
-				}
 
-				++ait;
+					++bit;
+				}
+			}
+			else if ( asize > bsize )
+			{
+				const RegionList::const_iterator b2it = bit + 1;
+				if( b2it != bend && bit->size + b2it->size > ait->size )
+				{
+					commonbase = ait->base + ait->size;
+					_changes.push_back( Changes::value_type( new DetailChange( Region( ait->base, bit->base + bit->size - ait->base, bit->type ), *ait ) ) );
+					++bit;
+					++ait;
+				}
+				else
+				{
+					RegionList toremove;
+
+					if( ait->type != bit->type )
+						toremove.push_back( *bit );
+
+					while( ++bit != bend && bit->base <= ait->base + ait->size )
+					{
+						if( bit->type != ait->type )
+						{
+							toremove.push_back( *bit );
+						}
+						else if( !toremove.empty() )
+						{
+							size_t base = toremove.front().base;
+							for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
+								_changes.push_back( Changes::value_type( new Removal( Region( base, i->base + i->size - base, i->type ) ) ) );
+							toremove.clear();
+						}
+					}
+
+					if( !toremove.empty() )
+					{
+						size_t base = toremove.front().base;
+	//					const RegionList::iterator lastbutone =  - 1;
+
+						for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
+							_changes.push_back( Changes::value_type( new Removal( Region( base, i->base + i->size - base, i->type ) ) ) );
+
+						if( !_changes.empty() && ait->base + ait->size > base )
+						{
+							Changes::value_type vt( new DetailChange( static_cast< Removal* >( _changes.back().get() )->GetRegion(), Region( base, ait->base + ait->size - base, ait->type ) ) );
+							std::swap( vt, _changes.back() );
+						}
+					}
+
+					++ait;
+				}
 			}
 			else if ( ait->type != bit->type )
 			{
+				commonbase = bit->base + bit->size;
 				_changes.push_back( Changes::value_type( new DetailChange( *bit++, *ait++ ) ) );
 			}
 			else
 			{
+				commonbase = bit->base + bit->size;
 				++ait;
 				++bit;
 			}
@@ -446,6 +478,33 @@ void MemoryDiff::DetailChange::Apply( RegionList& blocklist, RegionList::iterato
 		throw PatchFailed( PatchFailed::NoMatchForChange );
 
 	*i = _a;
+
+	if( _b.base != _a.base )
+	{
+		if( i == blocklist.begin() )
+			throw( PatchFailed::NoMatchForChange );
+
+		const RegionList::iterator& j = i - 1;
+
+		// unsigned overflow is well defined
+		j->size += _a.base - _b.base;
+
+		if( j->size == 0 )
+			blocklist.erase( j );
+	}
+
+	if( _b.base + _b.size != _a.base + _a.size )
+	{
+		const RegionList::iterator& j = i + 1;
+		if( j != blocklist.end() )
+		{
+			size_t diff = _a.base + _a.size - (_b.base + _b.size);
+			j->base += diff;
+			j->size -= diff;
+			if( j->size == 0 )
+				blocklist.erase( j );
+		}
+	}
 }
 
 void MemoryDiff::Apply( MemoryMap& target ) const
