@@ -6,6 +6,8 @@
 #include <streambuf>
 #include <vector>
 #include <utility>
+#include <exception>
+#include "mmvalueptr.h"
 
 namespace MemMon
 {
@@ -47,16 +49,27 @@ inline bool operator==(const FreeRegion& lhs, const FreeRegion& rhs)
 typedef std::vector< Region > RegionList;
 typedef std::vector< FreeRegion > FreeList;
 
+class ReadError : public std::exception
+{
+public:
+	ReadError( const char* msg ) : _msg( msg ) {}
+	virtual ~ReadError() throw() {}
+	virtual const char* what() const throw() { return _msg.c_str(); }
+
+private:
+	std::string _msg;
+};
+
 class MemoryMap
 {
 public:
 	MemoryMap() {}
 
-	template<typename charT, typename traits>
-	void Write(std::basic_streambuf<charT, traits>*) const;
+	template< class StreamBuf >
+	void Write( StreamBuf* ) const;
 
-	template<typename charT, typename traits>
-	void Read(std::basic_streambuf<charT, traits>*);
+	template< class StreamBuf >
+	void Read( StreamBuf* );
 
 	bool operator==( const MemoryMap& other ) const
 	{
@@ -95,19 +108,17 @@ private:
 	size_t _total_reserve;
 };
 
-template<typename charT, typename traits>
-inline std::basic_ostream<charT, traits>& operator<<( std::basic_ostream<charT, traits>& os,
-											   const MemoryMap& mem)
+template< class Stream >
+inline Stream& operator<<( Stream& os, const MemoryMap& mem )
 {
-	mem.Write(os.rdbuf());
+	mem.Write( os.rdbuf() );
 	return os;
 }
 
-template<typename charT, typename traitsT>
-inline std::basic_istream<charT, traitsT>& operator>>( std::basic_istream<charT, traitsT>& is,
-											   MemoryMap& mem)
+template< class Stream >
+inline Stream& operator>>( Stream& is, MemoryMap& mem)
 {
-	mem.Read(is.rdbuf());
+	mem.Read( is.rdbuf() );
 	return is;
 }
 
@@ -120,11 +131,11 @@ public:
 	void Apply( MemoryMap& target ) const;
 	void ReverseApply( MemoryMap& target ) const;
 
-	template< typename charT, typename traits >
-	void Write( std::basic_streambuf< charT, traits >* ) const;
+	template< class StreamBuf >
+	void Write( StreamBuf* ) const;
 
-	template<typename charT, typename traits>
-	void Read( std::basic_streambuf< charT, traits >*);
+	template< class StreamBuf >
+	void Read( StreamBuf* );
 
 	enum ChangeType
 	{
@@ -133,51 +144,73 @@ public:
 		, change
 	};
 
-	struct Change
+	class Change
 	{
-		Change() {}
-		Change( ChangeType ct, const std::pair< Region, Region >& rp ) : first( ct ), second( rp ) {}
-		ChangeType first;
-		std::pair< Region, Region > second;
-		bool operator==( const Change& other ) const
-		{
-			switch( first )
-			{
-			case addition:
-				return other.first == addition && second.second == other.second.second;
-			case removal:
-				return other.first == removal && second.first == other.second.first;
-			case change:
-				return other.first == change && second.first == other.second.first && second.second == other.second.second;
-			}
-			return false;
-		}
-		bool operator!=( const Change& other ) const { return !(*this == other); }
+	public:
+		virtual ~Change() {}
+		virtual void Apply( RegionList&, RegionList::iterator& ) const = 0;
+		virtual Change* Clone() const = 0;
+		virtual void Write( std::streambuf* sb ) const = 0;
 	};
 
-	typedef std::vector< Change > Changes;
+	class Addition : public MemoryDiff::Change
+	{
+	public:
+		explicit Addition( const Region& r ) : _r( r ) {}
+		void Apply( RegionList&, RegionList::iterator& ) const;
+		Change* Clone() const { return new Addition( _r ); }
+		void Write( std::streambuf* sb ) const;
+
+		const Region& GetRegion() const { return _r; }
+
+	private:
+		Addition( const Addition& );
+		Addition& operator=( const Addition& );
+
+		Region _r;
+	};
+
+	class Removal : public MemoryDiff::Change
+	{
+	public:
+		explicit Removal( const Region& r ) : _r( r ) {}
+		void Apply( RegionList&, RegionList::iterator& ) const;
+		Change* Clone() const { return new Removal( _r ); }
+		void Write( std::streambuf* sb ) const;
+
+		const Region& GetRegion() const { return _r; }
+
+	private:
+		Removal( const Removal& );
+		Removal& operator=( const Removal& );
+
+		Region _r;
+	};
+
+	class DetailChange : public MemoryDiff::Change
+	{
+	public:
+		explicit DetailChange( const Region& b, const Region& a ) : _b( b ), _a( a ) {}
+		void Apply( RegionList&, RegionList::iterator& ) const;
+		Change* Clone() const { return new DetailChange( _b, _a ); }
+		void Write( std::streambuf* sb ) const;
+
+		const Region& GetBefore() const { return _b; }
+		const Region& GetAfter() const { return _a; }
+
+	private:
+		DetailChange( const DetailChange& );
+		DetailChange& operator=( const DetailChange& );
+
+		Region _b;
+		Region _a;
+	};
+
+	typedef std::vector< ValuePtr< Change, Cloner > > Changes;
 
 	const Changes& GetChanges() const { return _changes; }
 
-	void AppendAddition( const Region& r )
-	{
-		_changes.push_back( Change( MemoryDiff::addition, std::make_pair( Region(), r ) ) );
-	}
-	void AppendRemoval( const Region& r )
-	{
-		_changes.push_back( Change( MemoryDiff::removal, std::make_pair( r, Region() ) ) );
-	}
-	void AppendChange( const Region& r1, const Region& r2 )
-	{
-		_changes.push_back( Change( MemoryDiff::change, std::make_pair( r1, r2 ) ) );
-	}
-
-	bool operator==( const MemoryDiff& other ) const
-	{
-		return _changes == other._changes;
-	}
-
-	bool operator!=( const MemoryDiff& other ) const { return !(*this == other); }
+	void Append( Change* c ) { _changes.push_back( Changes::value_type( c ) ); }
 
 private:
 	Changes _changes;

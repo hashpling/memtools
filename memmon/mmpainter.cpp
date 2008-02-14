@@ -548,7 +548,8 @@ void MMPainter::Snapshot(HWND hwnd) const
 
 		try
 		{
-			ofs << mem;
+			std::ostream& o = ofs;
+			o << mem;
 
 			if (ofs.fail())
 			{
@@ -600,7 +601,8 @@ void MMPainter::Read(HWND hwnd)
 
 		try
 		{
-			ifs >> mem;
+			std::istream& i = ifs;
+			i >> mem;
 
 			if (ifs.fail())
 			{
@@ -655,7 +657,8 @@ MMPainter::FStreamRecorder::FStreamRecorder( const char* fname, const MemoryMap&
 	if( !_buf.is_open() )
 		throw ConstructorFailure< FStreamRecorder >();
 
-	mm.Write( &_buf );
+	std::streambuf* bufptr = &_buf;
+	mm.Write( bufptr );
 }
 
 MMPainter::FStreamRecorder::~FStreamRecorder()
@@ -665,11 +668,13 @@ MMPainter::FStreamRecorder::~FStreamRecorder()
 void MMPainter::FStreamRecorder::Record( const MemoryMap& l, const MemoryMap& r )
 {
 	MemMon::MemoryDiff d( l, r );
-	d.Write( &_buf );
+	std::streambuf* bufptr = &_buf;
+	d.Write( bufptr );
 #ifdef MEMMON_DEBUG
 	std::ostringstream tmpname;
 	tmpname << _fname << "_DEBUG_" << ++_count;
 	ofstream fstmp( tmpname.str().c_str(), std::ios_base::out | std::ios_base::binary );
-	fstmp << r;
+	ostream& stmp = fstmp;
+	stmp << r;
 #endif
 }

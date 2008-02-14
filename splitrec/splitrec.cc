@@ -12,12 +12,13 @@ int main( int argc, char* argv[] )
 		if( buf.is_open() )
 		{
 			MemMon::MemoryMap mm;
-			mm.Read( &buf );
+			std::streambuf* bufptr = &buf;
+			mm.Read( bufptr );
 
 			while( !std::filebuf::traits_type::eq_int_type( buf.sgetc(), std::filebuf::traits_type::eof() ) )
 			{
 				MemMon::MemoryDiff md;
-				md.Read( &buf );
+				md.Read( bufptr );
 				md.Apply( mm );
 
 				std::ostringstream fnamemaker;
@@ -28,7 +29,8 @@ int main( int argc, char* argv[] )
 
 				if( out.is_open() )
 				{
-					mm.Write( &out );
+					std::streambuf* outptr = &out;
+					mm.Write( outptr );
 				}
 			}
 		}
