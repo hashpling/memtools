@@ -150,6 +150,7 @@ public:
 		virtual ~Change() {}
 		virtual void Apply( RegionList&, RegionList::iterator& ) const = 0;
 		virtual Change* Clone() const = 0;
+		virtual void Write( std::streambuf* sb ) const = 0;
 	};
 
 	class Addition : public MemoryDiff::Change
@@ -158,6 +159,7 @@ public:
 		explicit Addition( const Region& r ) : _r( r ) {}
 		void Apply( RegionList&, RegionList::iterator& ) const;
 		Change* Clone() const { return new Addition( _r ); }
+		void Write( std::streambuf* sb ) const;
 
 		const Region& GetRegion() const { return _r; }
 
@@ -174,6 +176,7 @@ public:
 		explicit Removal( const Region& r ) : _r( r ) {}
 		void Apply( RegionList&, RegionList::iterator& ) const;
 		Change* Clone() const { return new Removal( _r ); }
+		void Write( std::streambuf* sb ) const;
 
 		const Region& GetRegion() const { return _r; }
 
@@ -190,6 +193,7 @@ public:
 		explicit DetailChange( const Region& b, const Region& a ) : _b( b ), _a( a ) {}
 		void Apply( RegionList&, RegionList::iterator& ) const;
 		Change* Clone() const { return new DetailChange( _b, _a ); }
+		void Write( std::streambuf* sb ) const;
 
 		const Region& GetBefore() const { return _b; }
 		const Region& GetAfter() const { return _a; }

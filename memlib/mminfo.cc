@@ -2,6 +2,7 @@
 
 #include "mminfo.h"
 #include <sstream>
+#include <cassert>
 
 using std::vector;
 using std::basic_streambuf;
@@ -461,6 +462,41 @@ void MemoryDiff::Apply( MemoryMap& target ) const
 }
 
 template< class StreamBuf >
+void DoWrite( const MemoryDiff::Change*, StreamBuf* );
+
+template<> void DoWrite( const MemoryDiff::Change* c, std::streambuf* sb )
+{
+	c->Write( sb );
+}
+
+void MemoryDiff::Addition::Write( std::streambuf* sb ) const
+{
+	sb->sputc( '\0' );
+	MyIntPut( sb, _r.base );
+	MyIntPut( sb, _r.size );
+	sb->sputc( _r.type );
+}
+
+void MemoryDiff::Removal::Write( std::streambuf* sb ) const
+{
+	sb->sputc( '\01' );
+	MyIntPut( sb, _r.base );
+	MyIntPut( sb, _r.size );
+	sb->sputc( _r.type );
+}
+
+void MemoryDiff::DetailChange::Write( std::streambuf* sb ) const
+{
+	sb->sputc( '\02' );
+	MyIntPut( sb, _b.base );
+	MyIntPut( sb, _b.size );
+	sb->sputc( _b.type );
+	MyIntPut( sb, _a.base );
+	MyIntPut( sb, _a.size );
+	sb->sputc( _a.type );
+}
+
+template< class StreamBuf >
 void MemoryDiff::Write( StreamBuf* sb ) const
 {
 	sb->sputn( "md", 3 );
@@ -468,31 +504,7 @@ void MemoryDiff::Write( StreamBuf* sb ) const
 
 	for( Changes::const_iterator i = _changes.begin(); i != _changes.end(); ++i )
 	{
-		// HACK HACK HACK templates vs. virtual what to do?
-		if( const Addition* pa = dynamic_cast< const Addition* >( i->get() ) )
-		{
-			sb->sputc( '\0' );
-			MyIntPut( sb, pa->GetRegion().base );
-			MyIntPut( sb, pa->GetRegion().size );
-			sb->sputc( pa->GetRegion().type );
-		}
-		else if ( const Removal* pr = dynamic_cast< const Removal* >( i->get() ) )
-		{
-			sb->sputc( '\01' );
-			MyIntPut( sb, pr->GetRegion().base );
-			MyIntPut( sb, pr->GetRegion().size );
-			sb->sputc( pr->GetRegion().type );
-		}
-		else if ( const DetailChange* pc = dynamic_cast< const DetailChange* >( i->get() ) )
-		{
-			sb->sputc( '\02' );
-			MyIntPut( sb, pc->GetBefore().base );
-			MyIntPut( sb, pc->GetBefore().size );
-			sb->sputc( pc->GetBefore().type );
-			MyIntPut( sb, pc->GetAfter().base );
-			MyIntPut( sb, pc->GetAfter().size );
-			sb->sputc( pc->GetAfter().type );
-		}
+		DoWrite( i->get(), sb );
 	}
 	sb->sputc( '\xf0' );
 }
