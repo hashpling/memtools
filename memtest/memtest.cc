@@ -50,11 +50,7 @@ void DiffAddMid()
 	const MemMon::MemoryDiff::Removal* pRem = dynamic_cast< const MemMon::MemoryDiff::Removal* >( cit->get() );
 	HSHG_ASSERT( pRem != NULL);
 
-	rr = &pRem->GetRegion();
-
-	HSHG_ASSERT( rr->base == 10 );
-	HSHG_ASSERT( rr->size == 10 );
-	HSHG_ASSERT( rr->type == Region::committed );
+	HSHG_ASSERT( pRem->GetBase() == 10 );
 }
 
 void DiffAddStart()
@@ -100,13 +96,7 @@ void DiffAddStart()
 	const MemMon::MemoryDiff::DetailChange* pChg = dynamic_cast< const MemMon::MemoryDiff::DetailChange* >( cit->get() );
 	HSHG_ASSERT( pChg != NULL);
 
-	rr = &pChg->GetBefore();
-
-	HSHG_ASSERT( rr->base == 0 );
-	HSHG_ASSERT( rr->size == 10 );
-	HSHG_ASSERT( rr->type == Region::committed );
-
-	rr = &pChg->GetAfter();
+	rr = &pChg->GetRegion();
 
 	HSHG_ASSERT( rr->base == 0 );
 	HSHG_ASSERT( rr->size == 30 );
@@ -158,13 +148,7 @@ void DiffAddEnd()
 	const MemMon::MemoryDiff::DetailChange* pChg = dynamic_cast< const MemMon::MemoryDiff::DetailChange* >( cit->get() );
 	HSHG_ASSERT( pChg != NULL );
 
-	rr = &pChg->GetBefore();
-
-	HSHG_ASSERT( rr->base == 0 );
-	HSHG_ASSERT( rr->size == 20 );
-	HSHG_ASSERT( rr->type == Region::free );
-
-	rr = &pChg->GetAfter();
+	rr = &pChg->GetRegion();
 
 	HSHG_ASSERT( rr->base == 0 );
 	HSHG_ASSERT( rr->size == 30 );
@@ -263,8 +247,8 @@ void DiffIoTrip()
 {
 	MemMon::MemoryDiff d;
 	d.Append( new MemMon::MemoryDiff::Addition( Region( 10, 10, Region::committed ) ) );
-	d.Append( new MemMon::MemoryDiff::DetailChange( Region( 30, 10, Region::free ), Region( 30, 10, Region::reserved ) ) );
-	d.Append( new MemMon::MemoryDiff::Removal( Region( 50, 10, Region::committed ) ) );
+	d.Append( new MemMon::MemoryDiff::DetailChange( Region( 30, 10, Region::reserved ) ) );
+	d.Append( new MemMon::MemoryDiff::Removal( 50 ) );
 
 	std::stringbuf buf;
 	std::streambuf* bufptr = &buf;
@@ -291,15 +275,14 @@ void DiffIoTrip()
 	const MemMon::MemoryDiff::DetailChange* pChg = dynamic_cast< const MemMon::MemoryDiff::DetailChange* >( cit->get() );
 	HSHG_ASSERT( pChg != NULL );
 
-	HSHG_ASSERT( pChg->GetBefore() == Region( 30, 10, Region::free ) );
-	HSHG_ASSERT( pChg->GetAfter() == Region( 30, 10, Region::reserved ) );
+	HSHG_ASSERT( pChg->GetRegion() == Region( 30, 10, Region::reserved ) );
 
 	HSHG_ASSERT( ++cit != cend );
 
 	const MemMon::MemoryDiff::Removal* pRem = dynamic_cast< const MemMon::MemoryDiff::Removal* >( cit->get() );
 	HSHG_ASSERT( pRem != NULL );
 
-	HSHG_ASSERT( pRem->GetRegion() == Region( 50, 10, Region::committed ) );
+	HSHG_ASSERT( pRem->GetBase() == 50 );
 
 	HSHG_ASSERT( ++cit == cend );
 }

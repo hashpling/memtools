@@ -264,9 +264,9 @@ void DebugLog( const MemoryDiff::Change* p )
 	if( const MemoryDiff::Addition* a = dynamic_cast< const MemoryDiff::Addition* >( p ) )
 		std::clog << "add " << a->GetRegion() << std::endl;
 	else if( const MemoryDiff::Removal* r = dynamic_cast< const MemoryDiff::Removal* >( p ) )
-		std::clog << "rem " << r->GetRegion() << std::endl;
+		std::clog << "rem " << r->GetBase() << std::endl;
 	else if( const MemoryDiff::DetailChange* c = dynamic_cast< const MemoryDiff::DetailChange* >( p ) )
-		std::clog << "chg " << c->GetBefore() << " ~ " << c->GetAfter() << std::endl;
+		std::clog << "chg " << c->GetRegion() << std::endl;
 }
 
 }
@@ -302,7 +302,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 		if( ait == aend )
 		{
 			while( bit != bend )
-				_changes.push_back( Changes::value_type( new Removal( *bit++ ) ) );
+				_changes.push_back( Changes::value_type( new Removal( (bit++)->base) ) );
 			break;
 		}
 
@@ -315,7 +315,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 		if( abase < bbase )
 			_changes.push_back( Changes::value_type( new Addition( *ait++ ) ) );
 		else if( abase > bbase )
-			_changes.push_back( Changes::value_type( new Removal( *bit++ ) ) );
+			_changes.push_back( Changes::value_type( new Removal( (bit++)->base ) ) );
 		else
 		{
 			size_t bsize = bit->base + bit->size - bbase;
@@ -327,7 +327,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 				if( a2it != aend && ait->size + a2it->size > bit->size )
 				{
 					commonbase = bit->base + bit->size;
-					_changes.push_back( Changes::value_type( new DetailChange( Region( ait->base, commonbase - ait->base, bit->type ), *ait ) ) );
+					_changes.push_back( Changes::value_type( new DetailChange( *ait ) ) );
 					do
 					{
 						++ait;
@@ -358,7 +358,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 				if( bit->type != ait->type || b2it != bend && bit->size + b2it->size >= ait->size )
 				{
 					commonbase = ait->base + ait->size;
-					_changes.push_back( Changes::value_type( new DetailChange( Region( ait->base, bit->base + bit->size - ait->base, bit->type ), *ait ) ) );
+					_changes.push_back( Changes::value_type( new DetailChange( *ait ) ) );
 					++ait;
 					do
 					{
@@ -369,7 +369,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 				{
 					if( ++bit != bend )
 					{
-						_changes.push_back( Changes::value_type( new Removal( *bit ) ) );
+						_changes.push_back( Changes::value_type( new Removal( bit->base ) ) );
 						commonbase = bit->base + bit->size;
 						++bit;
 					}
@@ -378,7 +378,8 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 			else if ( ait->type != bit->type )
 			{
 				commonbase = bit->base + bit->size;
-				_changes.push_back( Changes::value_type( new DetailChange( *bit++, *ait++ ) ) );
+				_changes.push_back( Changes::value_type( new DetailChange( *ait++ ) ) );
+				++bit;
 			}
 			else
 			{
@@ -474,15 +475,17 @@ void MemoryDiff::Addition::Apply( RegionList& blocklist, RegionList::iterator& i
 
 void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i ) const
 {
-	while( i != blocklist.end() && i->base + i->size <= _r.base )
+	while( i != blocklist.end() && i->base + i->size <= _b )
 		++i;
+
+	size_t s = i->size;
 
 	i = blocklist.erase( i );
 
 	if( i != blocklist.begin() )
 	{
 		const RegionList::iterator j = i - 1;
-		j->size += _r.size;
+		j->size += s;
 
 		if( i != blocklist.end() )
 		{
@@ -496,8 +499,8 @@ void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i 
 	}
 	else if( i != blocklist.end() )
 	{
-		i->base -= _r.size;
-		i->size += _r.size;
+		i->base -= s;
+		i->size += s;
 
 		if( i != blocklist.begin() )
 		{
@@ -513,42 +516,27 @@ void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i 
 
 void MemoryDiff::DetailChange::Apply( RegionList& blocklist, RegionList::iterator& i ) const
 {
-	size_t change_base = _a.base;
-
-	while( i != blocklist.end() && i->base + i->size <= change_base )
+	while( i != blocklist.end() && i->base + i->size <= _r.base )
 		++i;
 
 	if( i == blocklist.end() )
 		throw PatchFailed( PatchFailed::NoMatchForChange );
 
-	*i = _a;
-
-	if( _b.base != _a.base )
-	{
-		if( i == blocklist.begin() )
-			throw( PatchFailed::NoMatchForChange );
-
-		const RegionList::iterator& j = i - 1;
-
-		// unsigned overflow is well defined
-		j->size += _a.base - _b.base;
-
-		if( j->size == 0 )
-			blocklist.erase( j );
-	}
-
-	if( _b.base + _b.size != _a.base + _a.size )
+	if( i->base + i->size != _r.base + _r.size )
 	{
 		const RegionList::iterator& j = i + 1;
 		if( j != blocklist.end() )
 		{
-			size_t diff = _a.base + _a.size - (_b.base + _b.size);
+			size_t diff = _r.base + _r.size - (i->base + i->size);
 			j->base += diff;
 			j->size -= diff;
 			if( j->size == 0 )
 				blocklist.erase( j );
 		}
 	}
+
+	i->size = _r.size;
+	i->type = _r.type;
 }
 
 void MemoryDiff::Apply( MemoryMap& target ) const
@@ -583,20 +571,15 @@ void MemoryDiff::Addition::Write( std::streambuf* sb ) const
 void MemoryDiff::Removal::Write( std::streambuf* sb ) const
 {
 	sb->sputc( '\01' );
-	MyIntPut( sb, _r.base );
-	MyIntPut( sb, _r.size );
-	sb->sputc( _r.type );
+	MyIntPut( sb, _b );
 }
 
 void MemoryDiff::DetailChange::Write( std::streambuf* sb ) const
 {
 	sb->sputc( '\02' );
-	MyIntPut( sb, _b.base );
-	MyIntPut( sb, _b.size );
-	sb->sputc( _b.type );
-	MyIntPut( sb, _a.base );
-	MyIntPut( sb, _a.size );
-	sb->sputc( _a.type );
+	MyIntPut( sb, _r.base );
+	MyIntPut( sb, _r.size );
+	sb->sputc( _r.type );
 }
 
 template< class StreamBuf >
@@ -631,32 +614,27 @@ void MemoryDiff::Read( StreamBuf* sb )
 
 	while( (j = sb->sbumpc()) != traits_type::eof() && j != 0xf0 )
 	{
-		Region r1, r2;
+		Region r;
 
 		switch( j )
 		{
 		case 0:
-			MyIntGet( sb, r2.base, sz );
-			MyIntGet( sb, r2.size );
-			r2.type = static_cast< Region::Type >( sb->sbumpc() );
-			_changes.push_back( Changes::value_type( new Addition( r2 ) ) );
+			MyIntGet( sb, r.base, sz );
+			MyIntGet( sb, r.size );
+			r.type = static_cast< Region::Type >( sb->sbumpc() );
+			_changes.push_back( Changes::value_type( new Addition( r ) ) );
 			break;
 
 		case 1:
-			MyIntGet( sb, r1.base, sz );
-			MyIntGet( sb, r1.size );
-			r1.type = static_cast< Region::Type >( sb->sbumpc() );
-			_changes.push_back( Changes::value_type( new Removal( r1 ) ) );
+			MyIntGet( sb, r.base, sz );
+			_changes.push_back( Changes::value_type( new Removal( r.base ) ) );
 			break;
 
 		case 2:
-			MyIntGet( sb, r1.base, sz );
-			MyIntGet( sb, r1.size );
-			r1.type = static_cast< Region::Type >( sb->sbumpc() );
-			MyIntGet( sb, r2.base, sz );
-			MyIntGet( sb, r2.size );
-			r2.type = static_cast< Region::Type >( sb->sbumpc() );
-			_changes.push_back( Changes::value_type( new DetailChange( r1, r2 ) ) );
+			MyIntGet( sb, r.base, sz );
+			MyIntGet( sb, r.size );
+			r.type = static_cast< Region::Type >( sb->sbumpc() );
+			_changes.push_back( Changes::value_type( new DetailChange( r ) ) );
 			break;
 		}
 	}

@@ -173,37 +173,35 @@ public:
 	class Removal : public MemoryDiff::Change
 	{
 	public:
-		explicit Removal( const Region& r ) : _r( r ) {}
+		explicit Removal( const size_t& b ) : _b( b ) {}
 		void Apply( RegionList&, RegionList::iterator& ) const;
-		Change* Clone() const { return new Removal( _r ); }
+		Change* Clone() const { return new Removal( _b ); }
 		void Write( std::streambuf* sb ) const;
 
-		const Region& GetRegion() const { return _r; }
+		size_t GetBase() const { return _b; }
 
 	private:
 		Removal( const Removal& );
 		Removal& operator=( const Removal& );
 
-		Region _r;
+		size_t _b;
 	};
 
 	class DetailChange : public MemoryDiff::Change
 	{
 	public:
-		explicit DetailChange( const Region& b, const Region& a ) : _b( b ), _a( a ) {}
+		explicit DetailChange( const Region& r ) : _r( r ) {}
 		void Apply( RegionList&, RegionList::iterator& ) const;
-		Change* Clone() const { return new DetailChange( _b, _a ); }
+		Change* Clone() const { return new DetailChange( _r ); }
 		void Write( std::streambuf* sb ) const;
 
-		const Region& GetBefore() const { return _b; }
-		const Region& GetAfter() const { return _a; }
+		const Region& GetRegion() const { return _r; }
 
 	private:
 		DetailChange( const DetailChange& );
 		DetailChange& operator=( const DetailChange& );
 
-		Region _b;
-		Region _a;
+		Region _r;
 	};
 
 	typedef std::vector< ValuePtr< Change, Cloner > > Changes;
