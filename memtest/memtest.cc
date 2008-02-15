@@ -91,7 +91,7 @@ void DiffAddStart()
 
 	cit = crev.begin();
 
-	HSHG_ASSERT( cit != c.end() );
+	HSHG_ASSERT( cit != crev.end() );
 
 	const MemMon::MemoryDiff::DetailChange* pChg = dynamic_cast< const MemMon::MemoryDiff::DetailChange* >( cit->get() );
 	HSHG_ASSERT( pChg != NULL);
@@ -102,7 +102,7 @@ void DiffAddStart()
 	HSHG_ASSERT( rr->size == 30 );
 	HSHG_ASSERT( rr->type == Region::free );
 
-	HSHG_ASSERT( ++cit != c.end() );
+	HSHG_ASSERT( ++cit == crev.end() );
 }
 
 void DiffAddEnd()
