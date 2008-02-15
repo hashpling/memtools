@@ -3,6 +3,7 @@
 #include "mminfo.h"
 #include <sstream>
 #include <cassert>
+#include <iostream>
 
 using std::vector;
 using std::basic_streambuf;
@@ -11,6 +12,7 @@ using std::basic_istream;
 using std::streambuf;
 using std::stringbuf;
 using std::ios_base;
+using std::ostream;
 
 namespace MemMon
 {
@@ -234,6 +236,41 @@ void MemoryMap::Swap( MemoryMap& other )
 	std::swap( _total_reserve, other._total_reserve );
 }
 
+namespace
+{
+
+ostream& operator<<( ostream& o, const Region& r )
+{
+	o << "base=" << r.base << ", size=" << r.size << ", type=";
+	switch( r.type )
+	{
+	case Region::free:
+		o << 'F';
+		break;
+
+	case Region::reserved:
+		o << 'R';
+		break;
+
+	case Region::committed:
+		o << 'C';
+		break;
+	}
+	return o;
+}
+
+void DebugLog( const MemoryDiff::Change* p )
+{
+	if( const MemoryDiff::Addition* a = dynamic_cast< const MemoryDiff::Addition* >( p ) )
+		std::clog << "add " << a->GetRegion() << std::endl;
+	else if( const MemoryDiff::Removal* r = dynamic_cast< const MemoryDiff::Removal* >( p ) )
+		std::clog << "rem " << r->GetRegion() << std::endl;
+	else if( const MemoryDiff::DetailChange* c = dynamic_cast< const MemoryDiff::DetailChange* >( p ) )
+		std::clog << "chg " << c->GetBefore() << " ~ " << c->GetAfter() << std::endl;
+}
+
+}
+
 MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 {
 	RegionList::const_iterator bit = before.GetBlockList().begin();
@@ -243,8 +280,18 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 
 	size_t commonbase = 0;
 
+	size_t oldchangesize = 0;
+
+	std::clog << std::endl;
+
 	while( ait != aend || bit != bend )
 	{
+		for( size_t s = oldchangesize; s < _changes.size(); ++s )
+		{
+			DebugLog( _changes[s].get() );
+			oldchangesize = _changes.size();
+		}
+
 		if( bit == bend )
 		{
 			while( ait != aend )
@@ -258,6 +305,8 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 				_changes.push_back( Changes::value_type( new Removal( *bit++ ) ) );
 			break;
 		}
+
+		std::clog << commonbase << " : " << *bit << " ~ " <<  *ait << std::endl;
 
 		size_t bbase = std::max( commonbase, bit->base );
 		size_t abase = std::max( commonbase, ait->base );
@@ -279,78 +328,51 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 				{
 					commonbase = bit->base + bit->size;
 					_changes.push_back( Changes::value_type( new DetailChange( Region( ait->base, commonbase - ait->base, bit->type ), *ait ) ) );
+					do
+					{
+						++ait;
+					} while ( ait != aend && ait->base + ait->size <= commonbase );
 					++bit;
-					++ait;
 				}
 				else
 				{
-					bool bOriginalPreserved = false;
-
-					do
+					if( ait->type != bit->type )
 					{
-						if( ait->type == bit->type )
-							bOriginalPreserved = true;
-						else
-							_changes.push_back( Changes::value_type( new Addition( *ait ) ) );
-					} while( ++ait != aend && ait->base < bit->base + bit->size );
-
-					if( !bOriginalPreserved )
-					{
-						Changes::value_type vt( new DetailChange( *bit, static_cast< Addition* >( _changes.back().get() )->GetRegion() ) );
-						std::swap( vt, _changes.back() );
+						_changes.push_back( Changes::value_type( new Addition( *ait ) ) );
+						commonbase = ait->base + ait->size;
+						++ait;
 					}
-
-					++bit;
+					else if( ++ait != aend )
+					{
+						_changes.push_back( Changes::value_type( new Addition( *ait ) ) );
+						commonbase = ait->base + ait->size;
+						++ait;
+						while ( bit!= bend && bit->base + bit->size <= commonbase )
+							++bit;
+					}
 				}
 			}
 			else if ( asize > bsize )
 			{
 				const RegionList::const_iterator b2it = bit + 1;
-				if( b2it != bend && bit->size + b2it->size > ait->size )
+				if( bit->type != ait->type || b2it != bend && bit->size + b2it->size >= ait->size )
 				{
 					commonbase = ait->base + ait->size;
 					_changes.push_back( Changes::value_type( new DetailChange( Region( ait->base, bit->base + bit->size - ait->base, bit->type ), *ait ) ) );
-					++bit;
 					++ait;
+					do
+					{
+						++bit;
+					} while ( bit!= bend && bit->base + bit->size <= commonbase );
 				}
 				else
 				{
-					RegionList toremove;
-
-					if( ait->type != bit->type )
-						toremove.push_back( *bit );
-
-					while( ++bit != bend && bit->base <= ait->base + ait->size )
+					if( ++bit != bend )
 					{
-						if( bit->type != ait->type )
-						{
-							toremove.push_back( *bit );
-						}
-						else if( !toremove.empty() )
-						{
-							size_t base = toremove.front().base;
-							for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
-								_changes.push_back( Changes::value_type( new Removal( Region( base, i->base + i->size - base, i->type ) ) ) );
-							toremove.clear();
-						}
+						_changes.push_back( Changes::value_type( new Removal( *bit ) ) );
+						commonbase = bit->base + bit->size;
+						++bit;
 					}
-
-					if( !toremove.empty() )
-					{
-						size_t base = toremove.front().base;
-	//					const RegionList::iterator lastbutone =  - 1;
-
-						for( RegionList::iterator i = toremove.begin(); i != toremove.end(); ++i )
-							_changes.push_back( Changes::value_type( new Removal( Region( base, i->base + i->size - base, i->type ) ) ) );
-
-						if( !_changes.empty() && ait->base + ait->size > base )
-						{
-							Changes::value_type vt( new DetailChange( static_cast< Removal* >( _changes.back().get() )->GetRegion(), Region( base, ait->base + ait->size - base, ait->type ) ) );
-							std::swap( vt, _changes.back() );
-						}
-					}
-
-					++ait;
 				}
 			}
 			else if ( ait->type != bit->type )
@@ -366,6 +388,13 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 			}
 		}
 	}
+
+	for( size_t s = oldchangesize; s < _changes.size(); ++s )
+	{
+		DebugLog( _changes[s].get() );
+		oldchangesize = _changes.size();
+	}
+
 }
 
 namespace
@@ -450,7 +479,22 @@ void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i 
 
 	i = blocklist.erase( i );
 
-	if( i != blocklist.end() )
+	if( i != blocklist.begin() )
+	{
+		const RegionList::iterator j = i - 1;
+		j->size += _r.size;
+
+		if( i != blocklist.end() )
+		{
+			// Merge adjacent blocks of the same type
+			if( i->type == j->type )
+			{
+				j->size += i->size;
+				i = blocklist.erase( i );
+			}
+		}
+	}
+	else if( i != blocklist.end() )
 	{
 		i->base -= _r.size;
 		i->size += _r.size;

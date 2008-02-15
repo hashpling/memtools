@@ -1,7 +1,7 @@
 
 .PHONY: all dep clean test
 
-all: memlib memtest memdiff splitrec
+all: memlib memtest memdiff splitrec memcat
 
 include global.mk
 
@@ -16,6 +16,9 @@ include memdiff/memdiff.mk
 
 Dir := splitrec
 include splitrec/splitrec.mk
+
+Dir := memcat
+include memcat/memcat.mk
 
 include $(DEP_FILES)
 
