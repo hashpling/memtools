@@ -3,16 +3,10 @@
 #include "mminfo.h"
 #include <sstream>
 #include <cassert>
-#include <iostream>
 
-using std::vector;
-using std::basic_streambuf;
-using std::basic_ostream;
-using std::basic_istream;
 using std::streambuf;
 using std::stringbuf;
 using std::ios_base;
-using std::ostream;
 
 namespace MemMon
 {
@@ -236,41 +230,6 @@ void MemoryMap::Swap( MemoryMap& other )
 	std::swap( _total_reserve, other._total_reserve );
 }
 
-namespace
-{
-
-ostream& operator<<( ostream& o, const Region& r )
-{
-	o << "base=" << r.base << ", size=" << r.size << ", type=";
-	switch( r.type )
-	{
-	case Region::free:
-		o << 'F';
-		break;
-
-	case Region::reserved:
-		o << 'R';
-		break;
-
-	case Region::committed:
-		o << 'C';
-		break;
-	}
-	return o;
-}
-
-void DebugLog( const MemoryDiff::Change* p )
-{
-	if( const MemoryDiff::Addition* a = dynamic_cast< const MemoryDiff::Addition* >( p ) )
-		std::clog << "add " << a->GetRegion() << std::endl;
-	else if( const MemoryDiff::Removal* r = dynamic_cast< const MemoryDiff::Removal* >( p ) )
-		std::clog << "rem " << r->GetBase() << std::endl;
-	else if( const MemoryDiff::DetailChange* c = dynamic_cast< const MemoryDiff::DetailChange* >( p ) )
-		std::clog << "chg " << c->GetRegion() << std::endl;
-}
-
-}
-
 MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 {
 	RegionList::const_iterator bit = before.GetBlockList().begin();
@@ -280,18 +239,8 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 
 	size_t commonbase = 0;
 
-	size_t oldchangesize = 0;
-
-	std::clog << std::endl;
-
 	while( ait != aend || bit != bend )
 	{
-		for( size_t s = oldchangesize; s < _changes.size(); ++s )
-		{
-			DebugLog( _changes[s].get() );
-			oldchangesize = _changes.size();
-		}
-
 		if( bit == bend )
 		{
 			while( ait != aend )
@@ -305,8 +254,6 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 				_changes.push_back( Changes::value_type( new Removal( (bit++)->base) ) );
 			break;
 		}
-
-		std::clog << commonbase << " : " << *bit << " ~ " <<  *ait << std::endl;
 
 		size_t bbase = std::max( commonbase, bit->base );
 		size_t abase = std::max( commonbase, ait->base );
@@ -389,13 +336,6 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 			}
 		}
 	}
-
-	for( size_t s = oldchangesize; s < _changes.size(); ++s )
-	{
-		DebugLog( _changes[s].get() );
-		oldchangesize = _changes.size();
-	}
-
 }
 
 namespace
