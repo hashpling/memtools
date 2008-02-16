@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="splitrec"
-	ProjectGUID="{A421B095-96FE-4AD8-A4E9-4CAC956BA7D1}"
-	RootNamespace="splitrec"
+	Name="memcat"
+	ProjectGUID="{2CF04B42-201C-477A-BBF8-4F2D5C8DAFD0}"
+	RootNamespace="memcat"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -334,7 +334,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\splitrec.cc"
+				RelativePath=".\memcat.cc"
 				>
 			</File>
 		</Filter>
