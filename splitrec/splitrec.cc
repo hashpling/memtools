@@ -1,6 +1,7 @@
 #include "mminfo.h"
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 int main( int argc, char* argv[] )
 {
@@ -22,7 +23,7 @@ int main( int argc, char* argv[] )
 				md.Apply( mm );
 
 				std::ostringstream fnamemaker;
-				fnamemaker << argv[i] << "_SPLIT_" << ++count;
+				fnamemaker << argv[i] << "_SPLIT_" << std::setw(3) << std::setfill('0') << ++count;
 
 				std::filebuf out;
 				out.open( fnamemaker.str().c_str(), std::ios_base::out | std::ios_base::binary );

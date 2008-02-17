@@ -418,6 +418,9 @@ void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i 
 	while( i != blocklist.end() && i->base + i->size <= _b )
 		++i;
 
+	if( i == blocklist.end() )
+		return;
+
 	size_t s = i->size;
 
 	i = blocklist.erase( i );
@@ -436,6 +439,8 @@ void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i 
 				i = blocklist.erase( i );
 			}
 		}
+		// Go back to previous block
+		--i;
 	}
 	else if( i != blocklist.end() )
 	{
