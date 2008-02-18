@@ -450,6 +450,69 @@ void ThreeColor()
 	HSHG_ASSERT( m1 == m2 );
 }
 
+void ExpandRemove()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 4, Region::committed ) );
+	m1.AddBlock( Region( 4, 2, Region::reserved ) );
+	m1.AddBlock( Region( 6, 2, Region::committed ) );
+	m1.AddBlock( Region( 8, 2, Region::reserved ) );
+	m1.AddBlock( Region( 10, 2, Region::free ) );
+
+	m2.AddBlock( Region( 0, 9, Region::committed ) );
+	m2.AddBlock( Region( 9, 1, Region::reserved ) );
+	m2.AddBlock( Region( 10, 2, Region::free ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void ComplexReverse()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 4, Region::committed ) );
+	m1.AddBlock( Region( 4, 2, Region::reserved ) );
+	m1.AddBlock( Region( 6, 2, Region::committed ) );
+	m1.AddBlock( Region( 8, 2, Region::reserved ) );
+	m1.AddBlock( Region( 10, 2, Region::free ) );
+
+	m2.AddBlock( Region( 0, 9, Region::reserved ) );
+	m2.AddBlock( Region( 9, 1, Region::committed ) );
+	m2.AddBlock( Region( 10, 2, Region::free ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void AddEndAgain()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 4, Region::committed ) );
+	m1.AddBlock( Region( 4, 1, Region::reserved ) );
+	m1.AddBlock( Region( 5, 5, Region::committed ) );
+
+	m2.AddBlock( Region( 0, 1, Region::committed ) );
+	m2.AddBlock( Region( 1, 1, Region::reserved ) );
+	m2.AddBlock( Region( 2, 1, Region::committed ) );
+	m2.AddBlock( Region( 3, 2, Region::reserved ) );
+	m2.AddBlock( Region( 5, 5, Region::committed ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
 }
 
 HSHG_BEGIN_TESTS
@@ -469,6 +532,9 @@ HSHG_TEST_ENTRY( ExpandBothEnds )
 HSHG_TEST_ENTRY( ContractBothEnds )
 HSHG_TEST_ENTRY( ContractRemove )
 HSHG_TEST_ENTRY( ThreeColor )
+HSHG_TEST_ENTRY( ExpandRemove )
+HSHG_TEST_ENTRY( ComplexReverse )
+HSHG_TEST_ENTRY( AddEndAgain )
 HSHG_END_TESTS
 
 HSHG_TEST_MAIN

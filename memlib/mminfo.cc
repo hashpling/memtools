@@ -294,7 +294,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 						_changes.push_back( Changes::value_type( new Addition( *ait ) ) );
 						commonbase = ait->base + ait->size;
 						++ait;
-						while ( bit!= bend && bit->base + bit->size <= commonbase )
+						while ( bit != bend && bit->base + bit->size <= commonbase )
 							++bit;
 					}
 				}
@@ -302,7 +302,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 			else if ( asize > bsize )
 			{
 				const RegionList::const_iterator b2it = bit + 1;
-				if( bit->type != ait->type || b2it != bend && bit->size + b2it->size >= ait->size )
+				if( bit->type != ait->type || b2it != bend && bsize + b2it->size >= asize )
 				{
 					commonbase = ait->base + ait->size;
 					_changes.push_back( Changes::value_type( new DetailChange( *ait ) ) );
@@ -319,6 +319,8 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 						_changes.push_back( Changes::value_type( new Removal( bit->base ) ) );
 						commonbase = bit->base + bit->size;
 						++bit;
+						while ( ait != aend && ait->base + ait->size <= commonbase )
+							++ait;
 					}
 				}
 			}
@@ -409,6 +411,8 @@ void MemoryDiff::Addition::Apply( RegionList& blocklist, RegionList::iterator& i
 		{
 			i->size -= _r.base + _r.size - i->base;
 			i->base = _r.base + _r.size;
+			if( i->size == 0 )
+				i = blocklist.erase( i );
 		}
 	}
 }
@@ -417,6 +421,9 @@ void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i 
 {
 	while( i != blocklist.end() && i->base + i->size <= _b )
 		++i;
+
+	if( i == blocklist.end() )
+		return;
 
 	size_t s = i->size;
 
@@ -436,6 +443,8 @@ void MemoryDiff::Removal::Apply( RegionList& blocklist, RegionList::iterator& i 
 				i = blocklist.erase( i );
 			}
 		}
+		// Go back to previous block
+		--i;
 	}
 	else if( i != blocklist.end() )
 	{
@@ -462,16 +471,31 @@ void MemoryDiff::DetailChange::Apply( RegionList& blocklist, RegionList::iterato
 	if( i == blocklist.end() )
 		throw PatchFailed( PatchFailed::NoMatchForChange );
 
-	if( i->base + i->size != _r.base + _r.size )
+	size_t iend = i->base + i->size;
+	size_t rend = _r.base + _r.size;
+
+	if( iend > rend )
 	{
-		const RegionList::iterator& j = i + 1;
+		const RegionList::iterator j = i + 1;
 		if( j != blocklist.end() )
 		{
-			size_t diff = _r.base + _r.size - (i->base + i->size);
-			j->base += diff;
-			j->size -= diff;
+			size_t diff = iend - rend;
+			j->base -= diff;
+			j->size += diff;
+		}
+	}
+	else if( iend < rend )
+	{
+		RegionList::iterator j = i + 1;
+		size_t diff = rend - iend;
+		while( diff != 0 && j != blocklist.end() )
+		{
+			size_t reduce = std::min( diff, j->size );
+			diff -= reduce;
+			j->base += reduce;
+			j->size -= reduce;
 			if( j->size == 0 )
-				blocklist.erase( j );
+				j = blocklist.erase( j );
 		}
 	}
 
@@ -560,7 +584,7 @@ void MemoryDiff::Read( StreamBuf* sb )
 		{
 		case 0:
 			MyIntGet( sb, r.base, sz );
-			MyIntGet( sb, r.size );
+			MyIntGet( sb, r.size, sz );
 			r.type = static_cast< Region::Type >( sb->sbumpc() );
 			_changes.push_back( Changes::value_type( new Addition( r ) ) );
 			break;
@@ -572,7 +596,7 @@ void MemoryDiff::Read( StreamBuf* sb )
 
 		case 2:
 			MyIntGet( sb, r.base, sz );
-			MyIntGet( sb, r.size );
+			MyIntGet( sb, r.size, sz );
 			r.type = static_cast< Region::Type >( sb->sbumpc() );
 			_changes.push_back( Changes::value_type( new DetailChange( r ) ) );
 			break;

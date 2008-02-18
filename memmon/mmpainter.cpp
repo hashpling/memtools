@@ -11,6 +11,7 @@
 #include <fstream>
 #include <sstream>
 #include <cassert>
+#include <iomanip>
 
 using std::cos;
 using std::sin;
@@ -672,7 +673,7 @@ void MMPainter::FStreamRecorder::Record( const MemoryMap& l, const MemoryMap& r 
 	d.Write( bufptr );
 #ifdef MEMMON_DEBUG
 	std::ostringstream tmpname;
-	tmpname << _fname << "_DEBUG_" << ++_count;
+	tmpname << _fname << "_DEBUG_" << std::setw(3) << std::setfill( '0' ) << ++_count;
 	ofstream fstmp( tmpname.str().c_str(), std::ios_base::out | std::ios_base::binary );
 	ostream& stmp = fstmp;
 	stmp << r;
