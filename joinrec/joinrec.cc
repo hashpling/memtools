@@ -2,6 +2,11 @@
 #include <fstream>
 #include <sstream>
 
+namespace
+{
+	struct PatchFailed {};
+}
+
 int main( int argc, char* argv[])
 {
 	if( argc > 2 )
@@ -38,7 +43,10 @@ int main( int argc, char* argv[])
 
 				md.Write( outptr );
 
-				std::swap( m, m2 );
+				md.Apply( m );
+
+				if( m != m2 )
+					throw PatchFailed();
 
 				in.close();
 			}
