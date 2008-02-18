@@ -28,6 +28,16 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memdiff", "memdiff\memdiff.
 		{B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA} = {B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memcat", "memcat\memcat.vcproj", "{6F92AD00-F846-47BD-A9B3-43E4C1B49150}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA} = {B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "joinrec", "joinrec\joinrec.vcproj", "{EA158441-27F1-4D70-A42A-89A93CCC7F8E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA} = {B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -60,6 +70,14 @@ Global
 		{8E735EB2-D062-45D9-A2AE-CADFFBDAE422}.Debug.Build.0 = Debug|Win32
 		{8E735EB2-D062-45D9-A2AE-CADFFBDAE422}.Release.ActiveCfg = Release|Win32
 		{8E735EB2-D062-45D9-A2AE-CADFFBDAE422}.Release.Build.0 = Release|Win32
+		{6F92AD00-F846-47BD-A9B3-43E4C1B49150}.Debug.ActiveCfg = Debug|Win32
+		{6F92AD00-F846-47BD-A9B3-43E4C1B49150}.Debug.Build.0 = Debug|Win32
+		{6F92AD00-F846-47BD-A9B3-43E4C1B49150}.Release.ActiveCfg = Release|Win32
+		{6F92AD00-F846-47BD-A9B3-43E4C1B49150}.Release.Build.0 = Release|Win32
+		{EA158441-27F1-4D70-A42A-89A93CCC7F8E}.Debug.ActiveCfg = Debug|Win32
+		{EA158441-27F1-4D70-A42A-89A93CCC7F8E}.Debug.Build.0 = Debug|Win32
+		{EA158441-27F1-4D70-A42A-89A93CCC7F8E}.Release.ActiveCfg = Release|Win32
+		{EA158441-27F1-4D70-A42A-89A93CCC7F8E}.Release.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

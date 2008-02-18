@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="memlib"
-	ProjectGUID="{B045EAFD-A96F-4D4C-AB1A-E8D50EC5B2EA}"
+	Name="joinrec"
+	ProjectGUID="{EA158441-27F1-4D70-A42A-89A93CCC7F8E}"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -14,12 +14,12 @@
 			Name="Debug|Win32"
 			OutputDirectory="..\win32\debug"
 			IntermediateDirectory="Win32\Debug"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="5"
@@ -30,8 +30,13 @@
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
-				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/memlib.lib"/>
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)/joinrec.exe"
+				LinkIncremental="2"
+				GenerateDebugInformation="TRUE"
+				ProgramDatabaseFile="$(OutDir)/joinrec.pdb"
+				SubSystem="1"
+				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -46,6 +51,8 @@
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
 			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
@@ -55,11 +62,11 @@
 			Name="Release|Win32"
 			OutputDirectory="..\win32\release"
 			IntermediateDirectory="Win32\Release"
-			ConfigurationType="4"
+			ConfigurationType="1"
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="4"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -68,8 +75,14 @@
 			<Tool
 				Name="VCCustomBuildTool"/>
 			<Tool
-				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)/memlib.lib"/>
+				Name="VCLinkerTool"
+				OutputFile="$(OutDir)/joinrec.exe"
+				LinkIncremental="1"
+				GenerateDebugInformation="TRUE"
+				SubSystem="1"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
 			<Tool
@@ -84,6 +97,8 @@
 				Name="VCWebServiceProxyGeneratorTool"/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"/>
+			<Tool
+				Name="VCWebDeploymentTool"/>
 			<Tool
 				Name="VCManagedWrapperGeneratorTool"/>
 			<Tool
@@ -98,11 +113,12 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\mminfo.cc">
+				RelativePath=".\joinrec.cc">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories="../memlib"
 						RuntimeLibrary="3"
 						TreatWChar_tAsBuiltInType="TRUE"
 						ForceConformanceInForLoopScope="TRUE"/>
@@ -111,6 +127,7 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
+						AdditionalIncludeDirectories="../memlib"
 						RuntimeLibrary="2"
 						TreatWChar_tAsBuiltInType="TRUE"
 						ForceConformanceInForLoopScope="TRUE"/>
@@ -121,15 +138,6 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
-			<File
-				RelativePath=".\mminfo.h">
-			</File>
-			<File
-				RelativePath=".\mmsource.h">
-			</File>
-			<File
-				RelativePath=".\mmvalueptr.h">
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

@@ -124,7 +124,8 @@
 						AdditionalIncludeDirectories="../memlib"
 						RuntimeLibrary="3"
 						TreatWChar_tAsBuiltInType="TRUE"
-						ForceConformanceInForLoopScope="TRUE"/>
+						ForceConformanceInForLoopScope="TRUE"
+						RuntimeTypeInfo="TRUE"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
@@ -133,7 +134,8 @@
 						AdditionalIncludeDirectories="../memlib"
 						RuntimeLibrary="2"
 						TreatWChar_tAsBuiltInType="TRUE"
-						ForceConformanceInForLoopScope="TRUE"/>
+						ForceConformanceInForLoopScope="TRUE"
+						RuntimeTypeInfo="TRUE"/>
 				</FileConfiguration>
 			</File>
 		</Filter>

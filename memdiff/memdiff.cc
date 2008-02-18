@@ -53,8 +53,8 @@ int main( int argc, char* argv[] )
 
 		std::cerr << "Patch applied incorrectly\n";
 
-		std::cerr << "Region base = " << p.second->base << " size = " << p.second->size << '\n';
-		std::cerr << "Region base = " << p.first->base << " size = " << p.first->size << '\n';
+		std::cerr << "Region base = " << p.second->base << " size = " << p.second->size << " type = " << (int)p.second->type << '\n';
+		std::cerr << "Region base = " << p.first->base << " size = " << p.first->size << " type = " << (int)p.first->type << '\n';
 
 		return EXIT_FAILURE;
 	}
