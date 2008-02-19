@@ -82,7 +82,7 @@ void MemoryMap::Read( StreamBuf* sb )
 	if( sz > sizeof(size_t))
 		throw ios_base::failure("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
 
-	Clear();
+	PartialClear();
 
 	size_t m = (size_t)-1;
 	while( (t = sb->sbumpc()) != 0xf0 && t != traits_type::eof() )
@@ -130,11 +130,11 @@ void MemoryMap::UpdateFreeList( const Region& r, const Region* modified )
 {
 	switch( r.type )
 	{
-	case 0:
+	case Region::free:
 		_total_free += r.size;
 		break;
 
-	case 1:
+	case Region::reserved:
 		_total_reserve += r.size;
 		break;
 
@@ -143,57 +143,54 @@ void MemoryMap::UpdateFreeList( const Region& r, const Region* modified )
 		break;
 	}
 
-	if( _freelist.empty() )
+	if( r.type != Region::free || _freelist.empty() )
 		return;
 
-	if( r.type == 0 )
+	const size_t wraparound = static_cast< size_t >( -1 );
+
+	size_t j;
+
+	if( modified == NULL )
 	{
-		const size_t wraparound = static_cast< size_t >( -1 );
+		if( _freelist.back().size >= r.size )
+			return;
 
-		size_t j;
-
-		if( modified == NULL )
-		{
-			if( _freelist.back().size >= r.size )
-				return;
-
-			modified = &r;
-			j = _freelist.size() - 1U;
-		}
-		else
-		{
-			if( _freelist.back().size >= modified->size )
-				return;
-
-			size_t oldsize = modified->size - r.size;
-
-			bool moveold = false;
-
-			for(j = _freelist.size() - 1U; j != wraparound; --j)
-			{
-				if( _freelist[j].size > oldsize ) break;
-				if( _freelist[j].base == modified->base )
-				{
-					moveold = true;
-					_freelist[j].size = modified->size;
-					break;
-				}
-			}
-
-			if( !moveold )
-				j = _freelist.size() - 1U;
-		}
-
-		while( --j != wraparound )
-		{
-			if (_freelist[j].size >= modified->size) break;
-			_freelist[j+1].size = _freelist[j].size;
-			_freelist[j+1].base = _freelist[j].base;
-		}
-
-		_freelist[j+1].size = modified->size;
-		_freelist[j+1].base = modified->base;
+		modified = &r;
+		j = _freelist.size() - 1U;
 	}
+	else
+	{
+		if( _freelist.back().size >= modified->size )
+			return;
+
+		size_t oldsize = modified->size - r.size;
+
+		bool moveold = false;
+
+		for(j = _freelist.size() - 1U; j != wraparound; --j)
+		{
+			if( _freelist[j].size > oldsize ) break;
+			if( _freelist[j].base == modified->base )
+			{
+				moveold = true;
+				_freelist[j].size = modified->size;
+				break;
+			}
+		}
+
+		if( !moveold )
+			j = _freelist.size() - 1U;
+	}
+
+	while( --j != wraparound )
+	{
+		if (_freelist[j].size >= modified->size) break;
+		_freelist[j+1].size = _freelist[j].size;
+		_freelist[j+1].base = _freelist[j].base;
+	}
+
+	_freelist[j+1].size = modified->size;
+	_freelist[j+1].base = modified->base;
 }
 
 void MemoryMap::AddBlock( const Region& r )

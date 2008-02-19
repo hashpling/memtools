@@ -603,6 +603,8 @@ void MMPainter::Read(HWND hwnd)
 		try
 		{
 			std::istream& i = ifs;
+
+			mem.Clear();
 			i >> mem;
 
 			if (ifs.fail())
