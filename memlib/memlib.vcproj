@@ -273,6 +273,10 @@
 				RelativePath=".\memorymap.cc"
 				>
 			</File>
+			<File
+				RelativePath=".\mminfo.cc"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

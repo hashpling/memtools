@@ -7,7 +7,6 @@
 
 using std::streambuf;
 using std::stringbuf;
-using std::ios_base;
 
 namespace MemMon
 {
@@ -50,12 +49,12 @@ void MemoryMap::Read( StreamBuf* sb )
 		s.sputc( t );
 
 	if (s.str() != "V1")
-		throw ios_base::failure("This file is not a valid Address Space Monitor dump.");
+		throw ReadError("This file is not a valid Address Space Monitor dump.");
 
 	size_t sz = sb->sbumpc();
 
 	if( sz > sizeof(size_t))
-		throw ios_base::failure("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
+		throw ReadError("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
 
 	PartialClear();
 
@@ -200,6 +199,7 @@ void MemoryMap::Swap( MemoryMap& other )
 	std::swap( _total_free, other._total_free );
 	std::swap( _total_commit, other._total_commit );
 	std::swap( _total_reserve, other._total_reserve );
+	std::swap( _ts, other._ts );
 }
 
 }

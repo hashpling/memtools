@@ -419,6 +419,8 @@ size_t MMPainter::ProcessSource::Update( MemoryMap& m )
 
 	max_addr = (size_t)meminfo.BaseAddress + meminfo.RegionSize;
 
+	m.Stamp();
+
 	return max_addr;
 }
 

@@ -64,16 +64,34 @@ private:
 	std::string _msg;
 };
 
-class Timestamp
-{
-public:
-
 #ifdef _WIN32
 	typedef __int64 mmint64;
 #else
 	typedef int_least64_t mmint64;
 #endif
 
+class TimeInterval
+{
+public:
+	friend class Timestamp;
+	friend TimeInterval operator-( const Timestamp&, const Timestamp& );
+
+	TimeInterval() : _msec( 0 ) {}
+
+	template< class StreamBuf >
+	void Write( StreamBuf* ) const;
+
+	template< class StreamBuf >
+	void Read( StreamBuf* );
+
+private:
+	TimeInterval( mmint64 ms ) : _msec( ms ) {}
+	mmint64 _msec;
+};
+
+class Timestamp
+{
+public:
 	Timestamp() : _msec( 0 ) {}
 
 	static Timestamp now();
@@ -87,10 +105,44 @@ public:
 	long seconds() const { return static_cast<long>( _msec / 1000 ); }
 	long milliseconds() const { return static_cast<long>( _msec % 1000 ); }
 
+	Timestamp& operator+=( const TimeInterval& ti )
+	{
+		_msec += ti._msec;
+		return *this;
+	}
+
+	Timestamp& operator-=( const TimeInterval& ti )
+	{
+		_msec -= ti._msec;
+		return *this;
+	}
+
+	friend TimeInterval operator-( const Timestamp&, const Timestamp& );
+
 private:
+	Timestamp( mmint64 ms ) : _msec( ms ) {}
 	mmint64 _msec;
 };
 
+inline TimeInterval operator-( const Timestamp& l, const Timestamp& r )
+{
+	return TimeInterval( l._msec - r._msec );
+}
+
+inline Timestamp operator+( Timestamp ts, const TimeInterval& ti )
+{
+	return ts += ti;
+}
+
+inline Timestamp operator+( const TimeInterval& ti, Timestamp ts )
+{
+	return ts += ti;
+}
+
+inline Timestamp operator-( Timestamp ts, const TimeInterval& ti )
+{
+	return ts -= ti;
+}
 
 template< class Stream >
 inline Stream& operator<<( Stream& os, const Timestamp& ts )
