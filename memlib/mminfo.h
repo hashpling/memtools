@@ -9,6 +9,10 @@
 #include <exception>
 #include "mmvalueptr.h"
 
+#ifndef _WIN32
+#include <stdint.h>
+#endif
+
 namespace MemMon
 {
 
@@ -59,6 +63,48 @@ public:
 private:
 	std::string _msg;
 };
+
+class Timestamp
+{
+public:
+
+#ifdef _WIN32
+	typedef __int64 mmint64;
+#else
+	typedef int_least64_t mmint64;
+#endif
+
+	Timestamp() : _msec( 0 ) {}
+
+	static Timestamp now();
+
+	template< class StreamBuf >
+	void Write( StreamBuf* ) const;
+
+	template< class StreamBuf >
+	void Read( StreamBuf* );
+
+	long seconds() const { return static_cast<long>( _msec / 1000 ); }
+	long milliseconds() const { return static_cast<long>( _msec % 1000 ); }
+
+private:
+	mmint64 _msec;
+};
+
+
+template< class Stream >
+inline Stream& operator<<( Stream& os, const Timestamp& ts )
+{
+	ts.Write( os.rdbuf() );
+	return os;
+}
+
+template< class Stream >
+inline Stream& operator>>( Stream& is, Timestamp& ts)
+{
+	ts.Read( is.rdbuf() );
+	return is;
+}
 
 }
 

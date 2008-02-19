@@ -42,6 +42,10 @@ public:
 
 	void Swap( MemoryMap& other );
 
+	void Stamp() { _ts = Timestamp::now(); }
+
+	const Timestamp& GetTimestamp() const { return _ts; }
+
 private:
 	MemoryMap( const MemoryMap& );
 	MemoryMap& operator=( const MemoryMap& );
@@ -55,6 +59,8 @@ private:
 	size_t _total_free;
 	size_t _total_commit;
 	size_t _total_reserve;
+
+	Timestamp _ts;
 };
 
 template< class Stream >

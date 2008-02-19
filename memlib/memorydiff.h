@@ -98,8 +98,11 @@ public:
 
 	void Append( Change* c ) { _changes.push_back( Changes::value_type( c ) ); }
 
+	const Timestamp& GetTimestamp() const { return _ts; }
+
 private:
 	Changes _changes;
+	Timestamp _ts;
 };
 
 }

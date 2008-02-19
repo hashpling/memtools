@@ -8,6 +8,7 @@ namespace MemMon
 {
 
 MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
+	: _ts( after.GetTimestamp() )
 {
 	RegionList::const_iterator bit = before.GetBlockList().begin();
 	RegionList::const_iterator ait = after.GetBlockList().begin();
