@@ -70,6 +70,8 @@ private:
 	typedef int_least64_t mmint64;
 #endif
 
+class Timestamp;
+
 class TimeInterval
 {
 public:

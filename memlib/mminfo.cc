@@ -4,6 +4,8 @@
 #ifdef _WIN32
 #include <sys/types.h>
 #include <sys/timeb.h>
+#else
+#include <sys/time.h>
 #endif
 
 namespace MemMon
@@ -23,6 +25,10 @@ Timestamp Timestamp::now()
 
 Timestamp Timestamp::now()
 {
+	struct timeval tv;
+	struct timezone tz;
+	gettimeofday( &tv, &tz );
+	return mmint64( tv.tv_sec ) * 1000 + ( tv.tv_usec / 1000 );
 }
 
 #endif

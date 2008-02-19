@@ -50,7 +50,9 @@ namespace
 template< class StreamBuf >
 inline void checkeof( StreamBuf*, typename StreamBuf::int_type n )
 {
-	if( typename StreamBuf::traits_type::eq_int_type( n, typename StreamBuf::traits_type::eof() ) )
+	typedef typename StreamBuf::traits_type traits_type;
+	typedef typename StreamBuf::int_type int_type;
+	if( traits_type::eq_int_type( n, traits_type::eof() ) )
 		throw ReadError( "Unexpected end of stream" );
 }
 
@@ -72,10 +74,11 @@ void MemoryMap::Read( StreamBuf* sb )
 
 	t = sb->sbumpc();
 	checkeof( sb, t );
-	if( t > sizeof(size_t))
-		throw ReadError( "This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture." );
 
 	size_t sz = t;
+	if( sz > sizeof(size_t))
+		throw ReadError( "This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture." );
+
 
 	int_type version = traits_type::eof();
 
