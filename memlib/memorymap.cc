@@ -14,8 +14,13 @@ namespace MemMon
 template< class StreamBuf >
 void MemoryMap::Write( StreamBuf* sb ) const
 {
-	sb->sputn( "V1", 3 );
+	sb->sputn( "Mm", 3 );
 	sb->sputc( sizeof( size_t ) );
+
+	// version
+	sb->sputc( 2 );
+
+	_ts.Write( sb );
 
 	size_t m = -1;
 
@@ -24,14 +29,14 @@ void MemoryMap::Write( StreamBuf* sb ) const
 		if (m != i->base)
 		{
 			sb->sputc(i->type | 0x40);
-			MyIntPut(sb, i->base);
+			IntPut(sb, i->base);
 		}
 		else
 		{
 			sb->sputc(i->type);
 		}
 
-		MyIntPut(sb, i->size);
+		IntPut(sb, i->size);
 
 		m = i->base + i->size;
 	}
@@ -39,22 +44,57 @@ void MemoryMap::Write( StreamBuf* sb ) const
 	sb->sputc( '\xf0' );
 }
 
+namespace
+{
+
+template< class StreamBuf >
+inline void checkeof( StreamBuf*, typename StreamBuf::int_type n )
+{
+	if( typename StreamBuf::traits_type::eq_int_type( n, typename StreamBuf::traits_type::eof() ) )
+		throw ReadError( "Unexpected end of stream" );
+}
+
+}
+
 template< class StreamBuf >
 void MemoryMap::Read( StreamBuf* sb )
 {
 	typedef typename StreamBuf::traits_type traits_type;
+	typedef typename StreamBuf::int_type int_type;
+
 	stringbuf s;
-	typename traits_type::int_type t;
+	int_type t;
+
 	while( (t = sb->sbumpc()) != 0 && t != traits_type::eof() )
 		s.sputc( t );
 
-	if (s.str() != "V1")
-		throw ReadError("This file is not a valid Address Space Monitor dump.");
+	checkeof( sb, t );
 
-	size_t sz = sb->sbumpc();
+	t = sb->sbumpc();
+	checkeof( sb, t );
+	if( t > sizeof(size_t))
+		throw ReadError( "This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture." );
 
-	if( sz > sizeof(size_t))
-		throw ReadError("This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture.");
+	size_t sz = t;
+
+	int_type version = traits_type::eof();
+
+	if( s.str() == "Mm" )
+	{
+		t = sb->sbumpc();
+		checkeof( sb, t );
+		version = t;
+	}
+	else if (s.str() == "V1")
+		version = 1;
+	else
+		throw ReadError( "This file is not a valid Address Space Monitor dump." );
+
+	if( version < 1 || version > 2 )
+		throw ReadError( "Unsupported version" );
+
+	if( version > 1 )
+		_ts.Read( sb );
 
 	PartialClear();
 
@@ -65,11 +105,11 @@ void MemoryMap::Read( StreamBuf* sb )
 		r.type = static_cast< Region::Type >( t & 0xf );
 
 		if( (t & 0x40) != 0 )
-			MyIntGet( sb, r.base, sz );
+			IntGet( sb, r.base, sz );
 		else
 			r.base = m;
 
-		MyIntGet( sb, r.size, sz );
+		IntGet( sb, r.size, sz );
 
 		m = r.base + r.size;
 

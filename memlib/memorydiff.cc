@@ -305,22 +305,22 @@ template<> void DoWrite( const MemoryDiff::Change* c, std::streambuf* sb )
 void MemoryDiff::Addition::Write( std::streambuf* sb ) const
 {
 	sb->sputc( '\0' );
-	MyIntPut( sb, _r.base );
-	MyIntPut( sb, _r.size );
+	IntPut( sb, _r.base );
+	IntPut( sb, _r.size );
 	sb->sputc( _r.type );
 }
 
 void MemoryDiff::Removal::Write( std::streambuf* sb ) const
 {
 	sb->sputc( '\01' );
-	MyIntPut( sb, _b );
+	IntPut( sb, _b );
 }
 
 void MemoryDiff::DetailChange::Write( std::streambuf* sb ) const
 {
 	sb->sputc( '\02' );
-	MyIntPut( sb, _r.base );
-	MyIntPut( sb, _r.size );
+	IntPut( sb, _r.base );
+	IntPut( sb, _r.size );
 	sb->sputc( _r.type );
 }
 
@@ -361,20 +361,20 @@ void MemoryDiff::Read( StreamBuf* sb )
 		switch( j )
 		{
 		case 0:
-			MyIntGet( sb, r.base, sz );
-			MyIntGet( sb, r.size, sz );
+			IntGet( sb, r.base, sz );
+			IntGet( sb, r.size, sz );
 			r.type = static_cast< Region::Type >( sb->sbumpc() );
 			_changes.push_back( Changes::value_type( new Addition( r ) ) );
 			break;
 
 		case 1:
-			MyIntGet( sb, r.base, sz );
+			IntGet( sb, r.base, sz );
 			_changes.push_back( Changes::value_type( new Removal( r.base ) ) );
 			break;
 
 		case 2:
-			MyIntGet( sb, r.base, sz );
-			MyIntGet( sb, r.size, sz );
+			IntGet( sb, r.base, sz );
+			IntGet( sb, r.size, sz );
 			r.type = static_cast< Region::Type >( sb->sbumpc() );
 			_changes.push_back( Changes::value_type( new DetailChange( r ) ) );
 			break;

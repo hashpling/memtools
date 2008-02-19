@@ -22,7 +22,7 @@ public:
 
 	bool operator==( const MemoryMap& other ) const
 	{
-		return _blocklist == other._blocklist && _freelist == other._freelist;
+		return _blocklist == other._blocklist && _ts == other._ts;
 	}
 	bool operator!=( const MemoryMap& other ) const { return !(*this == other); }
 

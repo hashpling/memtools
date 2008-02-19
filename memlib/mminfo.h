@@ -119,6 +119,16 @@ public:
 
 	friend TimeInterval operator-( const Timestamp&, const Timestamp& );
 
+	bool operator==( const Timestamp& other ) const
+	{
+		return _msec == other._msec;
+	}
+
+	bool operator!=( const Timestamp& other ) const
+	{
+		return !(*this == other);
+	}
+
 private:
 	Timestamp( mmint64 ms ) : _msec( ms ) {}
 	mmint64 _msec;
