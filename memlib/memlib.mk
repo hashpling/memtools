@@ -2,7 +2,7 @@
 
 STEM := memlib
 TGT_TYPE := lib
-memlib_SOURCES := mminfo.cc
+memlib_SOURCES := memorymap.cc memorydiff.cc
 
 memlib_CPPFLAGS := -DPROJ=memlib
 memlib_XINCLUDES := $(Dir)

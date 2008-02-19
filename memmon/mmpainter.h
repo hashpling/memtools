@@ -8,7 +8,7 @@
 #include <iosfwd>
 #include <memory>
 #include <fstream>
-#include "mminfo.h"
+#include "memorymap.h"
 #include "mmsource.h"
 
 #ifdef _DEBUG

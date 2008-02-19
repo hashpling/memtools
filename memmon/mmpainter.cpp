@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include "mmpainter.h"
+#include "memorydiff.h"
 #include <cmath>
 #include <vector>
 #include <algorithm>
