@@ -20,7 +20,7 @@ namespace MemMon
 	};
 
 	// Class like std::auto_ptr, but copies its target on
-	template< class T, template< class > class Cloner >
+	template< class T, template< class > class C >
 	class ValuePtr
 	{
 	public:
@@ -32,7 +32,7 @@ namespace MemMon
 		explicit ValuePtr( T* t = 0 ) throw() : _t( t ) {}
 
 		ValuePtr( const ValuePtr& r )
-			: _t( r._t ? Cloner< T >::MakeClone( r._t ) : 0 )
+			: _t( r._t ? C< T >::MakeClone( r._t ) : 0 )
 		{
 		}
 
