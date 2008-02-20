@@ -327,8 +327,13 @@ void MemoryDiff::DetailChange::Write( std::streambuf* sb ) const
 template< class StreamBuf >
 void MemoryDiff::Write( StreamBuf* sb ) const
 {
-	sb->sputn( "md", 3 );
+	sb->sputn( "Md", 3 );
 	sb->sputc( sizeof( size_t ) );
+
+	// version
+	sb->sputc( 2 );
+
+	_ti.Write( sb );
 
 	for( Changes::const_iterator i = _changes.begin(); i != _changes.end(); ++i )
 	{
@@ -344,15 +349,36 @@ void MemoryDiff::Read( StreamBuf* sb )
 
 	char b[4];
 
+	int version;
+
 	if( sb->sgetn( b, 4 ) != 4 )
 		throw ReadError( "MemoryDiff signature is incomplete" );
 
-	if( memcmp( b, "md", 3) != 0 )
+	typename traits_type::int_type j;
+
+	if( memcmp( b, "Md", 3) == 0 )
+	{
+		j = sb->sbumpc();
+		if( traits_type::eq_int_type( j, traits_type::eof() ) )
+			throw ReadError( "Unexpected end of stream" );
+		version = j;
+	}
+	else if( memcmp( b, "md", 3) == 0 )
+	{
+		version = 1;
+	}
+	else
+	{
 		throw ReadError( "MemoryDiff signature is incorrect" );
+	}
+
+	if( version < 1 || version > 2 )
+		throw ReadError( "Unsupported version" );
+
+	if( version > 1 )
+		_ti.Read( sb );
 
 	size_t sz = b[3];
-
-	typename traits_type::int_type j;
 
 	while( (j = sb->sbumpc()) != traits_type::eof() && j != 0xf0 )
 	{

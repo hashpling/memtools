@@ -50,6 +50,8 @@ MMPainter::MMPainter(int r, MMPrefs* p)
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
 
+	mem.Clear( 50 );
+
 	maxaddr = (size_t)sysinfo.lpMaximumApplicationAddress;
 	processor_count = (double)sysinfo.dwNumberOfProcessors;
 }
@@ -607,7 +609,6 @@ void MMPainter::Read(HWND hwnd)
 		{
 			std::istream& i = ifs;
 
-			mem.Clear();
 			i >> mem;
 
 			if (ifs.fail())

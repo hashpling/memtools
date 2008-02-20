@@ -80,7 +80,7 @@ void MemoryMap::Read( StreamBuf* sb )
 		throw ReadError( "This file is not compatible with this version of Address Space Monitor as it was saved by a version compiled for a different architecture." );
 
 
-	int_type version = traits_type::eof();
+	int version;
 
 	if( s.str() == "Mm" )
 	{
@@ -99,7 +99,7 @@ void MemoryMap::Read( StreamBuf* sb )
 	if( version > 1 )
 		_ts.Read( sb );
 
-	PartialClear();
+	Clear( _freelist.size() );
 
 	size_t m = (size_t)-1;
 	while( (t = sb->sbumpc()) != 0xf0 && t != traits_type::eof() )

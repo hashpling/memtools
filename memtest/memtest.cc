@@ -537,6 +537,18 @@ void MapIoTrip()
 	HSHG_ASSERT( m1 == m2 );
 }
 
+void TimestampTest()
+{
+	const char testts1[] = "2008-02-20T21:13:27.249Z";
+	const char testts2[] = "2008-02-21T21:13:27.249Z";
+
+	MemMon::Timestamp ts1( testts1 );
+
+	MemMon::Timestamp ts2( ts1 + MemMon::TimeInterval( 86400000 ) );
+
+	HSHG_ASSERT( ts2.GetUTCString() == testts2 );
+}
+
 }
 
 HSHG_BEGIN_TESTS
@@ -560,6 +572,7 @@ HSHG_TEST_ENTRY( ExpandRemove )
 HSHG_TEST_ENTRY( ComplexReverse )
 HSHG_TEST_ENTRY( AddEndAgain )
 HSHG_TEST_ENTRY( MapIoTrip )
+HSHG_TEST_ENTRY( TimestampTest )
 HSHG_END_TESTS
 
 HSHG_TEST_MAIN

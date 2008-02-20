@@ -22,8 +22,12 @@ int main( int argc, char* argv[] )
 				std::cout << "Base = " << i->base << " Size = " << i->size << " Type = " << (int)i->type << '\n';
 			}
 
+			std::cout << "\nGenerated at " << m.GetTimestamp().GetUTCString().c_str() << '\n';
+
 			std::cout << "\nTotal free = " << m.GetFreeTotal() << " Total reserved = " << m.GetReserveTotal()
-				<< " Total committed = " << m.GetCommitTotal() << " Largest free block = "
+				<< " Total committed = " << m.GetCommitTotal() << '\n';
+
+			std::cout << " Largest free block = "
 				<< m.GetFreeList().front().size << " @ " << std::setbase( std::ios_base::hex ) << m.GetFreeList().front().base << std::endl;
 		}
 	}

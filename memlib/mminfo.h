@@ -79,6 +79,7 @@ public:
 	friend TimeInterval operator-( const Timestamp&, const Timestamp& );
 
 	TimeInterval() : _msec( 0 ) {}
+	explicit TimeInterval( mmint64 ms ) : _msec( ms ) {}
 
 	template< class StreamBuf >
 	void Write( StreamBuf* ) const;
@@ -87,7 +88,6 @@ public:
 	void Read( StreamBuf* );
 
 private:
-	TimeInterval( mmint64 ms ) : _msec( ms ) {}
 	mmint64 _msec;
 };
 
@@ -95,6 +95,8 @@ class Timestamp
 {
 public:
 	Timestamp() : _msec( 0 ) {}
+	explicit Timestamp( mmint64 ms ) : _msec( ms ) {}
+	explicit Timestamp( const char* utcstring );
 
 	static Timestamp now();
 
@@ -131,8 +133,9 @@ public:
 		return !(*this == other);
 	}
 
+	std::string GetUTCString() const;
+
 private:
-	Timestamp( mmint64 ms ) : _msec( ms ) {}
 	mmint64 _msec;
 };
 
