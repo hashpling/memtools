@@ -4,6 +4,7 @@
 //
 #define IDC_MYICON                      2
 #define IDD_MEMMON_DIALOG               102
+#define IDD_CREATEPROC_DLOG             102
 #define IDS_APP_TITLE                   103
 #define IDD_ABOUTBOX                    103
 #define IDM_ABOUT                       104
@@ -21,6 +22,15 @@
 #define IDC_CHECK_CPUCOUNT              1004
 #define IDC_CHECK_TOPMOST               1005
 #define IDC_PROCLIST                    1006
+#define IDC_BROWSE_CMD                  1010
+#define IDC_EDIT_ARGS                   1011
+#define IDC_EDIT_WD                     1012
+#define IDC_EDIT4                       1013
+#define IDC_EDIT_RECORD                 1013
+#define IDC_RECORD                      1014
+#define IDC_BROWSE_WD                   1015
+#define IDC_BROWSE_REC                  1016
+#define IDC_EDIT_CMD                    1017
 #define ID_FILE_ATTACH                  32771
 #define ID_Menu                         32772
 #define IDM_EDIT_PREFERENCES            32773
@@ -35,9 +45,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        131
+#define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         32780
-#define _APS_NEXT_CONTROL_VALUE         1007
+#define _APS_NEXT_CONTROL_VALUE         1018
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

@@ -16,6 +16,10 @@
 namespace MemMon
 {
 
+// Basic type to throw from constructors
+template< class T >
+struct ConstructorFailure {};
+
 struct FreeRegion
 {
 	FreeRegion( size_t b, size_t s ) : base( b ), size( s ) {}
