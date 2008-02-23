@@ -84,7 +84,14 @@ INT_PTR CALLBACK AttachProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 
 			case IDOK:
 				GetDlgItemText(hwndDlg, IDC_EDIT1, tmp, 200);
-				reinterpret_cast< MMPainter* >( GetWindowLongPtr( hwndDlg, GWLP_USERDATA ) )->SetProcessId( _ttoi(tmp) );
+				try
+				{
+					reinterpret_cast< MMPainter* >( GetWindowLongPtr( hwndDlg, GWLP_USERDATA ) )->SetProcessId( _ttoi(tmp) );
+				}
+				catch( const std::exception& ex )
+				{
+					::MessageBoxA( hwndDlg, ex.what(), "Attach failed", MB_ICONINFORMATION | MB_OK );
+				}
 				// Drop through
 			case IDCANCEL:
 				EndDialog(hwndDlg, wParam);

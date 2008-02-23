@@ -8,6 +8,7 @@
 #include "mmpainter.h"
 #include "mmprefs.h"
 #include "attachdlg.h"
+#include "createprocdlg.h"
 
 #include <sstream>
 #include <crtdbg.h>
@@ -259,6 +260,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_FILE_SAVEAS:
 			pPaint->Snapshot(hWnd);
+			break;
+		case ID_FILE_RUN:
+			CreateProcDialog::Run( hInst, hWnd, pPaint, timerid );
 			break;
 		case ID_FILE_RECORD:
 			if( pPaint->Record( hWnd ) )

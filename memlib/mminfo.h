@@ -16,9 +16,33 @@
 namespace MemMon
 {
 
+class Exception : public std::exception
+{
+public:
+	Exception() {}
+
+	Exception( const char* txt ) : _reason( txt ) {}
+	Exception( const std::string& str ) : _reason( str ) {}
+
+	virtual ~Exception() throw() {}
+	virtual const char* what() const throw() { return _reason.empty() ? std::exception::what() : _reason.c_str(); }
+
+private:
+	std::string _reason;
+};
+
 // Basic type to throw from constructors
 template< class T >
-struct ConstructorFailure {};
+class ConstructorFailure : public Exception
+{
+public:
+	ConstructorFailure() {}
+
+	ConstructorFailure( const char* txt ) : Exception( txt ) {}
+	ConstructorFailure( const std::string& str ) : Exception( str ) {}
+
+	virtual ~ConstructorFailure() throw() {}
+};
 
 struct FreeRegion
 {

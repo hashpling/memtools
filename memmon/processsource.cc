@@ -28,8 +28,8 @@ namespace
 template< class T > T* StrDup( const T* );
 template< class T > void StrFree( T* t ) { free(t); }
 
-template<> char* StrDup( const char* t ) { return _strdup( t ); }
-template<> wchar_t* StrDup( const wchar_t* t ) { return _wcsdup( t ); }
+template<> char* StrDup( const char* t ) { return t ? _strdup( t ) : NULL; }
+template<> wchar_t* StrDup( const wchar_t* t ) { return t ? _wcsdup( t ) : NULL; }
 
 template< class T >
 class StrDupBuffer
@@ -47,6 +47,23 @@ private:
 template< class T >
 StrDupBuffer< T > MkDupBuffer( const T* t ) { return StrDupBuffer< T >( t ); }
 
+class Freer
+{
+public:
+	Freer() : _hmem( NULL ) {}
+
+	~Freer()
+	{
+		::LocalFree( _hmem );
+	}
+
+	LPSTR GetHandlePtr() { return reinterpret_cast< LPSTR >( &_hmem ); }
+	const char* GetString() const{ return reinterpret_cast< const char* >( _hmem ); }
+
+private:
+	HLOCAL _hmem;
+};
+
 }
 
 ProcessSource::ProcessSource( const TCHAR* cmd, const TCHAR* args, const TCHAR* wd )
@@ -58,10 +75,24 @@ ProcessSource::ProcessSource( const TCHAR* cmd, const TCHAR* args, const TCHAR* 
 {
 	PROCESS_INFORMATION pi;
 
-	BOOL b = ::CreateProcess( cmd, MkDupBuffer( args ), NULL, NULL, FALSE, 0, NULL, wd, NULL, &pi ); 
+	STARTUPINFO si;
+	si.cb = sizeof si;
+	si.lpReserved = NULL;
+	si.lpDesktop = NULL;
+	si.lpTitle = NULL;
+	si.dwFlags = 0;
+	si.cbReserved2 = 0;
+	si.lpReserved2 = NULL;
+
+	BOOL b = ::CreateProcess( cmd, MkDupBuffer( args ), NULL, NULL, FALSE, 0, NULL, wd, &si, &pi );
 
 	if( b == FALSE )
-		throw ConstructorFailure< ProcessSource >();
+	{
+		Freer hloc;
+		DWORD err = ::GetLastError();
+		::FormatMessageA( FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, err, 0, hloc.GetHandlePtr() , 0, NULL );
+		throw ConstructorFailure< ProcessSource >( hloc.GetString() );
+	}
 
 	::CloseHandle( pi.hThread );
 	_proc = pi.hProcess;

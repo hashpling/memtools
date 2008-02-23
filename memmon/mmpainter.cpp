@@ -51,8 +51,6 @@ MMPainter::MMPainter(int r, MMPrefs* p)
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
 
-	mem.Clear( 50 );
-
 	maxaddr = (size_t)sysinfo.lpMaximumApplicationAddress;
 	processor_count = (double)sysinfo.dwNumberOfProcessors;
 }
@@ -343,13 +341,14 @@ void MMPainter::DisplayTotals(HDC hdc, int offset) const
 
 void MMPainter::SetProcessId(int p)
 {
-	try
-	{
-		_source.reset( new MemMon::Win::ProcessSource( p ) );
-	}
-	catch( MemMon::ConstructorFailure< MemMon::Win::ProcessSource >& )
-	{
-	}
+	_source.reset( new MemMon::Win::ProcessSource( p ) );
+	mem.Clear( 50 );
+}
+
+void MMPainter::Run( const TCHAR* c, const TCHAR* wd, const TCHAR* a )
+{
+	_source.reset( new MemMon::Win::ProcessSource( c, wd, a ) );
+	mem.Clear( 50 );
 }
 
 void MMPainter::Update()
@@ -421,28 +420,59 @@ bool DoSaveDialog( HWND hwnd, char* filename )
 
 }
 
+void MMPainter::Snapshot( const char* fname ) const
+{
+	ofstream ofs( fname, ios_base::out | ios_base::binary );
+
+	std::ostream& o = ofs;
+	o << mem;
+
+	if (ofs.fail())
+	{
+		throw MemMon::Exception( "There was an error writing out the dump." );
+	}
+}
+
 void MMPainter::Snapshot(HWND hwnd) const
 {
 	char filename[MAX_PATH];
 
 	if (DoSaveDialog(hwnd, filename))
 	{
-		ofstream ofs(filename, ios_base::out | ios_base::binary);
-
 		try
 		{
-			std::ostream& o = ofs;
-			o << mem;
-
-			if (ofs.fail())
-			{
-				MessageBox(hwnd, _T("There was an error writing out the dump."), _T("Write Error"), MB_ICONWARNING | MB_OK);
-			}
+			Snapshot( filename );
 		}
-		catch (exception& ex)
+		catch( exception& ex )
 		{
 			MessageBoxA(hwnd, ex.what(), "Write Error", MB_ICONINFORMATION | MB_OK);
 		}
+	}
+}
+
+void MMPainter::Read( const char* fname )
+{
+	ifstream ifs( fname, ios_base::in | ios_base::binary );
+
+	if( !ifs.is_open() )
+		throw MemMon::Exception( "There was an error opening the dump." );
+
+	_recorder.reset();
+
+	std::istream& i = ifs;
+	i >> mem;
+
+	if (ifs.fail())
+		throw MemMon::Exception( "There was an error reading the dump." );
+
+	_source.reset();
+
+	const Region& r = mem.GetBlockList().back();
+	maxaddr = r.base + r.size;
+
+	if (hMemDC != NULL)
+	{
+		MemPaint(hMemDC);
 	}
 }
 
@@ -478,38 +508,20 @@ void MMPainter::Read(HWND hwnd)
 
 	if (GetOpenFileNameA(&ofn))
 	{
-		_recorder.reset();
-
-		ifstream ifs(filename, ios_base::in | ios_base::binary);
-
 		try
 		{
-			std::istream& i = ifs;
-
-			i >> mem;
-
-			if (ifs.fail())
-			{
-				MessageBox(hwnd, _T("There was an error reading the dump."), _T("Read Error"), MB_ICONWARNING | MB_OK);
-			}
-			else
-			{
-				_source.reset();
-
-				const Region& r = mem.GetBlockList().back();
-				maxaddr = r.base + r.size;
-
-				if (hMemDC != NULL)
-				{
-					MemPaint(hMemDC);
-				}
-			}
+			Read( filename );
 		}
 		catch (exception& ex)
 		{
 			MessageBoxA(hwnd, ex.what(), "Read Error", MB_ICONINFORMATION | MB_OK);
 		}
 	}
+}
+
+void MMPainter::Record( const char* fname )
+{
+	_recorder.reset( new FStreamRecorder( fname, mem ) );
 }
 
 bool MMPainter::Record(HWND hwnd)
@@ -520,11 +532,12 @@ bool MMPainter::Record(HWND hwnd)
 	{
 		try
 		{
-			_recorder.reset( new FStreamRecorder( filename, mem ) );
+			Record( filename );
 			return true;
 		}
-		catch (...)
+		catch( exception& ex )
 		{
+			MessageBoxA( hwnd, ex.what(), "Record Error", MB_ICONINFORMATION | MB_OK );
 		}
 	}
 	return false;

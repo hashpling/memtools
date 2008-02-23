@@ -26,14 +26,18 @@ public:
 	void Paint(HDC hdc, PAINTSTRUCT* ps);
 
 	void SetProcessId(int p);
+	void Run( const TCHAR* c, const TCHAR* wd, const TCHAR* a );
 	void Update();
 
 	const RECT& GetRect() const { return rsize; }
 
 	void Snapshot(HWND hwnd) const;
+	void Snapshot( const char* fname ) const;
 	void Read(HWND hwnd);
+	void Read( const char* fname );
 
 	bool Record(HWND hwnd);
+	void Record( const char* fname );
 
 private:
 	class Recorder
