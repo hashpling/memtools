@@ -345,9 +345,9 @@ void MMPainter::SetProcessId(int p)
 	mem.Clear( 50 );
 }
 
-void MMPainter::Run( const TCHAR* c, const TCHAR* wd, const TCHAR* a )
+void MMPainter::Run( const TCHAR* c, const TCHAR* a, const TCHAR* wd )
 {
-	_source.reset( new MemMon::Win::ProcessSource( c, wd, a ) );
+	_source.reset( new MemMon::Win::ProcessSource( c, a, wd ) );
 	mem.Clear( 50 );
 }
 

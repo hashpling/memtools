@@ -26,7 +26,7 @@ public:
 	void Paint(HDC hdc, PAINTSTRUCT* ps);
 
 	void SetProcessId(int p);
-	void Run( const TCHAR* c, const TCHAR* wd, const TCHAR* a );
+	void Run( const TCHAR* c, const TCHAR* a, const TCHAR* wd );
 	void Update();
 
 	const RECT& GetRect() const { return rsize; }

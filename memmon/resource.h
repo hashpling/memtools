@@ -31,6 +31,8 @@
 #define IDC_BROWSE_WD                   1015
 #define IDC_BROWSE_REC                  1016
 #define IDC_EDIT_CMD                    1017
+#define IDC_COMBO1                      1020
+#define IDC_CMD_HIST                    1020
 #define ID_FILE_ATTACH                  32771
 #define ID_Menu                         32772
 #define IDM_EDIT_PREFERENCES            32773
@@ -48,7 +50,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        132
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1018
+#define _APS_NEXT_CONTROL_VALUE         1022
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
