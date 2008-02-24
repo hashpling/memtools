@@ -9,8 +9,40 @@
 #include <exception>
 #include "mmvalueptr.h"
 
+#ifndef _WIN32
+#include <stdint.h>
+#endif
+
 namespace MemMon
 {
+
+class Exception : public std::exception
+{
+public:
+	Exception() {}
+
+	Exception( const char* txt ) : _reason( txt ) {}
+	Exception( const std::string& str ) : _reason( str ) {}
+
+	virtual ~Exception() throw() {}
+	virtual const char* what() const throw() { return _reason.empty() ? std::exception::what() : _reason.c_str(); }
+
+private:
+	std::string _reason;
+};
+
+// Basic type to throw from constructors
+template< class T >
+class ConstructorFailure : public Exception
+{
+public:
+	ConstructorFailure() {}
+
+	ConstructorFailure( const char* txt ) : Exception( txt ) {}
+	ConstructorFailure( const std::string& str ) : Exception( str ) {}
+
+	virtual ~ConstructorFailure() throw() {}
+};
 
 struct FreeRegion
 {
@@ -60,10 +92,22 @@ private:
 	std::string _msg;
 };
 
-class MemoryMap
+#ifdef _WIN32
+	typedef __int64 mmint64;
+#else
+	typedef int_least64_t mmint64;
+#endif
+
+class Timestamp;
+
+class TimeInterval
 {
 public:
-	MemoryMap() {}
+	friend class Timestamp;
+	friend TimeInterval operator-( const Timestamp&, const Timestamp& );
+
+	TimeInterval() : _msec( 0 ) {}
+	explicit TimeInterval( mmint64 ms ) : _msec( ms ) {}
 
 	template< class StreamBuf >
 	void Write( StreamBuf* ) const;
@@ -71,154 +115,92 @@ public:
 	template< class StreamBuf >
 	void Read( StreamBuf* );
 
-	bool operator==( const MemoryMap& other ) const
-	{
-		return _blocklist == other._blocklist && _freelist == other._freelist;
-	}
-	bool operator!=( const MemoryMap& other ) const { return !(*this == other); }
-
-	const RegionList& GetBlockList() const { return _blocklist; }
-	const FreeList& GetFreeList() const { return _freelist; }
-
-	size_t GetFreeTotal() const { return _total_free; }
-	size_t GetCommitTotal() const { return _total_commit; }
-	size_t GetReserveTotal() const { return _total_reserve; }
-
-	void Clear( size_t freecount = 50 );
-	void AddBlock( const Region& r );
-
-	void RecalcFreeList();
-
-	RegionList& GetBlockListRef() { return _blocklist; }
-
-	void Swap( MemoryMap& other );
-
 private:
-	MemoryMap( const MemoryMap& );
-	MemoryMap& operator=( const MemoryMap& );
-
-	void UpdateFreeList( const Region& r, const Region* modified );
-	void PartialClear();
-
-	RegionList _blocklist;
-	FreeList _freelist;
-
-	size_t _total_free;
-	size_t _total_commit;
-	size_t _total_reserve;
+	mmint64 _msec;
 };
 
-template< class Stream >
-inline Stream& operator<<( Stream& os, const MemoryMap& mem )
+class Timestamp
 {
-	mem.Write( os.rdbuf() );
+public:
+	Timestamp() : _msec( 0 ) {}
+	explicit Timestamp( mmint64 ms ) : _msec( ms ) {}
+	explicit Timestamp( const char* utcstring );
+
+	static Timestamp now();
+
+	template< class StreamBuf >
+	void Write( StreamBuf* ) const;
+
+	template< class StreamBuf >
+	void Read( StreamBuf* );
+
+	long seconds() const { return static_cast<long>( _msec / 1000 ); }
+	long milliseconds() const { return static_cast<long>( _msec % 1000 ); }
+
+	Timestamp& operator+=( const TimeInterval& ti )
+	{
+		_msec += ti._msec;
+		return *this;
+	}
+
+	Timestamp& operator-=( const TimeInterval& ti )
+	{
+		_msec -= ti._msec;
+		return *this;
+	}
+
+	friend TimeInterval operator-( const Timestamp&, const Timestamp& );
+
+	bool operator==( const Timestamp& other ) const
+	{
+		return _msec == other._msec;
+	}
+
+	bool operator!=( const Timestamp& other ) const
+	{
+		return !(*this == other);
+	}
+
+	std::string GetUTCString() const;
+
+private:
+	mmint64 _msec;
+};
+
+inline TimeInterval operator-( const Timestamp& l, const Timestamp& r )
+{
+	return TimeInterval( l._msec - r._msec );
+}
+
+inline Timestamp operator+( Timestamp ts, const TimeInterval& ti )
+{
+	return ts += ti;
+}
+
+inline Timestamp operator+( const TimeInterval& ti, Timestamp ts )
+{
+	return ts += ti;
+}
+
+inline Timestamp operator-( Timestamp ts, const TimeInterval& ti )
+{
+	return ts -= ti;
+}
+
+template< class Stream >
+inline Stream& operator<<( Stream& os, const Timestamp& ts )
+{
+	ts.Write( os.rdbuf() );
 	return os;
 }
 
 template< class Stream >
-inline Stream& operator>>( Stream& is, MemoryMap& mem)
+inline Stream& operator>>( Stream& is, Timestamp& ts)
 {
-	mem.Read( is.rdbuf() );
+	ts.Read( is.rdbuf() );
 	return is;
 }
 
-class MemoryDiff
-{
-public:
-	MemoryDiff() {}
-	MemoryDiff( const MemoryMap& before, const MemoryMap& after );
-
-	void Apply( MemoryMap& target ) const;
-	void ReverseApply( MemoryMap& target ) const;
-
-	template< class StreamBuf >
-	void Write( StreamBuf* ) const;
-
-	template< class StreamBuf >
-	void Read( StreamBuf* );
-
-	enum ChangeType
-	{
-		  addition
-		, removal
-		, change
-	};
-
-	class Change
-	{
-	public:
-		virtual ~Change() {}
-		virtual void Apply( RegionList&, RegionList::iterator& ) const = 0;
-		virtual Change* Clone() const = 0;
-		virtual void Write( std::streambuf* sb ) const = 0;
-	};
-
-	class Addition : public MemoryDiff::Change
-	{
-	public:
-		explicit Addition( const Region& r ) : _r( r ) {}
-		void Apply( RegionList&, RegionList::iterator& ) const;
-		Change* Clone() const { return new Addition( _r ); }
-		void Write( std::streambuf* sb ) const;
-
-		const Region& GetRegion() const { return _r; }
-
-	private:
-		Addition( const Addition& );
-		Addition& operator=( const Addition& );
-
-		Region _r;
-	};
-
-	class Removal : public MemoryDiff::Change
-	{
-	public:
-		explicit Removal( const size_t& b ) : _b( b ) {}
-		void Apply( RegionList&, RegionList::iterator& ) const;
-		Change* Clone() const { return new Removal( _b ); }
-		void Write( std::streambuf* sb ) const;
-
-		size_t GetBase() const { return _b; }
-
-	private:
-		Removal( const Removal& );
-		Removal& operator=( const Removal& );
-
-		size_t _b;
-	};
-
-	class DetailChange : public MemoryDiff::Change
-	{
-	public:
-		explicit DetailChange( const Region& r ) : _r( r ) {}
-		void Apply( RegionList&, RegionList::iterator& ) const;
-		Change* Clone() const { return new DetailChange( _r ); }
-		void Write( std::streambuf* sb ) const;
-
-		const Region& GetRegion() const { return _r; }
-
-	private:
-		DetailChange( const DetailChange& );
-		DetailChange& operator=( const DetailChange& );
-
-		Region _r;
-	};
-
-	typedef std::vector< ValuePtr< Change, Cloner > > Changes;
-
-	const Changes& GetChanges() const { return _changes; }
-
-	void Append( Change* c ) { _changes.push_back( Changes::value_type( c ) ); }
-
-private:
-	Changes _changes;
-};
-
-}
-
-namespace std
-{
-	template<> inline void swap( MemMon::MemoryMap& l, MemMon::MemoryMap& r ) { l.Swap( r ); }
 }
 
 #endif//MMINFO_H

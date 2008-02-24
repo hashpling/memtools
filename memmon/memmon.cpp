@@ -7,6 +7,8 @@
 #include "memmon.h"
 #include "mmpainter.h"
 #include "mmprefs.h"
+#include "attachdlg.h"
+#include "createprocdlg.h"
 
 #include <sstream>
 #include <crtdbg.h>
@@ -24,6 +26,7 @@ TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 MMPainter* pPaint;
 MMPrefs* pPrefs;
 UINT_PTR timerid = 0;
+bool bRecMenuState = false;
 }
 
 // Forward declarations of functions included in this code module:
@@ -172,113 +175,6 @@ void MyPaint(HDC hdc, PAINTSTRUCT* ps)
 	}
 }
 
-void PopulateProcessList(HWND listBox)
-{
-	DWORD pids[1024];
-	DWORD pids_ret_size;
-
-	if (::EnumProcesses(pids, sizeof pids, &pids_ret_size))
-	{
-		HANDLE hProc;
-		TCHAR procname[1024];
-
-		for (size_t i = (pids_ret_size / sizeof(DWORD)) - 1; i != (size_t)-1; --i)
-		{
-			hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pids[i]);
-			if (hProc != NULL)
-			{
-				//::GetProcessImageFileName(hProc, procname, sizeof procname / sizeof(TCHAR));
-				//::GetModuleFileNameEx(hProc, NULL, procname, sizeof procname / sizeof(TCHAR));
-				if (::GetModuleBaseName(hProc, NULL, procname, sizeof procname / sizeof(TCHAR)))
-				{
-					LRESULT lRes = ::SendMessage( listBox, LB_ADDSTRING, 0, LPARAM(procname) );
-					if (lRes >= 0)
-					{
-						::SendMessage( listBox, LB_SETITEMDATA, lRes, pids[i] );
-					}
-				}
-				else if (::GetProcessImageFileName(hProc, procname, sizeof procname / sizeof(TCHAR)))
-				{
-					LRESULT lRes = ::SendMessage( listBox, LB_ADDSTRING, 0, LPARAM(procname) );
-					if (lRes >= 0)
-					{
-						::SendMessage( listBox, LB_SETITEMDATA, lRes, pids[i] );
-					}
-				}
-
-			}
-		}
-	}
-}
-
-INT_PTR CALLBACK AttachProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	INT_PTR ret = (INT_PTR)FALSE;
-	switch (message)
-	{
-
-	case WM_COMMAND:
-		{
-			_TCHAR tmp[200] = { 0 };
-			switch (LOWORD(wParam))
-			{
-			case IDC_PROCLIST:
-				switch (HIWORD(wParam))
-				{
-				case LBN_SELCHANGE:
-					{
-						LRESULT lRes = ::SendMessage(HWND(lParam), LB_GETCURSEL, 0, 0);
-
-						if (lRes >= 0)
-						{
-							lRes = ::SendMessage(HWND(lParam), LB_GETITEMDATA, lRes, 0);
-							if (lRes >= 0)
-							{
-								wostringstream oss;
-								oss << lRes;
-								SetDlgItemText(hwndDlg, IDC_EDIT1, oss.str().c_str());
-							}
-						}
-					}
-					break;
-				case LBN_DBLCLK:
-					::SendMessage(hwndDlg, WM_COMMAND, IDOK, 0);
-					break;
-				}
-				break;
-
-			case IDOK:
-				GetDlgItemText(hwndDlg, IDC_EDIT1, tmp, 200);
-				pPaint->SetProcessId( _ttoi(tmp) );
-				// Drop through
-			case IDCANCEL:
-				EndDialog(hwndDlg, wParam);
-				ret = (INT_PTR)TRUE;
-			}
-		}
-		break;
-	case WM_INITDIALOG:
-		{
-			HWND hProcList = ::GetDlgItem(hwndDlg, IDC_PROCLIST);
-			if (hProcList != NULL)
-			{
-				PopulateProcessList(hProcList);
-			}
-		}
-		// Return true to set default focus
-		ret = (INT_PTR)TRUE;
-	}
-	return ret;
-}
-
-void RunAttachDialog(HWND hWnd)
-{
-	if (DialogBox(hInst, MAKEINTRESOURCE(IDD_ATTACH_DLOG), hWnd, AttachProc))
-	{
-		timerid = SetTimer(hWnd, 1, 100, NULL);
-	}
-}
-
 void CheckTopmostSetting(HWND hWnd, const MMPrefs::UIPrefs& uiprf)
 {
 	WINDOWINFO wi;
@@ -293,7 +189,7 @@ void CheckTopmostSetting(HWND hWnd, const MMPrefs::UIPrefs& uiprf)
 	}
 }
 
-void DoCheckMenuItem( HWND hWnd, bool check )
+void DoFlipMenuItem( HWND hWnd, bool& check )
 {
 	HMENU hMenu = GetMenu( hWnd );
 
@@ -306,6 +202,8 @@ void DoCheckMenuItem( HWND hWnd, bool check )
 
 	if( GetMenuItemInfo( hMenu, ID_FILE_RECORD, FALSE, &mii ) )
 	{
+		check = !check;
+
 		if( check )
 			mii.fState |= MFS_CHECKED;
 		else
@@ -353,7 +251,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 			break;
 		case ID_FILE_ATTACH:
-			RunAttachDialog(hWnd);
+			AttachDialog::Run( hInst, hWnd, pPaint, timerid );
 			break;
 		case IDM_EDIT_PREFERENCES:
 			pPrefs->RunDialog(hInst, hWnd);
@@ -366,21 +264,37 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_FILE_SAVEAS:
 			pPaint->Snapshot(hWnd);
 			break;
+		case ID_FILE_RUN:
+			CreateProcDialog::Run( hInst, hWnd, pPaint, timerid );
+			if( pPaint->IsRecording() != bRecMenuState )
+				DoFlipMenuItem( hWnd, bRecMenuState );
+			break;
 		case ID_FILE_RECORD:
-			if( pPaint->Record( hWnd ) )
-				DoCheckMenuItem( hWnd, true );
+			if( !bRecMenuState )
+				pPaint->Record( hWnd );
+			else
+				pPaint->StopRecording();
+
+			if( pPaint->IsRecording() != bRecMenuState )
+				DoFlipMenuItem( hWnd, bRecMenuState );
+
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
+
 	case WM_TIMER:
 		pPaint->Update();
+		if( pPaint->IsRecording() != bRecMenuState )
+			DoFlipMenuItem( hWnd, bRecMenuState );
 		InvalidateRect(hWnd, &rect, TRUE);
+		break;
 
 	case WM_KEYDOWN:
 		//PollShNotIcon(hWnd);
 		break;
+
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...

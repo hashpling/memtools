@@ -8,7 +8,7 @@
 #include <iosfwd>
 #include <memory>
 #include <fstream>
-#include "mminfo.h"
+#include "memorymap.h"
 #include "mmsource.h"
 
 #ifdef _DEBUG
@@ -26,39 +26,23 @@ public:
 	void Paint(HDC hdc, PAINTSTRUCT* ps);
 
 	void SetProcessId(int p);
-	void Update();
+	void Run( const TCHAR* c, const TCHAR* a, const TCHAR* wd );
+	void Update( bool bForce = false );
 
 	const RECT& GetRect() const { return rsize; }
 
 	void Snapshot(HWND hwnd) const;
+	void Snapshot( const char* fname ) const;
 	void Read(HWND hwnd);
+	void Read( const char* fname );
 
 	bool Record(HWND hwnd);
+	void Record( const char* fname );
+
+	bool IsRecording() const { return _recorder.get() != NULL; }
+	void StopRecording() { return _recorder.reset(); }
 
 private:
-
-	class ProcessSource : public MemMon::Source
-	{
-	public:
-		ProcessSource( int pid );
-		~ProcessSource();
-
-		size_t Update( MemMon::MemoryMap& );
-		double Poll( const MemMon::CPUPrefs& prefs );
-		double GetPos() const;
-
-	private:
-		HANDLE _proc;
-
-		double actual_u;
-		double actual_k;
-
-		double ind_pos;
-		double ind_vel;
-
-		double last_poll;
-	};
-
 	class Recorder
 	{
 	public:

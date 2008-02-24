@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
-#include "mminfo.h"
+#include "memorymap.h"
+#include "memorydiff.h"
 #include "hshgtest.h"
 
 namespace
@@ -513,6 +514,41 @@ void AddEndAgain()
 	HSHG_ASSERT( m1 == m2 );
 }
 
+void MapIoTrip()
+{
+	MemMon::MemoryMap m1, m2;
+	m1.AddBlock( Region( 0, 3, Region::committed ) );
+	m1.AddBlock( Region( 3, 1, Region::free ) );
+	m1.AddBlock( Region( 4, 2, Region::committed ) );
+	m1.AddBlock( Region( 6, 2, Region::reserved ) );
+	m1.AddBlock( Region( 8, 2, Region::committed ) );
+	m1.AddBlock( Region( 10, 2, Region::free ) );
+
+	m1.Stamp();
+
+	std::stringbuf buf;
+	std::streambuf* bufptr = &buf;
+
+	m1.Write( bufptr );
+	buf.pubsync();
+
+	m2.Read( bufptr );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
+void TimestampTest()
+{
+	const char testts1[] = "2008-02-20T21:13:27.249Z";
+	const char testts2[] = "2008-02-21T21:13:27.249Z";
+
+	MemMon::Timestamp ts1( testts1 );
+
+	MemMon::Timestamp ts2( ts1 + MemMon::TimeInterval( 86400000 ) );
+
+	HSHG_ASSERT( ts2.GetUTCString() == testts2 );
+}
+
 }
 
 HSHG_BEGIN_TESTS
@@ -535,6 +571,8 @@ HSHG_TEST_ENTRY( ThreeColor )
 HSHG_TEST_ENTRY( ExpandRemove )
 HSHG_TEST_ENTRY( ComplexReverse )
 HSHG_TEST_ENTRY( AddEndAgain )
+HSHG_TEST_ENTRY( MapIoTrip )
+HSHG_TEST_ENTRY( TimestampTest )
 HSHG_END_TESTS
 
 HSHG_TEST_MAIN

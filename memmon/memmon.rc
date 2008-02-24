@@ -45,7 +45,8 @@ BEGIN
         MENUITEM "&Attach...",                  ID_FILE_ATTACH
         MENUITEM "&Open...",                    ID_FILE_OPEN
         MENUITEM "&Save as...",                 ID_FILE_SAVEAS
-        MENUITEM "&Record...",                  ID_FILE_RECORD
+        MENUITEM "Re&cord...",                  ID_FILE_RECORD
+        MENUITEM "&Run...",                     ID_FILE_RUN
         MENUITEM "E&xit",                       IDM_EXIT
     END
     POPUP "&Edit"
@@ -115,6 +116,28 @@ BEGIN
     LTEXT           "Damping",IDC_STATIC,7,33,28,8
 END
 
+IDD_CREATEPROC_DLOG DIALOGEX 0, 0, 316, 185
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Run"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_EDIT_CMD,80,43,168,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...",IDC_BROWSE_CMD,252,43,50,14,NOT WS_VISIBLE
+    EDITTEXT        IDC_EDIT_ARGS,80,62,168,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_WD,80,82,168,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse...",IDC_BROWSE_WD,252,82,50,14,NOT WS_VISIBLE
+    CONTROL         "Record",IDC_RECORD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,34,116,39,10
+    EDITTEXT        IDC_EDIT_RECORD,80,116,167,14,ES_AUTOHSCROLL | WS_DISABLED
+    PUSHBUTTON      "Browse...",IDC_BROWSE_REC,252,116,50,14,NOT WS_VISIBLE | WS_DISABLED
+    DEFPUSHBUTTON   "OK",IDOK,205,164,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,259,164,50,14
+    LTEXT           "Application",IDC_STATIC,37,43,36,8
+    LTEXT           "Arguments",IDC_STATIC,37,62,36,8
+    LTEXT           "Working directory",IDC_STATIC,15,82,58,8
+    GROUPBOX        "Command",IDC_STATIC,7,30,302,77
+    COMBOBOX        IDC_CMD_HIST,80,7,169,131,CBS_DROPDOWNLIST | NOT WS_VISIBLE | WS_VSCROLL | WS_TABSTOP
+END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -166,6 +189,14 @@ BEGIN
         RIGHTMARGIN, 179
         TOPMARGIN, 7
         BOTTOMMARGIN, 170
+    END
+
+    IDD_CREATEPROC_DLOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 178
     END
 END
 #endif    // APSTUDIO_INVOKED

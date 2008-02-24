@@ -2,6 +2,8 @@
 
 #include "stdafx.h"
 #include "mmpainter.h"
+#include "memorydiff.h"
+#include "processsource.h"
 #include <cmath>
 #include <vector>
 #include <algorithm>
@@ -337,97 +339,34 @@ void MMPainter::DisplayTotals(HDC hdc, int offset) const
 	SetTextColor(hdc, txtcol);
 }
 
-namespace
-{
-	template< class T >
-	struct ConstructorFailure {};
-}
-
-MMPainter::ProcessSource::ProcessSource( int p )
-: actual_u(0.0)
-, actual_k(0.0)
-, ind_pos(0.0)
-, ind_vel(0.0)
-, last_poll(0.0)
-{
-	_proc = ::OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, p );
-
-	if( _proc == NULL )
-		throw ConstructorFailure< ProcessSource >();
-}
-
-MMPainter::ProcessSource::~ProcessSource()
-{
-	::CloseHandle( _proc );
-}
-
 void MMPainter::SetProcessId(int p)
 {
-	try
-	{
-		_source.reset( new ProcessSource( p ) );
-	}
-	catch( ConstructorFailure< ProcessSource >& )
-	{
-	}
+	_source.reset( new MemMon::Win::ProcessSource( p ) );
+	mem.Clear( 50 );
 }
 
-size_t MMPainter::ProcessSource::Update( MemoryMap& m )
+void MMPainter::Run( const TCHAR* c, const TCHAR* a, const TCHAR* wd )
 {
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-
-	size_t max_addr = (size_t)sysinfo.lpMaximumApplicationAddress;
-
-	Region r;
-	m.Clear();
-
-	MEMORY_BASIC_INFORMATION meminfo;
-
-	for (char* p = (char*)sysinfo.lpMinimumApplicationAddress;
-		p < (char*)sysinfo.lpMaximumApplicationAddress;
-		p += sysinfo.dwPageSize)
-	{
-		VirtualQueryEx( _proc, p, &meminfo, sizeof(meminfo) );
-
-		if (p != meminfo.BaseAddress) break;
-
-		r.base = (size_t)meminfo.BaseAddress;
-		r.size = meminfo.RegionSize;
-		switch (meminfo.State)
-		{
-		case MEM_FREE:
-			r.type = Region::free;
-			break;
-		case MEM_RESERVE:
-			r.type = Region::reserved;
-			break;
-		case MEM_COMMIT:
-		default:
-			r.type = Region::committed;
-			break;
-		}
-
-		m.AddBlock( r );
-
-		if (meminfo.RegionSize > 0)
-		{
-			p += (meminfo.RegionSize - sysinfo.dwPageSize);
-		}
-	}
-
-	max_addr = (size_t)meminfo.BaseAddress + meminfo.RegionSize;
-
-	return max_addr;
+	_source.reset( new MemMon::Win::ProcessSource( c, a, wd ) );
+	mem.Clear( 50 );
 }
 
-void MMPainter::Update()
+void MMPainter::Update( bool bForce )
 {
 	if (_source.get() != NULL)
 	{
 		double ctime = _source->Poll( pPrefs->GetCPUPrefs() );
 
-		if (ctime > next_update)
+		if( ctime == 0.0 )
+		{
+			_recorder.reset();
+			_source.reset();
+			mem.Clear();
+			MemPaint( hMemDC );
+			return;
+		}
+
+		if ( bForce || ctime > next_update )
 		{
 			maxaddr = _source->Update( _memprev );
 			std::swap( mem, _memprev );
@@ -451,55 +390,6 @@ void MMPainter::Update()
 			}
 		}
 	}
-}
-
-inline double FT2dbl(LPFILETIME lpFt)
-{
-	__int64 tmp = (__int64(lpFt->dwHighDateTime) << 32) + __int64(lpFt->dwLowDateTime);
-	return double(tmp) / 10000000.0;
-}
-
-double MMPainter::ProcessSource::Poll( const MemMon::CPUPrefs& prefs )
-{
-	double k = prefs.k;
-	const double delta_t = 0.1;
-	double damping = prefs.damper;
-
-	FILETIME currtime;
-	FILETIME sysidle, syskernel, sysuser;
-	FILETIME proccreate, procexit, prockern, procuser;
-
-	GetSystemTimeAsFileTime(&currtime);
-	GetSystemTimes(&sysidle, &syskernel, &sysuser);
-	GetProcessTimes(_proc, &proccreate, &procexit, &prockern, &procuser);
-
-	double dtime = FT2dbl(&currtime);
-
-	double new_u = FT2dbl(&procuser);
-	double new_k = FT2dbl(&prockern);
-
-	double cpufrac = ((new_u - actual_u) + (new_k - actual_k)) / (dtime - last_poll);
-
-	if (last_poll > 0.0)
-	{
-		for (double time = last_poll; time < dtime; time += delta_t)
-		{
-			double daccel = k * (cpufrac - ind_pos) - damping * ind_vel;
-			ind_vel += daccel * delta_t;
-			ind_pos += ind_vel * delta_t;
-		}
-	}
-
-	actual_u = new_u;
-	actual_k = new_k;
-	last_poll = dtime;
-
-	return dtime;
-}
-
-double MMPainter::ProcessSource::GetPos() const
-{
-	return ind_pos;
 }
 
 namespace
@@ -539,28 +429,59 @@ bool DoSaveDialog( HWND hwnd, char* filename )
 
 }
 
+void MMPainter::Snapshot( const char* fname ) const
+{
+	ofstream ofs( fname, ios_base::out | ios_base::binary );
+
+	std::ostream& o = ofs;
+	o << mem;
+
+	if (ofs.fail())
+	{
+		throw MemMon::Exception( "There was an error writing out the dump." );
+	}
+}
+
 void MMPainter::Snapshot(HWND hwnd) const
 {
 	char filename[MAX_PATH];
 
 	if (DoSaveDialog(hwnd, filename))
 	{
-		ofstream ofs(filename, ios_base::out | ios_base::binary);
-
 		try
 		{
-			std::ostream& o = ofs;
-			o << mem;
-
-			if (ofs.fail())
-			{
-				MessageBox(hwnd, _T("There was an error writing out the dump."), _T("Write Error"), MB_ICONWARNING | MB_OK);
-			}
+			Snapshot( filename );
 		}
-		catch (exception& ex)
+		catch( exception& ex )
 		{
 			MessageBoxA(hwnd, ex.what(), "Write Error", MB_ICONINFORMATION | MB_OK);
 		}
+	}
+}
+
+void MMPainter::Read( const char* fname )
+{
+	ifstream ifs( fname, ios_base::in | ios_base::binary );
+
+	if( !ifs.is_open() )
+		throw MemMon::Exception( "There was an error opening the dump." );
+
+	_recorder.reset();
+
+	std::istream& i = ifs;
+	i >> mem;
+
+	if (ifs.fail())
+		throw MemMon::Exception( "There was an error reading the dump." );
+
+	_source.reset();
+
+	const Region& r = mem.GetBlockList().back();
+	maxaddr = r.base + r.size;
+
+	if (hMemDC != NULL)
+	{
+		MemPaint(hMemDC);
 	}
 }
 
@@ -596,37 +517,20 @@ void MMPainter::Read(HWND hwnd)
 
 	if (GetOpenFileNameA(&ofn))
 	{
-		_recorder.reset();
-
-		ifstream ifs(filename, ios_base::in | ios_base::binary);
-
 		try
 		{
-			std::istream& i = ifs;
-			i >> mem;
-
-			if (ifs.fail())
-			{
-				MessageBox(hwnd, _T("There was an error reading the dump."), _T("Read Error"), MB_ICONWARNING | MB_OK);
-			}
-			else
-			{
-				_source.reset();
-
-				const Region& r = mem.GetBlockList().back();
-				maxaddr = r.base + r.size;
-
-				if (hMemDC != NULL)
-				{
-					MemPaint(hMemDC);
-				}
-			}
+			Read( filename );
 		}
 		catch (exception& ex)
 		{
 			MessageBoxA(hwnd, ex.what(), "Read Error", MB_ICONINFORMATION | MB_OK);
 		}
 	}
+}
+
+void MMPainter::Record( const char* fname )
+{
+	_recorder.reset( new FStreamRecorder( fname, mem ) );
 }
 
 bool MMPainter::Record(HWND hwnd)
@@ -637,11 +541,12 @@ bool MMPainter::Record(HWND hwnd)
 	{
 		try
 		{
-			_recorder.reset( new FStreamRecorder( filename, mem ) );
+			Record( filename );
 			return true;
 		}
-		catch (...)
+		catch( exception& ex )
 		{
+			MessageBoxA( hwnd, ex.what(), "Record Error", MB_ICONINFORMATION | MB_OK );
 		}
 	}
 	return false;
@@ -656,7 +561,7 @@ MMPainter::FStreamRecorder::FStreamRecorder( const char* fname, const MemoryMap&
 	_buf.open( fname, std::ios_base::out | std::ios_base::binary );
 
 	if( !_buf.is_open() )
-		throw ConstructorFailure< FStreamRecorder >();
+		throw MemMon::ConstructorFailure< FStreamRecorder >();
 
 	std::streambuf* bufptr = &_buf;
 	mm.Write( bufptr );

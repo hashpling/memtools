@@ -340,6 +340,14 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\attachdlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\createprocdlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\memmon.cpp"
 				>
 			</File>
@@ -349,6 +357,10 @@
 			</File>
 			<File
 				RelativePath=".\mmprefs.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\processsource.cc"
 				>
 			</File>
 			<File
@@ -394,6 +406,14 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\attachdlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\createprocdlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\memmon.h"
 				>
 			</File>
@@ -403,6 +423,10 @@
 			</File>
 			<File
 				RelativePath=".\mmprefs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\processsource.h"
 				>
 			</File>
 			<File
