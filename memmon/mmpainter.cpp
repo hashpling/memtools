@@ -351,13 +351,13 @@ void MMPainter::Run( const TCHAR* c, const TCHAR* a, const TCHAR* wd )
 	mem.Clear( 50 );
 }
 
-void MMPainter::Update()
+void MMPainter::Update( bool bForce )
 {
 	if (_source.get() != NULL)
 	{
 		double ctime = _source->Poll( pPrefs->GetCPUPrefs() );
 
-		if (ctime > next_update)
+		if ( bForce || ctime > next_update )
 		{
 			maxaddr = _source->Update( _memprev );
 			std::swap( mem, _memprev );

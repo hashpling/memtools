@@ -27,7 +27,7 @@ public:
 
 	void SetProcessId(int p);
 	void Run( const TCHAR* c, const TCHAR* a, const TCHAR* wd );
-	void Update();
+	void Update( bool bForce = false );
 
 	const RECT& GetRect() const { return rsize; }
 

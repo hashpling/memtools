@@ -229,6 +229,16 @@ void CallRun( HWND hwndDlg )
 			CPDlgContext* pcu = reinterpret_cast< CPDlgContext* >( ::GetWindowLongPtr( hwndDlg, GWLP_USERDATA ) );
 			pcu->GetPainter()->Run( command, pag, pwd );
 			pcu->Save( CPDlgContext::Command( command, args, workingdir ) );
+			if( ::IsDlgButtonChecked( hwndDlg, IDC_RECORD ) )
+			{
+				char recfile[ MAX_PATH ];
+
+				if( ::GetDlgItemTextA( hwndDlg, IDC_EDIT_RECORD, recfile, MAX_PATH ) != 0 )
+				{
+					pcu->GetPainter()->Update( true );
+					pcu->GetPainter()->Record( recfile );
+				}
+			}
 		}
 		catch( const std::exception& ex )
 		{
