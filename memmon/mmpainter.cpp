@@ -357,6 +357,15 @@ void MMPainter::Update( bool bForce )
 	{
 		double ctime = _source->Poll( pPrefs->GetCPUPrefs() );
 
+		if( ctime == 0.0 )
+		{
+			_recorder.reset();
+			_source.reset();
+			mem.Clear();
+			MemPaint( hMemDC );
+			return;
+		}
+
 		if ( bForce || ctime > next_update )
 		{
 			maxaddr = _source->Update( _memprev );

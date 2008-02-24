@@ -39,6 +39,9 @@ public:
 	bool Record(HWND hwnd);
 	void Record( const char* fname );
 
+	bool IsRecording() const { return _recorder.get() != NULL; }
+	void StopRecording() { return _recorder.reset(); }
+
 private:
 	class Recorder
 	{

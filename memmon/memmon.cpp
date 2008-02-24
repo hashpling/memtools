@@ -26,6 +26,7 @@ TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 MMPainter* pPaint;
 MMPrefs* pPrefs;
 UINT_PTR timerid = 0;
+bool bRecMenuState = false;
 }
 
 // Forward declarations of functions included in this code module:
@@ -188,7 +189,7 @@ void CheckTopmostSetting(HWND hWnd, const MMPrefs::UIPrefs& uiprf)
 	}
 }
 
-void DoCheckMenuItem( HWND hWnd, bool check )
+void DoFlipMenuItem( HWND hWnd, bool& check )
 {
 	HMENU hMenu = GetMenu( hWnd );
 
@@ -201,6 +202,8 @@ void DoCheckMenuItem( HWND hWnd, bool check )
 
 	if( GetMenuItemInfo( hMenu, ID_FILE_RECORD, FALSE, &mii ) )
 	{
+		check = !check;
+
 		if( check )
 			mii.fState |= MFS_CHECKED;
 		else
@@ -263,22 +266,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case ID_FILE_RUN:
 			CreateProcDialog::Run( hInst, hWnd, pPaint, timerid );
+			if( pPaint->IsRecording() != bRecMenuState )
+				DoFlipMenuItem( hWnd, bRecMenuState );
 			break;
 		case ID_FILE_RECORD:
-			if( pPaint->Record( hWnd ) )
-				DoCheckMenuItem( hWnd, true );
+			if( !bRecMenuState )
+				pPaint->Record( hWnd );
+			else
+				pPaint->StopRecording();
+
+			if( pPaint->IsRecording() != bRecMenuState )
+				DoFlipMenuItem( hWnd, bRecMenuState );
+
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
+
 	case WM_TIMER:
 		pPaint->Update();
+		if( pPaint->IsRecording() != bRecMenuState )
+			DoFlipMenuItem( hWnd, bRecMenuState );
 		InvalidateRect(hWnd, &rect, TRUE);
+		break;
 
 	case WM_KEYDOWN:
 		//PollShNotIcon(hWnd);
 		break;
+
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 		// TODO: Add any drawing code here...

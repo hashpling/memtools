@@ -16,7 +16,7 @@ ProcessSource::ProcessSource( int p )
 , ind_vel(0.0)
 , last_poll(0.0)
 {
-	_proc = ::OpenProcess( PROCESS_QUERY_INFORMATION, FALSE, p );
+	_proc = ::OpenProcess( PROCESS_QUERY_INFORMATION | SYNCHRONIZE, FALSE, p );
 
 	if( _proc == NULL )
 		throw ConstructorFailure< ProcessSource >();
@@ -174,6 +174,9 @@ double ProcessSource::Poll( const MemMon::CPUPrefs& prefs )
 	FILETIME currtime;
 	FILETIME sysidle, syskernel, sysuser;
 	FILETIME proccreate, procexit, prockern, procuser;
+
+	if( ::WaitForSingleObject( _proc, 0 ) == WAIT_OBJECT_0 )
+		return 0.0;
 
 	GetSystemTimeAsFileTime(&currtime);
 	GetSystemTimes(&sysidle, &syskernel, &sysuser);
