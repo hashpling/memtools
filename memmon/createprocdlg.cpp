@@ -83,7 +83,7 @@ void CPDlgContext::Load()
 	{
 		vector< wchar_t > buffer( 8192 );
 
-		LSTATUS ls;
+		LONG ls;
 
 		DWORD dwType;
 		DWORD dwSize = static_cast< DWORD >( buffer.size() * sizeof buffer[0] );
