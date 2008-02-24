@@ -1,4 +1,5 @@
-#include "mminfo.h"
+#include "memorymap.h"
+#include "memorydiff.h"
 #include <fstream>
 #include <sstream>
 #include <iomanip>

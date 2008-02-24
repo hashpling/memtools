@@ -46,6 +46,8 @@ void MMPrefs::Load()
 
 		dwcbData = sizeof(uiprf.topmost);
 		::RegQueryValueEx(hk, prefs_ui_topmost, NULL, &dwType, (LPBYTE)&uiprf.topmost, &dwcbData);
+
+		::RegCloseKey( hk );
 	}
 }
 
@@ -71,6 +73,8 @@ void MMPrefs::Save() const
 
 		dwcbData = sizeof(uiprf.topmost);
 		::RegSetValueEx(hk, prefs_ui_topmost, 0, dwType, (const BYTE*)&uiprf.topmost, dwcbData);
+
+		::RegCloseKey( hk );
 	}
 }
 

@@ -11,3 +11,5 @@ build_rel
 core
 core.*
 build32
+*.gcov
+build_cov
