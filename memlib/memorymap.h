@@ -45,6 +45,7 @@ public:
 	void Stamp() { _ts = Timestamp::now(); }
 
 	const Timestamp& GetTimestamp() const { return _ts; }
+	Timestamp& GetTimestamp() { return _ts; }
 
 private:
 	MemoryMap( const MemoryMap& );

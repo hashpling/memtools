@@ -161,7 +161,7 @@ public:
 		return !(*this == other);
 	}
 
-	std::string GetUTCString() const;
+	std::string GetAsString() const;
 
 private:
 	mmint64 _msec;

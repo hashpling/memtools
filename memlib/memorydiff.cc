@@ -49,7 +49,7 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 			if( asize < bsize )
 			{
 				const RegionList::const_iterator a2it = ait + 1;
-				if( a2it != aend && ait->size + a2it->size > bit->size )
+				if( a2it != aend && asize + a2it->size > bsize )
 				{
 					commonbase = bit->base + bit->size;
 					_changes.push_back( Changes::value_type( new DetailChange( *ait ) ) );
@@ -63,8 +63,8 @@ MemoryDiff::MemoryDiff( const MemoryMap& before, const MemoryMap& after )
 				{
 					if( ait->type != bit->type )
 					{
-						_changes.push_back( Changes::value_type( new Addition( *ait ) ) );
-						commonbase = ait->base + ait->size;
+						_changes.push_back( Changes::value_type( new Addition( Region( abase, asize, ait->type ) ) ) );
+						commonbase = abase + asize;
 						++ait;
 					}
 					else if( ++ait != aend )
@@ -156,8 +156,17 @@ void MemoryDiff::Addition::Apply( RegionList& blocklist, RegionList::iterator& i
 		i->base += _r.size;
 		i->size -= _r.size;
 
-		i = blocklist.insert( i, _r );
-		++i;
+		RegionList::iterator j;
+		if( i != blocklist.begin() && (j = i - 1)->type == _r.type )
+		{
+			// Merge into preceding region of same type
+			j->size += _r.size;
+		}
+		else
+		{
+			i = blocklist.insert( i, _r );
+			++i;
+		}
 	}
 	else
 	{
@@ -292,6 +301,8 @@ void MemoryDiff::Apply( MemoryMap& target ) const
 	}
 
 	target.RecalcFreeList();
+
+	target.GetTimestamp() += _ti;
 }
 
 template< class StreamBuf >

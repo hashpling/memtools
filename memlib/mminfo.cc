@@ -39,47 +39,47 @@ namespace
 	struct BadTimestamp {};
 }
 
-Timestamp::Timestamp( const char* utcstring )
+Timestamp::Timestamp( const char* tmstring )
 	: _msec( 0 )
 {
-	char* p = const_cast< char* >( utcstring );
+	char* p = const_cast< char* >( tmstring );
 	struct tm t;
 
 	t.tm_year = std::strtoul( p, &p, 10 ) - 1900;
 
-	if( p != utcstring + 4 || *p++ != '-' )
+	if( p != tmstring + 4 || *p++ != '-' )
 		throw BadTimestamp();
 
 	t.tm_mon = std::strtoul( p, &p, 10 );
 
-	if( p != utcstring + 7 || *p++ != '-' )
+	if( p != tmstring + 7 || *p++ != '-' )
 		throw BadTimestamp();
 
 	t.tm_mday = std::strtoul( p, &p, 10 );
 
-	if( p != utcstring + 10 || *p++ != 'T' )
+	if( p != tmstring + 10 || *p++ != 'T' )
 		throw BadTimestamp();
 
 	t.tm_hour = std::strtoul( p, &p, 10 );
 
-	if( p != utcstring + 13 || *p++ != ':' )
+	if( p != tmstring + 13 || *p++ != ':' )
 		throw BadTimestamp();
 
 	t.tm_min = std::strtoul( p, &p, 10 );
 
-	if( p != utcstring + 16 || *p++ != ':' )
+	if( p != tmstring + 16 || *p++ != ':' )
 		throw BadTimestamp();
 
 	t.tm_sec = std::strtoul( p, &p, 10 );
 
-	if( p != utcstring + 19 )
+	if( p != tmstring + 19 )
 		throw BadTimestamp();
 
 	if( *p++ == '.' )
 	{
 		_msec = strtoul( p, &p, 10 );
 
-		ptrdiff_t nplaces = p - utcstring - 20;
+		ptrdiff_t nplaces = p - tmstring - 20;
 
 		switch( nplaces )
 		{
@@ -111,9 +111,6 @@ Timestamp::Timestamp( const char* utcstring )
 
 	}
 
-	if( *p != 'Z' )
-		throw BadTimestamp();
-
 	t.tm_isdst = 0;
 
 	time_t u = std::mktime( &t );
@@ -124,17 +121,17 @@ Timestamp::Timestamp( const char* utcstring )
 	_msec += mmint64( u ) * 1000;
 }
 
-std::string Timestamp::GetUTCString() const
+std::string Timestamp::GetAsString() const
 {
 	if( _msec == 0 )
 		return std::string();
 
 	const time_t sec = _msec / 1000;
-	// TODO, no it isn't localtime, but it is at least the opposite of mktime
+
 	struct tm* t = localtime( &sec );
 	char buffer[25];
 
-	sprintf( buffer, "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ", t->tm_year + 1900, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, int(_msec % 1000) );
+	sprintf( buffer, "%04d-%02d-%02dT%02d:%02d:%02d.%03d", t->tm_year + 1900, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, int(_msec % 1000) );
 
 	return buffer;
 }
