@@ -514,6 +514,28 @@ void AddEndAgain()
 	HSHG_ASSERT( m1 == m2 );
 }
 
+void OverwritingBlock()
+{
+	MemMon::MemoryMap m1, m2;
+
+	m1.AddBlock( Region( 0, 2, Region::committed ) );
+	m1.AddBlock( Region( 2, 2, Region::reserved ) );
+	m1.AddBlock( Region( 4, 2, Region::committed ) );
+	m1.AddBlock( Region( 6, 2, Region::reserved ) );
+	m1.AddBlock( Region( 8, 6, Region::free ) );
+
+	m2.AddBlock( Region( 0, 9, Region::committed ) );
+	m2.AddBlock( Region( 9, 1, Region::reserved ) );
+	m2.AddBlock( Region( 10, 1, Region::committed ) );
+	m2.AddBlock( Region( 11, 3, Region::free ) );
+
+	MemMon::MemoryDiff md( m1, m2 );
+
+	md.Apply( m1 );
+
+	HSHG_ASSERT( m1 == m2 );
+}
+
 void MapIoTrip()
 {
 	MemMon::MemoryMap m1, m2;
@@ -539,14 +561,14 @@ void MapIoTrip()
 
 void TimestampTest()
 {
-	const char testts1[] = "2008-02-20T21:13:27.249Z";
-	const char testts2[] = "2008-02-21T21:13:27.249Z";
+	const char testts1[] = "2008-02-20T21:13:27.249";
+	const char testts2[] = "2008-02-21T21:13:27.249";
 
 	MemMon::Timestamp ts1( testts1 );
 
 	MemMon::Timestamp ts2( ts1 + MemMon::TimeInterval( 86400000 ) );
 
-	HSHG_ASSERT( ts2.GetUTCString() == testts2 );
+	HSHG_ASSERT( ts2.GetAsString() == testts2 );
 }
 
 }
@@ -571,6 +593,7 @@ HSHG_TEST_ENTRY( ThreeColor )
 HSHG_TEST_ENTRY( ExpandRemove )
 HSHG_TEST_ENTRY( ComplexReverse )
 HSHG_TEST_ENTRY( AddEndAgain )
+HSHG_TEST_ENTRY( OverwritingBlock )
 HSHG_TEST_ENTRY( MapIoTrip )
 HSHG_TEST_ENTRY( TimestampTest )
 HSHG_END_TESTS
