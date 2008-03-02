@@ -6,6 +6,7 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <sstream>
 
 using std::list;
 using std::vector;
@@ -209,6 +210,38 @@ void InitDialog( HWND hwndDlg, LPARAM lParam )
 	}
 }
 
+void EscapePath( std::basic_string< TCHAR >& str, const TCHAR* path )
+{
+	bool needsescape = false;
+	for( const TCHAR* p = path; *p; ++p )
+	{
+		if( *p == '\"' || *p == ' ' )
+		{
+			needsescape = true;
+			break;
+		}
+	}
+
+	if( !needsescape )
+		str.assign( path );
+	else
+	{
+		std::basic_stringbuf< TCHAR > buf;
+
+		buf.sputc( _T('\"') );
+		for( const TCHAR* p = path; *p; ++p )
+		{
+			if( *p == '"' )
+				buf.sputc( _T('\\') );
+
+			buf.sputc( *p );
+		}
+		buf.sputc( _T('\"') );
+
+		str.assign( buf.str() );
+	}
+}
+
 bool CallRun( HWND hwndDlg )
 {
 	TCHAR command[ MAX_PATH ];
@@ -218,15 +251,24 @@ bool CallRun( HWND hwndDlg )
 	if( GetDlgItemText( hwndDlg, IDC_EDIT_CMD, command, sizeof command / sizeof( TCHAR ) ) )
 	{
 		TCHAR workingdir[ MAX_PATH ];
-		TCHAR *pwd = workingdir;
-		TCHAR args[ MAX_PATH ];
-		TCHAR *pag = args;
+		const TCHAR *pwd = workingdir;
+		TCHAR args[ 65536 ];
+		const TCHAR *pag = args;
+		std::basic_string< TCHAR > argstr;
 
 		if( GetDlgItemText( hwndDlg, IDC_EDIT_ARGS, args, sizeof args / sizeof( TCHAR ) ) == 0 )
 			pag = NULL;
 
 		if( GetDlgItemText( hwndDlg, IDC_EDIT_WD, workingdir, sizeof workingdir / sizeof( TCHAR ) ) == 0)
 			pwd = NULL;
+
+		if( pag != NULL )
+		{
+			EscapePath( argstr, command );
+			argstr += _T(' ');
+			argstr += args;
+			pag = argstr.c_str();
+		}
 
 		try
 		{
