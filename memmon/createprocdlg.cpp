@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "createprocdlg.h"
 #include "mmpainter.h"
+#include "filedialog.h"
 #include "resource.h"
 #include <list>
 #include <vector>
@@ -185,6 +186,7 @@ void ChangeHistSel( HWND hwndDlg, HWND hwndCombo )
 void InitDialog( HWND hwndDlg, LPARAM lParam )
 {
 	::SetWindowLongPtr( hwndDlg, GWLP_USERDATA, lParam );
+	::CheckDlgButton( hwndDlg, IDC_RECORD, BST_CHECKED );
 
 	CPDlgContext* pcu = reinterpret_cast< CPDlgContext* >( lParam );
 
@@ -207,9 +209,11 @@ void InitDialog( HWND hwndDlg, LPARAM lParam )
 	}
 }
 
-void CallRun( HWND hwndDlg )
+bool CallRun( HWND hwndDlg )
 {
 	TCHAR command[ MAX_PATH ];
+
+	bool success = false;
 
 	if( GetDlgItemText( hwndDlg, IDC_EDIT_CMD, command, sizeof command / sizeof( TCHAR ) ) )
 	{
@@ -228,6 +232,9 @@ void CallRun( HWND hwndDlg )
 		{
 			CPDlgContext* pcu = reinterpret_cast< CPDlgContext* >( ::GetWindowLongPtr( hwndDlg, GWLP_USERDATA ) );
 			pcu->GetPainter()->Run( command, pag, pwd );
+
+			success = true;
+
 			pcu->Save( CPDlgContext::Command( command, args, workingdir ) );
 			if( ::IsDlgButtonChecked( hwndDlg, IDC_RECORD ) )
 			{
@@ -245,6 +252,8 @@ void CallRun( HWND hwndDlg )
 			::MessageBoxA( hwndDlg, ex.what(), "Exception", MB_ICONINFORMATION | MB_OK );
 		}
 	}
+
+	return success;
 }
 
 void ShowRecButtons( HWND hwndDlg, bool bEnable )
@@ -252,6 +261,33 @@ void ShowRecButtons( HWND hwndDlg, bool bEnable )
 	BOOL enable = bEnable ? TRUE : FALSE;
 	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_EDIT_RECORD ), enable );
 	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_BROWSE_REC ), enable );
+}
+
+void DoCmdBrowse( HWND hwnd )
+{
+	char fname[ MAX_PATH ];
+	if( MemMon::Win::RunOpenFileDialog( hwnd, fname ) )
+	{
+		::SetWindowTextA( ::GetDlgItem( hwnd, IDC_EDIT_CMD ), fname );
+	}
+}
+
+void DoRecBrowse( HWND hwnd )
+{
+	char fname[ MAX_PATH ];
+	if( MemMon::Win::RunSaveFileDialog( hwnd, fname ) )
+	{
+		::SetWindowTextA( ::GetDlgItem( hwnd, IDC_EDIT_RECORD ), fname );
+	}
+}
+
+void DoWdBrowse( HWND hwnd )
+{
+	char fname[ MAX_PATH ];
+	if( MemMon::Win::RunSelectDirDialog( hwnd, fname ) )
+	{
+		::SetWindowTextA( ::GetDlgItem( hwnd, IDC_EDIT_WD ), fname );
+	}
 }
 
 INT_PTR CALLBACK CreateProcProc( HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam )
@@ -263,7 +299,8 @@ INT_PTR CALLBACK CreateProcProc( HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		switch( LOWORD(wParam) )
 		{
 		case IDOK:
-			CallRun( hwndDlg );
+			if( !CallRun( hwndDlg ) )
+				break;
 			// Drop through
 		case IDCANCEL:
 			EndDialog( hwndDlg, wParam );
@@ -275,6 +312,15 @@ INT_PTR CALLBACK CreateProcProc( HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 		case IDC_CMD_HIST:
 			if( HIWORD(wParam) == CBN_SELCHANGE )
 				ChangeHistSel( hwndDlg, reinterpret_cast< HWND >( lParam ) );
+			break;
+		case IDC_BROWSE_CMD:
+			DoCmdBrowse( hwndDlg );
+			break;
+		case IDC_BROWSE_REC:
+			DoRecBrowse( hwndDlg );
+			break;
+		case IDC_BROWSE_WD:
+			DoWdBrowse( hwndDlg );
 			break;
 		}
 		break;

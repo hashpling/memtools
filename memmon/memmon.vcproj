@@ -335,6 +335,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\filedialog.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\memmon.cpp"
 				>
 			</File>
@@ -398,6 +402,10 @@
 			</File>
 			<File
 				RelativePath=".\createprocdlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\filedialog.h"
 				>
 			</File>
 			<File

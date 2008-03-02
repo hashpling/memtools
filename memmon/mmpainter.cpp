@@ -4,12 +4,12 @@
 #include "mmpainter.h"
 #include "memorydiff.h"
 #include "processsource.h"
+#include "filedialog.h"
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #include "hrfmt.h"
 #include "mmprefs.h"
-#include "shlobj.h"
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -392,43 +392,6 @@ void MMPainter::Update( bool bForce )
 	}
 }
 
-namespace
-{
-
-bool DoSaveDialog( HWND hwnd, char* filename )
-{
-	filename[0] = 0;
-
-	OPENFILENAMEA ofn;
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hwnd;
-	ofn.hInstance = NULL;
-	ofn.lpstrFilter = NULL;
-	ofn.lpstrCustomFilter = NULL;
-	ofn.nMaxCustFilter = 0;
-	ofn.nFilterIndex = 0;
-	ofn.lpstrFile = filename;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.lpstrTitle = NULL;
-	ofn.Flags = OFN_DONTADDTORECENT | OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT;
-	ofn.nFileOffset = 0;
-	ofn.nFileExtension = 0;
-	ofn.lpstrDefExt = NULL;
-	ofn.lCustData = 0;
-	ofn.lpfnHook = NULL;
-	ofn.lpTemplateName = NULL;
-	ofn.pvReserved = NULL;
-	ofn.dwReserved = NULL;
-	ofn.FlagsEx = 0;
-
-	return GetSaveFileNameA(&ofn) == TRUE;
-}
-
-}
-
 void MMPainter::Snapshot( const char* fname ) const
 {
 	ofstream ofs( fname, ios_base::out | ios_base::binary );
@@ -446,7 +409,7 @@ void MMPainter::Snapshot(HWND hwnd) const
 {
 	char filename[MAX_PATH];
 
-	if (DoSaveDialog(hwnd, filename))
+	if( MemMon::Win::RunSaveFileDialog( hwnd, filename ) )
 	{
 		try
 		{
@@ -488,34 +451,8 @@ void MMPainter::Read( const char* fname )
 void MMPainter::Read(HWND hwnd)
 {
 	char filename[MAX_PATH];
-	filename[0] = 0;
 
-	OPENFILENAMEA ofn;
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hwnd;
-	ofn.hInstance = NULL;
-	ofn.lpstrFilter = NULL;
-	ofn.lpstrCustomFilter = NULL;
-	ofn.nMaxCustFilter = 0;
-	ofn.nFilterIndex = 0;
-	ofn.lpstrFile = filename;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.lpstrTitle = NULL;
-	ofn.Flags = OFN_DONTADDTORECENT | OFN_NOTESTFILECREATE | OFN_FILEMUSTEXIST;
-	ofn.nFileOffset = 0;
-	ofn.nFileExtension = 0;
-	ofn.lpstrDefExt = NULL;
-	ofn.lCustData = 0;
-	ofn.lpfnHook = NULL;
-	ofn.lpTemplateName = NULL;
-	ofn.pvReserved = NULL;
-	ofn.dwReserved = NULL;
-	ofn.FlagsEx = 0;
-
-	if (GetOpenFileNameA(&ofn))
+	if( MemMon::Win::RunOpenFileDialog( hwnd, filename ) )
 	{
 		try
 		{
@@ -537,7 +474,7 @@ bool MMPainter::Record(HWND hwnd)
 {
 	char filename[MAX_PATH];
 
-	if (DoSaveDialog(hwnd, filename))
+	if( MemMon::Win::RunSaveFileDialog( hwnd, filename ) )
 	{
 		try
 		{
