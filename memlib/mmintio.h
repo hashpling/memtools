@@ -7,12 +7,13 @@ namespace MemMon
 template< class StreamBuf, class intT >
 void IntPut( StreamBuf* sb, intT toput, size_t width = sizeof(intT) )
 {
+	typedef typename StreamBuf::char_type charT;
 	for (unsigned i = 0; i < width - 1; ++i)
 	{
-		sb->sputc( toput & 0xff );
+		sb->sputc( static_cast< charT >( toput & 0xff ) );
 		toput >>= 8;
 	}
-	sb->sputc( toput & 0xff );
+	sb->sputc( static_cast< charT >( toput & 0xff ) );
 }
 
 template< class StreamBuf, class intT >
@@ -21,7 +22,7 @@ void IntGet( StreamBuf* sb, intT& toget, size_t width = sizeof(intT) )
 	toget = 0;
 	for (unsigned i = 0; i < width; ++i)
 	{
-		toget |= intT(sb->sbumpc()) << (i * 8);
+		toget |= static_cast< intT >( sb->sbumpc() ) << (i * 8);
 	}
 }
 
