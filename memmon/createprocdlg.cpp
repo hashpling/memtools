@@ -7,10 +7,11 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 using std::list;
 using std::vector;
-using std::wstring;
+using std::basic_string;
 
 namespace
 {
@@ -20,18 +21,23 @@ class CPDlgContext
 public:
 	CPDlgContext( MMPainter* pPaint ) : _ppaint( pPaint ) {}
 
-	struct Command
-	{
-		Command( vector< wchar_t >::const_iterator
-			   , vector< wchar_t >::const_iterator
-			   , vector< wchar_t >::const_iterator
-			   , vector< wchar_t >::const_iterator);
+	typedef basic_string< TCHAR > tstring;
+	typedef vector< TCHAR > tchvector;
 
-		Command( const wchar_t *, const wchar_t *, const wchar_t * );
+	class Command
+	{
+	public:
+
+		Command( tchvector::const_iterator
+			   , tchvector::const_iterator
+			   , tchvector::const_iterator
+			   , tchvector::const_iterator);
+
+		Command( const TCHAR *, const TCHAR *, const TCHAR * );
 
 		bool operator==( const Command& other ) const
 		{
-			return cmd == other.cmd && arg == other.arg && wd == other.wd;
+			return _cmd == other._cmd && _arg == other._arg && _wd == other._wd;
 		}
 
 		bool operator!=( const Command& other ) const
@@ -39,9 +45,16 @@ public:
 			return *this != other;
 		}
 
-		wstring cmd;
-		wstring arg;
-		wstring wd;
+		const tstring& GetCmd() const { return _cmd; }
+		const tstring& GetArg() const { return _arg; }
+		const tstring& GetWd() const { return _wd; }
+
+		tstring MakeSummaryStr() const;
+
+	private:
+		tstring _cmd;
+		tstring _arg;
+		tstring _wd;
 	};
 
 	void Load();
@@ -61,21 +74,85 @@ private:
 const TCHAR CPDlgContext::prefs_subkey[] = _T("SOFTWARE\\hashpling.org\\memmon");
 const TCHAR CPDlgContext::prefs_value[] = _T("mru_commands");
 
-CPDlgContext::Command::Command( vector< wchar_t >::const_iterator a
-	   , vector< wchar_t >::const_iterator b
-	   , vector< wchar_t >::const_iterator c
-	   , vector< wchar_t >::const_iterator d )
-: cmd( a, b )
-, arg( b + 1, c )
-, wd( c + 1, d )
+CPDlgContext::Command::Command( tchvector::const_iterator a
+	   , tchvector::const_iterator b
+	   , tchvector::const_iterator c
+	   , tchvector::const_iterator d )
+: _cmd( a, b )
+, _arg( b + 1, c )
+, _wd( c + 1, d )
 {
 }
 
-CPDlgContext::Command::Command( const wchar_t *c, const wchar_t *a, const wchar_t *w )
-: cmd( c )
-, arg( a )
-, wd( w )
+CPDlgContext::Command::Command( const TCHAR *c, const TCHAR *a, const TCHAR *w )
+: _cmd( c )
+, _arg( a )
+, _wd( w )
 {
+}
+
+CPDlgContext::tstring CPDlgContext::Command::MakeSummaryStr() const
+{
+	const TCHAR dots[] = _T("...");
+	const TCHAR* const dotend = dots + 3;
+
+	tstring::size_type lastslash = _cmd.find_last_of( _T('\\') );
+	tstring::size_type arglen = _arg.size();
+
+	tstring::size_type totalsize =  arglen + _cmd.size();
+
+	tstring::size_type totrunc = totalsize > 40 ? totalsize - 40 : 0;
+
+	tstring::size_type trunccmd = lastslash == tstring::npos || lastslash < 6 ? 0 : lastslash;
+	tstring::size_type truncarg = arglen < 6 ? 0 : arglen;
+
+	if( trunccmd + truncarg > totrunc )
+	{
+		tstring::size_type tolose = trunccmd + truncarg - totrunc;
+		if( trunccmd < truncarg )
+		{
+			tstring::size_type losecmd = std::min( trunccmd, tolose / 2 );
+			trunccmd -= losecmd;
+			truncarg -= tolose - losecmd;
+		}
+		else
+		{
+			tstring::size_type losearg = std::min( truncarg, tolose / 2 );
+			truncarg -= losearg;
+			trunccmd -= tolose - losearg;
+		}
+	}
+
+	if( trunccmd < 5 )
+		trunccmd = 0;
+
+	if( truncarg < 5 )
+		truncarg = 0;
+
+	tstring::const_iterator cmd_trunc_begin = _cmd.begin() + (lastslash - trunccmd) / 2;
+	tstring::const_iterator cmd_trunc_end = cmd_trunc_begin + trunccmd;
+
+	tstring::const_iterator arg_trunc_begin = _arg.end() - truncarg;
+
+	tstring out;
+
+	std::back_insert_iterator< tstring > bins = std::back_inserter( out );
+
+	tstring::size_type cmdretain = lastslash - trunccmd;
+
+	std::copy( _cmd.begin(), cmd_trunc_begin, bins );
+
+	if( cmd_trunc_begin != cmd_trunc_end )
+		std::copy( dots, dotend, bins );
+
+	std::copy( cmd_trunc_end, _cmd.end(), bins );
+	*bins++ = _T( ' ' );
+	std::copy( _arg.begin(), arg_trunc_begin, bins );
+
+	if( arg_trunc_begin != _arg.end() )
+		std::copy( dots, dotend, bins );
+
+	return out;
 }
 
 void CPDlgContext::Load()
@@ -83,7 +160,7 @@ void CPDlgContext::Load()
 	HKEY hk;
 	if (::RegOpenKeyEx(HKEY_CURRENT_USER, prefs_subkey, 0, KEY_QUERY_VALUE, &hk) == ERROR_SUCCESS)
 	{
-		vector< wchar_t > buffer( 8192 );
+		tchvector buffer( 8192 );
 
 		LSTATUS ls;
 
@@ -102,22 +179,22 @@ void CPDlgContext::Load()
 		{
 			buffer.resize( dwSize / sizeof buffer[0] );
 
-			vector< wchar_t >::const_iterator i = buffer.begin();
-			const vector< wchar_t >::const_iterator end = buffer.end();
+			tchvector::const_iterator i = buffer.begin();
+			const tchvector::const_iterator end = buffer.end();
 
 			while( i != end )
 			{
-				vector< wchar_t >::const_iterator j = std::find( i, end, 0 );
+				tchvector::const_iterator j = std::find( i, end, 0 );
 
 				if( j == end )
 					break;
 
-				vector< wchar_t >::const_iterator k = std::find( j + 1, end, 0 );
+				tchvector::const_iterator k = std::find( j + 1, end, 0 );
 
 				if( k == end )
 					break;
 
-				vector< wchar_t >::const_iterator l = std::find( k + 1, end, 0 );
+				tchvector::const_iterator l = std::find( k + 1, end, 0 );
 
 				_commands.push_back( Command( i, j, k, l ) );
 
@@ -146,19 +223,19 @@ void CPDlgContext::Save( const Command& cmd )
 		_commands.push_front( cmd );
 	}
 
-	vector< wchar_t > buffer;
-	std::back_insert_iterator< vector< wchar_t > > out = std::back_inserter( buffer );
+	tchvector buffer;
+	std::back_insert_iterator< tchvector > out = std::back_inserter( buffer );
 
 	for( list< Command >::const_iterator i = _commands.begin(); i != _commands.end(); ++i )
 	{
 		if( i != _commands.begin() )
 			*out++ = 0;
 
-		std::copy( i->cmd.begin(), i->cmd.end(), out );
+		std::copy( i->GetCmd().begin(), i->GetCmd().end(), out );
 		*out++ = 0;
-		std::copy( i->arg.begin(), i->arg.end(), out );
+		std::copy( i->GetArg().begin(), i->GetArg().end(), out );
 		*out++ = 0;
-		std::copy( i->wd.begin(), i->wd.end(), out );
+		std::copy( i->GetWd().begin(), i->GetWd().end(), out );
 	}
 
 	HKEY hk;
@@ -178,9 +255,9 @@ void ChangeHistSel( HWND hwndDlg, HWND hwndCombo )
 		&& (lRes = ::SendMessage(hwndCombo, CB_GETITEMDATA, lRes, 0)) != CB_ERR )
 	{
 		CPDlgContext::Command* pCmd = reinterpret_cast< CPDlgContext::Command* >( lRes );
-		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_CMD ), pCmd->cmd.c_str() );
-		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_ARGS ), pCmd->arg.c_str() );
-		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_WD ), pCmd->wd.c_str() );
+		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_CMD ), pCmd->GetCmd().c_str() );
+		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_ARGS ), pCmd->GetArg().c_str() );
+		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_WD ), pCmd->GetWd().c_str() );
 	}
 }
 
@@ -200,7 +277,7 @@ void InitDialog( HWND hwndDlg, LPARAM lParam )
 		HWND hwndHist = ::GetDlgItem( hwndDlg, IDC_CMD_HIST );
 		for( list< CPDlgContext::Command >::const_iterator i = cmds.begin(); i != cmds.end(); ++i )
 		{
-			LRESULT lRes = ::SendMessage( hwndHist, CB_ADDSTRING, 0, reinterpret_cast< LPARAM >( i->cmd.c_str() ) );
+			LRESULT lRes = ::SendMessage( hwndHist, CB_ADDSTRING, 0, reinterpret_cast< LPARAM >( i->MakeSummaryStr().c_str() ) );
 			lRes = ::SendMessage( hwndHist, CB_SETITEMDATA, lRes, reinterpret_cast< LPARAM >( &*i ) );
 		}
 		ShowWindow( hwndHist, SW_SHOWNOACTIVATE );

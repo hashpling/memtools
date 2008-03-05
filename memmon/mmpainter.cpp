@@ -87,10 +87,10 @@ void MMPainter::Paint(HDC hdc, PAINTSTRUCT* ps)
 	}
 
 	int x, y, w, h;
-	x = max(ps->rcPaint.left, 0);
-	y = max(ps->rcPaint.top, 0);
-	w = min(ps->rcPaint.right - x, (rsize.right) - x);
-	h = min(ps->rcPaint.bottom - y, (rsize.bottom) - y);
+	x = std::max(ps->rcPaint.left, 0L);
+	y = std::max(ps->rcPaint.top, 0L);
+	w = std::min(ps->rcPaint.right - x, (rsize.right) - x);
+	h = std::min(ps->rcPaint.bottom - y, (rsize.bottom) - y);
 	BitBlt(hdc, x, y, w, h, hMemDC, x, y, SRCCOPY);
 }
 
@@ -122,11 +122,11 @@ COLORREF MMPainter::GetColour(vector<Region>::const_iterator& reg
 		vector<Region>::const_iterator oreg = reg;
 		while (reg != rend && reg->base < end)
 		{
-			size_t sbegin = max(base, reg->base);
-			size_t send = min(end, reg->base + reg->size);
+			size_t sbegin = std::max(base, reg->base);
+			size_t send = std::min(end, reg->base + reg->size);
 
 			tmp += (send - sbegin) * reg->type;
-			tmp2 += (send - sbegin) * max(reg->type, 1);
+			tmp2 += (send - sbegin) * std::max( static_cast< int >( reg->type ), 1);
 
 			if (reg->type > max_type) max_type = reg->type;
 
