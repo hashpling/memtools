@@ -4,12 +4,12 @@
 #include "mmpainter.h"
 #include "memorydiff.h"
 #include "processsource.h"
+#include "filedialog.h"
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #include "hrfmt.h"
 #include "mmprefs.h"
-#include "shlobj.h"
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -87,10 +87,10 @@ void MMPainter::Paint(HDC hdc, PAINTSTRUCT* ps)
 	}
 
 	int x, y, w, h;
-	x = max(ps->rcPaint.left, 0);
-	y = max(ps->rcPaint.top, 0);
-	w = min(ps->rcPaint.right - x, (rsize.right) - x);
-	h = min(ps->rcPaint.bottom - y, (rsize.bottom) - y);
+	x = std::max(ps->rcPaint.left, 0L);
+	y = std::max(ps->rcPaint.top, 0L);
+	w = std::min(ps->rcPaint.right - x, (rsize.right) - x);
+	h = std::min(ps->rcPaint.bottom - y, (rsize.bottom) - y);
 	BitBlt(hdc, x, y, w, h, hMemDC, x, y, SRCCOPY);
 }
 
@@ -122,11 +122,11 @@ COLORREF MMPainter::GetColour(vector<Region>::const_iterator& reg
 		vector<Region>::const_iterator oreg = reg;
 		while (reg != rend && reg->base < end)
 		{
-			size_t sbegin = max(base, reg->base);
-			size_t send = min(end, reg->base + reg->size);
+			size_t sbegin = std::max(base, reg->base);
+			size_t send = std::min(end, reg->base + reg->size);
 
 			tmp += (send - sbegin) * reg->type;
-			tmp2 += (send - sbegin) * max(reg->type, 1);
+			tmp2 += (send - sbegin) * std::max( static_cast< int >( reg->type ), 1);
 
 			if (reg->type > max_type) max_type = reg->type;
 
@@ -392,43 +392,6 @@ void MMPainter::Update( bool bForce )
 	}
 }
 
-namespace
-{
-
-bool DoSaveDialog( HWND hwnd, char* filename )
-{
-	filename[0] = 0;
-
-	OPENFILENAMEA ofn;
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hwnd;
-	ofn.hInstance = NULL;
-	ofn.lpstrFilter = NULL;
-	ofn.lpstrCustomFilter = NULL;
-	ofn.nMaxCustFilter = 0;
-	ofn.nFilterIndex = 0;
-	ofn.lpstrFile = filename;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.lpstrTitle = NULL;
-	ofn.Flags = OFN_DONTADDTORECENT | OFN_NOTESTFILECREATE | OFN_OVERWRITEPROMPT;
-	ofn.nFileOffset = 0;
-	ofn.nFileExtension = 0;
-	ofn.lpstrDefExt = NULL;
-	ofn.lCustData = 0;
-	ofn.lpfnHook = NULL;
-	ofn.lpTemplateName = NULL;
-	ofn.pvReserved = NULL;
-	ofn.dwReserved = NULL;
-	ofn.FlagsEx = 0;
-
-	return GetSaveFileNameA(&ofn) == TRUE;
-}
-
-}
-
 void MMPainter::Snapshot( const char* fname ) const
 {
 	ofstream ofs( fname, ios_base::out | ios_base::binary );
@@ -446,7 +409,7 @@ void MMPainter::Snapshot(HWND hwnd) const
 {
 	char filename[MAX_PATH];
 
-	if (DoSaveDialog(hwnd, filename))
+	if( MemMon::Win::RunSaveFileDialog( hwnd, filename ) )
 	{
 		try
 		{
@@ -488,34 +451,8 @@ void MMPainter::Read( const char* fname )
 void MMPainter::Read(HWND hwnd)
 {
 	char filename[MAX_PATH];
-	filename[0] = 0;
 
-	OPENFILENAMEA ofn;
-	ofn.lStructSize = sizeof(ofn);
-	ofn.hwndOwner = hwnd;
-	ofn.hInstance = NULL;
-	ofn.lpstrFilter = NULL;
-	ofn.lpstrCustomFilter = NULL;
-	ofn.nMaxCustFilter = 0;
-	ofn.nFilterIndex = 0;
-	ofn.lpstrFile = filename;
-	ofn.nMaxFile = MAX_PATH;
-	ofn.lpstrFileTitle = NULL;
-	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
-	ofn.lpstrTitle = NULL;
-	ofn.Flags = OFN_DONTADDTORECENT | OFN_NOTESTFILECREATE | OFN_FILEMUSTEXIST;
-	ofn.nFileOffset = 0;
-	ofn.nFileExtension = 0;
-	ofn.lpstrDefExt = NULL;
-	ofn.lCustData = 0;
-	ofn.lpfnHook = NULL;
-	ofn.lpTemplateName = NULL;
-	ofn.pvReserved = NULL;
-	ofn.dwReserved = NULL;
-	ofn.FlagsEx = 0;
-
-	if (GetOpenFileNameA(&ofn))
+	if( MemMon::Win::RunOpenFileDialog( hwnd, filename ) )
 	{
 		try
 		{
@@ -537,7 +474,7 @@ bool MMPainter::Record(HWND hwnd)
 {
 	char filename[MAX_PATH];
 
-	if (DoSaveDialog(hwnd, filename))
+	if( MemMon::Win::RunSaveFileDialog( hwnd, filename ) )
 	{
 		try
 		{
