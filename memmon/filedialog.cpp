@@ -8,6 +8,12 @@ namespace MemMon
 namespace Win
 {
 
+#if _MSC_VER < 1500
+typedef LPITEMIDLIST IdListPtr;
+#else
+typedef PIDLIST_ABSOLUTE IdListPtr;
+#endif
+
 namespace
 {
 
@@ -77,7 +83,7 @@ bool RunSelectDirDialog( HWND hwnd, char* fnamebuf )
 	bi.lParam = 0;
 	bi.iImage = 0;
 
-	PIDLIST_ABSOLUTE pidlabs = ::SHBrowseForFolder( &bi );
+	IdListPtr pidlabs = ::SHBrowseForFolder( &bi );
 
 	bool success = false;
 
