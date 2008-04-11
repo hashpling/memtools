@@ -50,7 +50,7 @@ Timestamp::Timestamp( const char* tmstring )
 	if( p != tmstring + 4 || *p++ != '-' )
 		throw BadTimestamp();
 
-	t.tm_mon = std::strtoul( p, &p, 10 );
+	t.tm_mon = std::strtoul( p, &p, 10 ) - 1;
 
 	if( p != tmstring + 7 || *p++ != '-' )
 		throw BadTimestamp();
@@ -131,7 +131,7 @@ std::string Timestamp::GetAsString() const
 	struct tm* t = localtime( &sec );
 	char buffer[25];
 
-	sprintf( buffer, "%04d-%02d-%02dT%02d:%02d:%02d.%03d", t->tm_year + 1900, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, int(_msec % 1000) );
+	sprintf( buffer, "%04d-%02d-%02dT%02d:%02d:%02d.%03d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, int(_msec % 1000) );
 
 	return buffer;
 }
