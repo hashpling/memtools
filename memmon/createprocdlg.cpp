@@ -9,6 +9,7 @@
 #include <sstream>
 #include <algorithm>
 #include <shlobj.h>
+#include <iomanip>
 
 using std::list;
 using std::vector;
@@ -251,6 +252,13 @@ void CPDlgContext::Save( const Command& cmd )
 	}
 }
 
+void ShowRecButtons( HWND hwndDlg, bool bEnable )
+{
+	BOOL enable = bEnable ? TRUE : FALSE;
+	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_EDIT_RECORD ), enable );
+	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_BROWSE_REC ), enable );
+}
+
 void UpdateRecFileGuess( HWND hwndDlg, CPDlgContext::Command* pCmd )
 {
 	TCHAR recfile[ MAX_PATH ];
@@ -281,10 +289,40 @@ void UpdateRecFileGuess( HWND hwndDlg, CPDlgContext::Command* pCmd )
 
 			tmp.append( cmd.c_str() + start, end - start );
 
-			tmp.append( _T(".rec") );
+			tstring file;
 
-			pcu->SetSaveFile( tmp );
-			::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_RECORD ), tmp.c_str() );
+			for( int i = 0; i < 100; ++i )
+			{
+				std::basic_ostringstream< TCHAR > tstream;
+
+				tstream << tmp;
+				tstream << std::setfill( _T('0') ) << std::setw( 2 ) << i;
+				tstream << _T(".rec");
+
+				tstring tmpfile( tstream.str() );
+
+				HANDLE hFile = ::CreateFile( tmpfile.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY
+ | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+				if( hFile != INVALID_HANDLE_VALUE )
+				{
+					CloseHandle( hFile );
+					file = tmpfile;
+					break;
+				}
+			}
+
+			if( !file.empty() )
+			{
+				pcu->SetSaveFile( file );
+				::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_RECORD ), file.c_str() );
+				::CheckDlgButton( hwndDlg, IDC_RECORD, BST_CHECKED );
+				ShowRecButtons( hwndDlg, true );
+			}
+			else
+			{
+				::CheckDlgButton( hwndDlg, IDC_RECORD, BST_UNCHECKED );
+				ShowRecButtons( hwndDlg, false );
+			}
 		}
 	}
 }
@@ -416,13 +454,6 @@ bool CallRun( HWND hwndDlg )
 	}
 
 	return success;
-}
-
-void ShowRecButtons( HWND hwndDlg, bool bEnable )
-{
-	BOOL enable = bEnable ? TRUE : FALSE;
-	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_EDIT_RECORD ), enable );
-	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_BROWSE_REC ), enable );
 }
 
 void DoCmdBrowse( HWND hwnd )
