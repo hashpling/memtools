@@ -8,6 +8,8 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <shlobj.h>
+#include <iomanip>
 
 using std::list;
 using std::vector;
@@ -65,10 +67,12 @@ public:
 
 	const list< Command >& GetCommands() const { return _commands; }
 	MMPainter* GetPainter() const { return _ppaint; }
-
+	const tstring& GetSaveFile() const { return _savefile; }
+	void SetSaveFile( const tstring& str ) { _savefile = str; }
 private:
 	list< Command > _commands;
 	MMPainter* _ppaint;
+	tstring _savefile;
 };
 
 const TCHAR CPDlgContext::prefs_subkey[] = _T("SOFTWARE\\hashpling.org\\memmon");
@@ -248,6 +252,81 @@ void CPDlgContext::Save( const Command& cmd )
 	}
 }
 
+void ShowRecButtons( HWND hwndDlg, bool bEnable )
+{
+	BOOL enable = bEnable ? TRUE : FALSE;
+	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_EDIT_RECORD ), enable );
+	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_BROWSE_REC ), enable );
+}
+
+void UpdateRecFileGuess( HWND hwndDlg, CPDlgContext::Command* pCmd )
+{
+	TCHAR recfile[ MAX_PATH ];
+	CPDlgContext* pcu = reinterpret_cast< CPDlgContext* >( ::GetWindowLongPtr( hwndDlg, GWLP_USERDATA ) );
+
+	if( ::GetDlgItemText( hwndDlg, IDC_EDIT_RECORD, recfile, MAX_PATH ) == 0
+		|| pcu->GetSaveFile().empty()
+		|| pcu->GetSaveFile() == recfile )
+	{
+		TCHAR docsFolder[ MAX_PATH ];
+
+		if( ::SHGetFolderPath( hwndDlg, CSIDL_PERSONAL, NULL, 0, docsFolder ) == S_OK )
+		{
+			typedef CPDlgContext::tstring tstring;
+
+			const tstring& cmd = pCmd->GetCmd();
+			tstring::size_type start = cmd.find_last_of( _T('\\') );
+			if( start == tstring::npos )
+				start = 0;
+
+			tstring::size_type end = cmd.find_last_of( _T('.') );
+			if( end == tstring::npos || end < start )
+				end = cmd.size();
+
+			tstring tmp( docsFolder );
+			if( tmp.empty() || *(tmp.end() - 1) == _T('\\') )
+				++start;
+
+			tmp.append( cmd.c_str() + start, end - start );
+
+			tstring file;
+
+			for( int i = 0; i < 100; ++i )
+			{
+				std::basic_ostringstream< TCHAR > tstream;
+
+				tstream << tmp;
+				tstream << std::setfill( _T('0') ) << std::setw( 2 ) << i;
+				tstream << _T(".rec");
+
+				tstring tmpfile( tstream.str() );
+
+				HANDLE hFile = ::CreateFile( tmpfile.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_TEMPORARY
+ | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+				if( hFile != INVALID_HANDLE_VALUE )
+				{
+					CloseHandle( hFile );
+					file = tmpfile;
+					break;
+				}
+			}
+
+			if( !file.empty() )
+			{
+				pcu->SetSaveFile( file );
+				::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_RECORD ), file.c_str() );
+				::CheckDlgButton( hwndDlg, IDC_RECORD, BST_CHECKED );
+				ShowRecButtons( hwndDlg, true );
+			}
+			else
+			{
+				::CheckDlgButton( hwndDlg, IDC_RECORD, BST_UNCHECKED );
+				ShowRecButtons( hwndDlg, false );
+			}
+		}
+	}
+}
+
 void ChangeHistSel( HWND hwndDlg, HWND hwndCombo )
 {
 	LRESULT lRes;
@@ -258,6 +337,8 @@ void ChangeHistSel( HWND hwndDlg, HWND hwndCombo )
 		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_CMD ), pCmd->GetCmd().c_str() );
 		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_ARGS ), pCmd->GetArg().c_str() );
 		::SetWindowText( ::GetDlgItem( hwndDlg, IDC_EDIT_WD ), pCmd->GetWd().c_str() );
+
+		UpdateRecFileGuess( hwndDlg, pCmd );
 	}
 }
 
@@ -373,13 +454,6 @@ bool CallRun( HWND hwndDlg )
 	}
 
 	return success;
-}
-
-void ShowRecButtons( HWND hwndDlg, bool bEnable )
-{
-	BOOL enable = bEnable ? TRUE : FALSE;
-	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_EDIT_RECORD ), enable );
-	::EnableWindow( ::GetDlgItem( hwndDlg, IDC_BROWSE_REC ), enable );
 }
 
 void DoCmdBrowse( HWND hwnd )
