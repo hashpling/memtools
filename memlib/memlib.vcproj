@@ -277,6 +277,10 @@
 				RelativePath=".\mminfo.cc"
 				>
 			</File>
+			<File
+				RelativePath=".\playbacksource.cc"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -301,6 +305,10 @@
 			</File>
 			<File
 				RelativePath=".\mmsource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\playbacksource.h"
 				>
 			</File>
 		</Filter>

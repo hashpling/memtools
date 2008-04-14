@@ -42,16 +42,20 @@ IDC_MEMMON MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&Attach...",                  ID_FILE_ATTACH
         MENUITEM "&Open...",                    ID_FILE_OPEN
         MENUITEM "&Save as...",                 ID_FILE_SAVEAS
-        MENUITEM "Re&cord...",                  ID_FILE_RECORD
-        MENUITEM "&Run...",                     ID_FILE_RUN
+        MENUITEM "&Record...",                  ID_FILE_RECORD
+        MENUITEM "&Playback...",                ID_FILE_PLAYBACK
         MENUITEM "E&xit",                       IDM_EXIT
     END
     POPUP "&Edit"
     BEGIN
         MENUITEM "&Preferences",                IDM_EDIT_PREFERENCES
+    END
+    POPUP "&Process"
+    BEGIN
+        MENUITEM "&Attach...",                  ID_PROC_ATTACH
+        MENUITEM "&Run...",                     ID_PROC_RUN
     END
     POPUP "&Help"
     BEGIN

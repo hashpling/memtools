@@ -250,8 +250,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
-		case ID_FILE_ATTACH:
-			AttachDialog::Run( hInst, hWnd, pPaint, timerid );
+		case ID_PROC_ATTACH:
+			if( AttachDialog::Run( hInst, hWnd, pPaint ) && timerid == 0 )
+				timerid = SetTimer(hWnd, 1, 100, NULL);
 			break;
 		case IDM_EDIT_PREFERENCES:
 			pPrefs->RunDialog(hInst, hWnd);
@@ -264,8 +265,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_FILE_SAVEAS:
 			pPaint->Snapshot(hWnd);
 			break;
-		case ID_FILE_RUN:
-			CreateProcDialog::Run( hInst, hWnd, pPaint, timerid );
+		case ID_PROC_RUN:
+			if( CreateProcDialog::Run( hInst, hWnd, pPaint ) && timerid == 0 )
+				timerid = SetTimer(hWnd, 1, 100, NULL);
 			if( pPaint->IsRecording() != bRecMenuState )
 				DoFlipMenuItem( hWnd, bRecMenuState );
 			break;
@@ -279,6 +281,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				DoFlipMenuItem( hWnd, bRecMenuState );
 
 			break;
+
+		case ID_FILE_PLAYBACK:
+			if( pPaint->Playback( hWnd ) && timerid == 0 )
+				timerid = SetTimer(hWnd, 1, 100, NULL);
+			if( pPaint->IsRecording() != bRecMenuState )
+				DoFlipMenuItem( hWnd, bRecMenuState );
+			break;
+
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}

@@ -6,7 +6,7 @@ class MMPainter;
 namespace CreateProcDialog
 {
 
-	void Run( HINSTANCE hInst, HWND hWnd, MMPainter* pPaint, UINT_PTR& timerid );
+	bool Run( HINSTANCE hInst, HWND hWnd, MMPainter* pPaint );
 
 };
 

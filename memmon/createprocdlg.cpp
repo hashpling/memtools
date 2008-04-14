@@ -528,11 +528,8 @@ INT_PTR CALLBACK CreateProcProc( HWND hwndDlg, UINT message, WPARAM wParam, LPAR
 
 }
 
-void CreateProcDialog::Run( HINSTANCE hInst, HWND hWnd, MMPainter* pPaint, UINT_PTR& timerid )
+bool CreateProcDialog::Run( HINSTANCE hInst, HWND hWnd, MMPainter* pPaint )
 {
 	CPDlgContext ctx( pPaint );
-	if( DialogBoxParam( hInst, MAKEINTRESOURCE(IDD_CREATEPROC_DLOG), hWnd, CreateProcProc, reinterpret_cast< LPARAM >( &ctx ) ) )
-	{
-		timerid = SetTimer(hWnd, 1, 100, NULL);
-	}
+	return DialogBoxParam( hInst, MAKEINTRESOURCE(IDD_CREATEPROC_DLOG), hWnd, CreateProcProc, reinterpret_cast< LPARAM >( &ctx ) ) == IDOK;
 }

@@ -154,35 +154,20 @@ size_t ProcessSource::Update( MemoryMap& m )
 	return max_addr;
 }
 
-namespace
-{
-
-inline double FT2dbl(LPFILETIME lpFt)
-{
-	__int64 tmp = (__int64(lpFt->dwHighDateTime) << 32) + __int64(lpFt->dwLowDateTime);
-	return double(tmp) / 10000000.0;
-}
-
-}
-
-double ProcessSource::Poll( const MemMon::CPUPrefs& prefs )
+bool ProcessSource::Poll( double dtime, const MemMon::CPUPrefs& prefs )
 {
 	double k = prefs.k;
 	const double delta_t = 0.1;
 	double damping = prefs.damper;
 
-	FILETIME currtime;
 	FILETIME sysidle, syskernel, sysuser;
 	FILETIME proccreate, procexit, prockern, procuser;
 
 	if( ::WaitForSingleObject( _proc, 0 ) == WAIT_OBJECT_0 )
-		return 0.0;
+		return false;
 
-	GetSystemTimeAsFileTime(&currtime);
 	GetSystemTimes(&sysidle, &syskernel, &sysuser);
 	GetProcessTimes(_proc, &proccreate, &procexit, &prockern, &procuser);
-
-	double dtime = FT2dbl(&currtime);
 
 	double new_u = FT2dbl(&procuser);
 	double new_k = FT2dbl(&prockern);
@@ -203,7 +188,7 @@ double ProcessSource::Poll( const MemMon::CPUPrefs& prefs )
 	actual_k = new_k;
 	last_poll = dtime;
 
-	return dtime;
+	return true;
 }
 
 double ProcessSource::GetPos() const

@@ -116,10 +116,7 @@ INT_PTR CALLBACK AttachProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lP
 
 }
 
-void AttachDialog::Run( HINSTANCE hInst, HWND hWnd, MMPainter* pPaint, UINT_PTR& timerid )
+bool AttachDialog::Run( HINSTANCE hInst, HWND hWnd, MMPainter* pPaint )
 {
-	if( DialogBoxParam( hInst, MAKEINTRESOURCE(IDD_ATTACH_DLOG), hWnd, AttachProc, reinterpret_cast< LPARAM >( pPaint ) ) )
-	{
-		timerid = SetTimer(hWnd, 1, 100, NULL);
-	}
+	return DialogBoxParam( hInst, MAKEINTRESOURCE(IDD_ATTACH_DLOG), hWnd, AttachProc, reinterpret_cast< LPARAM >( pPaint ) ) == IDOK;
 }
