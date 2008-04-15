@@ -12,6 +12,17 @@ struct CPUPrefs;
 namespace Win
 {
 
+inline unsigned __int64 DwordToUint64( DWORD d )
+{
+	return d;
+}
+
+inline double FT2dbl(LPFILETIME lpFt)
+{
+	unsigned __int64 tmp =  ( DwordToUint64( lpFt->dwHighDateTime ) << 32 ) + lpFt->dwLowDateTime;
+	return double(tmp) / 10000000.0;
+}
+
 class ProcessSource : public MemMon::Source
 {
 public:
@@ -21,7 +32,7 @@ public:
 	~ProcessSource();
 
 	size_t Update( MemMon::MemoryMap& );
-	double Poll( const MemMon::CPUPrefs& prefs );
+	bool Poll( double dtime, const MemMon::CPUPrefs& prefs );
 	double GetPos() const;
 
 private:

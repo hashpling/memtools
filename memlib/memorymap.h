@@ -12,7 +12,7 @@ namespace MemMon
 class MemoryMap
 {
 public:
-	MemoryMap() {}
+	MemoryMap() : _total_free( 0 ), _total_commit( 0 ), _total_reserve( 0 ) {}
 
 	template< class StreamBuf >
 	void Write( StreamBuf* ) const;
@@ -47,10 +47,10 @@ public:
 	const Timestamp& GetTimestamp() const { return _ts; }
 	Timestamp& GetTimestamp() { return _ts; }
 
-private:
 	MemoryMap( const MemoryMap& );
 	MemoryMap& operator=( const MemoryMap& );
 
+private:
 	void UpdateFreeList( const Region& r, const Region* modified );
 	void PartialClear();
 
