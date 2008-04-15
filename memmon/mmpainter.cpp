@@ -4,6 +4,7 @@
 #include "mmpainter.h"
 #include "memorydiff.h"
 #include "processsource.h"
+#include "playbacksource.h"
 #include "filedialog.h"
 #include <cmath>
 #include <vector>
@@ -355,9 +356,11 @@ void MMPainter::Update( bool bForce )
 {
 	if (_source.get() != NULL)
 	{
-		double ctime = _source->Poll( pPrefs->GetCPUPrefs() );
+		FILETIME currtime;
+		::GetSystemTimeAsFileTime(&currtime);
+		double ctime = MemMon::Win::FT2dbl(&currtime);
 
-		if( ctime == 0.0 )
+		if( !_source->Poll( ctime, pPrefs->GetCPUPrefs() ) )
 		{
 			_recorder.reset();
 			_source.reset();
@@ -463,6 +466,27 @@ void MMPainter::Read(HWND hwnd)
 			MessageBoxA(hwnd, ex.what(), "Read Error", MB_ICONINFORMATION | MB_OK);
 		}
 	}
+}
+
+bool MMPainter::Playback(HWND hwnd)
+{
+	char filename[MAX_PATH];
+
+	if( MemMon::Win::RunOpenFileDialog( hwnd, filename ) )
+	{
+		try
+		{
+			_source.reset( new MemMon::PlaybackSource(filename) );
+			mem.Clear( 50 );
+			_memprev.Clear( 50 );
+			return true;
+		}
+		catch (exception& ex)
+		{
+			MessageBoxA(hwnd, ex.what(), "Read Error", MB_ICONINFORMATION | MB_OK);
+		}
+	}
+	return false;
 }
 
 void MMPainter::Record( const char* fname )

@@ -29,7 +29,7 @@ class Source
 public:
 	virtual ~Source() {}
 	virtual size_t Update( MemoryMap& ) = 0;
-	virtual double Poll( const CPUPrefs& ) = 0;
+	virtual bool Poll( double, const CPUPrefs& ) = 0;
 	virtual double GetPos() const = 0;
 };
 

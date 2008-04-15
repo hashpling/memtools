@@ -42,6 +42,8 @@ public:
 	bool IsRecording() const { return _recorder.get() != NULL; }
 	void StopRecording() { return _recorder.reset(); }
 
+	bool Playback(HWND hwnd);
+
 private:
 	class Recorder
 	{
@@ -63,20 +65,6 @@ private:
 		std::string _fname;
 		int _count;
 #endif
-	};
-
-	class PlaybackSource : public MemMon::Source
-	{
-	public:
-		PlaybackSource( const char* fname, MemMon::MemoryMap& mm );
-		~PlaybackSource();
-
-		size_t Update( MemMon::MemoryMap& );
-		double Poll( const MemMon::CPUPrefs& prefs );
-		double GetPos() const;
-
-	private:
-		std::filebuf _buf;
 	};
 
 	void DisplayGauge(HDC hdc, bool bQuick) const;

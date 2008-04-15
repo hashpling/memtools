@@ -154,6 +154,25 @@
 						ForceConformanceInForLoopScope="TRUE"/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\playbacksource.cc">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						RuntimeLibrary="3"
+						TreatWChar_tAsBuiltInType="TRUE"
+						ForceConformanceInForLoopScope="TRUE"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						RuntimeLibrary="2"
+						TreatWChar_tAsBuiltInType="TRUE"
+						ForceConformanceInForLoopScope="TRUE"/>
+				</FileConfiguration>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -176,6 +195,9 @@
 			</File>
 			<File
 				RelativePath=".\mmvalueptr.h">
+			</File>
+			<File
+				RelativePath=".\playbacksource.h">
 			</File>
 		</Filter>
 		<Filter

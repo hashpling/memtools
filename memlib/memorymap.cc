@@ -245,4 +245,31 @@ void MemoryMap::Swap( MemoryMap& other )
 	std::swap( _ts, other._ts );
 }
 
+	MemoryMap::MemoryMap( const MemoryMap& other )
+		: _blocklist( other._blocklist )
+		, _total_free( 0 )
+		, _total_commit( 0 )
+		, _total_reserve( 0 )
+		, _ts( other._ts )
+	{
+	}
+
+	MemoryMap& MemoryMap::operator=( const MemoryMap& other )
+	{
+		_blocklist = other._blocklist;
+		if( _freelist.size() <= other._freelist.size() )
+		{
+			std::copy( other._freelist.begin(), other._freelist.begin() + _freelist.size(), _freelist.begin() );
+			_total_free = other._total_free;
+			_total_commit = other._total_commit;
+			_total_reserve = other._total_reserve;
+		}
+		else
+		{
+			RecalcFreeList();
+		}
+		_ts = other._ts;
+		return *this;
+	}
+
 }
