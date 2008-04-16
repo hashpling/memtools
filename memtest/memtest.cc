@@ -1,3 +1,4 @@
+// Copyright (c) 2008 Charles Bailey
 #include <iostream>
 #include <sstream>
 #include "memorymap.h"

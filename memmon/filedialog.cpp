@@ -1,3 +1,4 @@
+// Copyright (c) 2007,2008 Charles Bailey
 #include "stdafx.h"
 #include "filedialog.h"
 #include <windows.h>
