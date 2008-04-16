@@ -1,3 +1,4 @@
+// Copyright (c) 2008 Charles Bailey
 #include "mminfo.h"
 #include "mmintio.h"
 #include <ctime>

@@ -1,3 +1,4 @@
+// Copyright (c) 2008 Charles Bailey
 #include "stdafx.h"
 #include "processsource.h"
 #include "mminfo.h"

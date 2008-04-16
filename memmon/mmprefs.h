@@ -1,7 +1,7 @@
 #ifndef MMPREFS_H
 #define MMPREFS_H
 
-// Copyright (c) 2007 Charles Bailey
+// Copyright (c) 2007,2008 Charles Bailey
 
 #include <windows.h>
 #include "mmsource.h"

@@ -1,6 +1,8 @@
 #ifndef CREATEPROCDLG_H
 #define CREATEPROCDLG_H
 
+// Copyright (c) 2008 Charles Bailey
+
 class MMPainter;
 
 namespace CreateProcDialog

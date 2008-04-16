@@ -1,6 +1,8 @@
 #ifndef FILEDIALOG_H
 #define FILEDIALOG_H
 
+// Copyright (c) 2007,2008 Charles Bailey
+
 namespace MemMon
 {
 namespace Win
