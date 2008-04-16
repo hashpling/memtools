@@ -308,6 +308,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\mmvalueptr.h"
+				>
+			</File>
+			<File
 				RelativePath=".\playbacksource.h"
 				>
 			</File>

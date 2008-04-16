@@ -1,6 +1,8 @@
 #ifndef MMVALUEPTR_H
 #define MMVALUEPTR_H
 
+// Copyright (c) 2008 Charles Bailey
+
 #include <algorithm>
 #include <utility>
 

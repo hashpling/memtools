@@ -1,4 +1,4 @@
-// Copyright (c) 2007 Charles Bailey
+// Copyright (c) 2007,2008 Charles Bailey
 
 #include "stdafx.h"
 #include "mmprefs.h"

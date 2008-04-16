@@ -1,6 +1,8 @@
 #ifndef MMINTIO_H
 #define MMINTIO_H
 
+// Copyright (c) 2007,2008 Charles Bailey
+
 namespace MemMon
 {
 

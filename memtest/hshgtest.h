@@ -1,7 +1,7 @@
 #ifndef HSHGTEST_H
 #define HSHGTEST_H
 
-// Copyright (c) 2007 Charles Bailey
+// Copyright (c) 2007,2008 Charles Bailey
 
 // Distributed under the Boost Software License, Version 1.0
 // See: http://boost.org/LICENSE_1_0.txt

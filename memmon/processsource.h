@@ -1,6 +1,8 @@
 #ifndef PROCESSSOURCE_H
 #define PROCESSSOURCE_H
 
+// Copyright (c) 2008 Charles Bailey
+
 #include "mmsource.h"
 
 namespace MemMon
