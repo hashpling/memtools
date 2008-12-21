@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <cstring>
 
 namespace
 {
@@ -28,6 +29,7 @@ namespace
 
 int main( int argc, char* argv[] )
 {
+	using std::strcmp;
 	bool noopts = false;
 	bool summary = false;
 	MemMon::MemoryMap m;

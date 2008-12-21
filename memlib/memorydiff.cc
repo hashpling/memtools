@@ -3,6 +3,7 @@
 #include "memorydiff.h"
 #include "memorymap.h"
 #include "mmintio.h"
+#include <cstring>
 
 namespace MemMon
 {
@@ -356,6 +357,7 @@ void MemoryDiff::Write( StreamBuf* sb ) const
 template< class StreamBuf >
 void MemoryDiff::Read( StreamBuf* sb )
 {
+	using std::memcmp;
 	typedef typename StreamBuf::traits_type traits_type;
 
 	char b[4];
