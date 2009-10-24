@@ -36,14 +36,19 @@ using MemMon::FreeRegion;
 using MemMon::Region;
 
 MMPainter::MMPainter(int r, MMPrefs* p)
-: hMemDC(NULL), hBmp(NULL), hOldBmp(NULL)
-, radius(r), dradius(r), width(r * 3 /  5), maxaddr(0x1000000u)
-, next_update(0.0), pPrefs(p)
+	: hBrush(RGB(255, 0, 0))
+	, hWBrush(RGB(255, 255, 255))
+	, hPen(PS_SOLID, 0, RGB(255, 255, 255))
+	, hMemDC(NULL)
+	, hBmp(NULL)
+	, hOldBmp(NULL)
+	, radius(r)
+	, dradius(r)
+	, width(r * 3 /  5)
+	, maxaddr(0x1000000u)
+	, next_update(0.0)
+	, pPrefs(p)
 {
-	hBrush = CreateSolidBrush(RGB(255, 0, 0));
-	hWBrush = CreateSolidBrush(RGB(255, 255, 255));
-	hPen = CreatePen(PS_SOLID, 0, RGB(255, 255, 255));
-
 	rsize.left = 0;
 	rsize.top = 0;
 	rsize.right = radius << 1;
@@ -70,10 +75,6 @@ MMPainter::~MMPainter()
 	{
 		DeleteDC(hMemDC);
 	}
-
-	DeleteObject(hPen);
-	DeleteObject(hWBrush);
-	DeleteObject(hBrush);
 }
 
 void MMPainter::Paint(HDC hdc, PAINTSTRUCT* ps)
