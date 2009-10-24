@@ -404,7 +404,7 @@ void MMPainter::Snapshot( const char* fname ) const
 
 	if (ofs.fail())
 	{
-		throw MemMon::Exception( "There was an error writing out the dump." );
+		throw std::runtime_error( "There was an error writing out the dump." );
 	}
 }
 
@@ -430,7 +430,7 @@ void MMPainter::Read( const char* fname )
 	ifstream ifs( fname, ios_base::in | ios_base::binary );
 
 	if( !ifs.is_open() )
-		throw MemMon::Exception( "There was an error opening the dump." );
+		throw std::runtime_error( "There was an error opening the dump." );
 
 	_recorder.reset();
 
@@ -438,7 +438,7 @@ void MMPainter::Read( const char* fname )
 	i >> mem;
 
 	if (ifs.fail())
-		throw MemMon::Exception( "There was an error reading the dump." );
+		throw std::runtime_error( "There was an error reading the dump." );
 
 	_source.reset();
 
