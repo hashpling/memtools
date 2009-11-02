@@ -370,6 +370,22 @@ void MMPainter::Update( bool bForce )
 			return;
 		}
 
+		if (hMemDC != NULL && _recorder.get() && next_update - ctime > 0.5)
+		{
+			HGDIOBJ hOldBrush = ::SelectObject(hMemDC, GetStockObject(DC_BRUSH));
+			HGDIOBJ hOldPen = ::SelectObject(hMemDC, GetStockObject(DC_PEN));
+			::SetDCBrushColor(hMemDC, RGB(215, 38, 38));
+			::SetDCPenColor(hMemDC, RGB(215, 38, 38));
+			::Ellipse(hMemDC, 5, 5, 20, 20);
+			::SelectObject(hMemDC, hOldPen);
+			::SelectObject(hMemDC, hOldBrush);
+		}
+		else
+		{
+			RECT tmp = { 5, 5, 20, 20 };
+			FillRect(hMemDC, &tmp, hWBrush);
+		}
+
 		if ( bForce || ctime > next_update )
 		{
 			maxaddr = _source->Update( _memprev );
