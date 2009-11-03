@@ -6,11 +6,12 @@
 #include "processsource.h"
 #include "playbacksource.h"
 #include "filedialog.h"
+#include "hrfmt.h"
+#include "mmprefs.h"
+#include "gdiswitcher.h"
 #include <cmath>
 #include <vector>
 #include <algorithm>
-#include "hrfmt.h"
-#include "mmprefs.h"
 #include <fstream>
 #include <sstream>
 #include <cassert>
@@ -167,8 +168,8 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 
 		vector<Region>::const_iterator pReg = mem.GetBlockList().begin();
 
-		HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
-		HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
+		GDI::Switcher BrushSaver(hdc, GetStockObject(DC_BRUSH));
+		GDI::Switcher PenSaver(hdc, GetStockObject(DC_PEN));
 		for (double d = dstart; d > ddiff; d = dnext)
 		{
 			dnext = d - ddiff;
@@ -186,15 +187,16 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 			Pie(hdc, 0, 0, radius << 1, radius << 1, x1, y1, x2, y2);
 
 		}
-		SelectObject(hdc, hOldPen);
-		SelectObject(hdc, hOldBrush);
 	}
-	//
-	HGDIOBJ hOldPen = SelectObject(hdc, hPen);
-	HGDIOBJ hOldBrush = SelectObject(hdc, hWBrush);
-	int ww = (radius << 1) - width;
-	Pie(hdc, width, width, ww, ww, ww, radius, width, radius + 1);
-	SelectObject(hdc, hOldPen);
+
+	const int ww = (radius << 1) - width;
+
+	GDI::Switcher BrushSaver(hdc, hWBrush);
+	{
+		GDI::Switcher PenSaver(hdc, hPen);
+		Pie(hdc, width, width, ww, ww, ww, radius, width, radius + 1);
+	}
+
 	Arc(hdc, width, width, ww, ww, ww, radius, width, radius + 1);
 	Arc(hdc, 0, 0, radius << 1, radius << 1, radius << 1, radius, 0, radius + 1);
 
@@ -207,8 +209,8 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 			dpos /= processor_count;
 		}
 
-		SelectObject(hdc, GetStockObject(DC_BRUSH));
-		SelectObject(hdc, GetStockObject(DC_PEN));
+		GDI::Switcher BrushSaver(hdc, GetStockObject(DC_BRUSH));
+		GDI::Switcher PenSaver(hdc, GetStockObject(DC_PEN));
 		SetDCBrushColor(hdc, RGB(127, 0, 0));
 		SetDCPenColor(hdc, RGB(127, 0, 0));
 
@@ -223,9 +225,6 @@ void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
 		if (y1 == radius) y1 -= 1;
 
 		Pie(hdc, width + 3, width + 3, ww - 3, ww - 3, x1, y1, x2, y2);
-
-		SelectObject(hdc, hOldPen);
-		SelectObject(hdc, hOldBrush);
 	}
 }
 
@@ -254,8 +253,8 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 	int currentline = 1;
 	int currentpos = 0;
 
-	HGDIOBJ hOldBrush = SelectObject(hdc, GetStockObject(DC_BRUSH));
-	HGDIOBJ hOldPen = SelectObject(hdc, GetStockObject(DC_PEN));
+	GDI::Switcher BrushSaver(hdc, GetStockObject(DC_BRUSH));
+	GDI::Switcher PenSaver(hdc, GetStockObject(DC_PEN));
 	SetDCPenColor(hdc, RGB(0, 0, 0));
 
 	for (vector<FreeRegion>::const_iterator k = mem.GetFreeList().begin();
@@ -281,9 +280,6 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 		currentpos += nwidth + 1;
 
 	}
-
-	SelectObject(hdc, hOldPen);
-	SelectObject(hdc, hOldBrush);
 }
 
 void MMPainter::DisplayTotals(HDC hdc, int offset) const
@@ -372,13 +368,11 @@ void MMPainter::Update( bool bForce )
 
 		if (hMemDC != NULL && _recorder.get() && next_update - ctime > 0.5)
 		{
-			HGDIOBJ hOldBrush = ::SelectObject(hMemDC, GetStockObject(DC_BRUSH));
-			HGDIOBJ hOldPen = ::SelectObject(hMemDC, GetStockObject(DC_PEN));
+			GDI::Switcher BrushSaver(hMemDC, GetStockObject(DC_BRUSH));
+			GDI::Switcher PenSaver(hMemDC, GetStockObject(DC_PEN));
 			::SetDCBrushColor(hMemDC, RGB(215, 38, 38));
 			::SetDCPenColor(hMemDC, RGB(215, 38, 38));
 			::Ellipse(hMemDC, 5, 5, 20, 20);
-			::SelectObject(hMemDC, hOldPen);
-			::SelectObject(hMemDC, hOldBrush);
 		}
 		else
 		{

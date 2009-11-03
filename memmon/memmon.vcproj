@@ -417,6 +417,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gdiswitcher.h"
+				>
+			</File>
+			<File
 				RelativePath=".\memmon.h"
 				>
 			</File>
