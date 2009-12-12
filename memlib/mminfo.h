@@ -7,6 +7,7 @@
 #include <vector>
 #include <utility>
 #include <exception>
+#include <stdexcept>
 #include "mmvalueptr.h"
 
 #ifndef _WIN32
