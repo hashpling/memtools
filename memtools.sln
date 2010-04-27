@@ -1,40 +1,21 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memmon", "memmon\memmon.vcproj", "{940EA588-998B-4547-8518-A4BB25CBF91F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178} = {ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}
-		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
-	EndProjectSection
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memmon", "memmon\memmon.vcxproj", "{940EA588-998B-4547-8518-A4BB25CBF91F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmtlib", "fmtlib\fmtlib.vcproj", "{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmtlib", "fmtlib\fmtlib.vcxproj", "{ECEE9A1F-EA69-4C1D-8F13-53A101DA5178}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memlib", "memlib\memlib.vcproj", "{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memlib", "memlib\memlib.vcxproj", "{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memtest", "memtest\memtest.vcproj", "{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memtest", "memtest\memtest.vcxproj", "{6C12BE48-47D9-4A4F-BD95-D8431CAA20DA}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "splitrec", "splitrec\splitrec.vcproj", "{A421B095-96FE-4AD8-A4E9-4CAC956BA7D1}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "splitrec", "splitrec\splitrec.vcxproj", "{A421B095-96FE-4AD8-A4E9-4CAC956BA7D1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memdiff", "memdiff\memdiff.vcproj", "{4CB4A83F-DB76-421C-B004-D43E6F0294F1}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memdiff", "memdiff\memdiff.vcxproj", "{4CB4A83F-DB76-421C-B004-D43E6F0294F1}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memcat", "memcat\memcat.vcproj", "{2CF04B42-201C-477A-BBF8-4F2D5C8DAFD0}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "memcat", "memcat\memcat.vcxproj", "{2CF04B42-201C-477A-BBF8-4F2D5C8DAFD0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "joinrec", "joinrec\joinrec.vcproj", "{FC9123C1-75FD-4022-B4BD-08D18A5AA635}"
-	ProjectSection(ProjectDependencies) = postProject
-		{3B7FED65-4037-4959-BA4E-F1BDDF8CFB87} = {3B7FED65-4037-4959-BA4E-F1BDDF8CFB87}
-	EndProjectSection
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "joinrec", "joinrec\joinrec.vcxproj", "{FC9123C1-75FD-4022-B4BD-08D18A5AA635}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

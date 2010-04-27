@@ -1,4 +1,4 @@
-*.vcproj.*.user
+*.vcxproj.user
 *.ncb
 *.aps
 *.suo
@@ -14,3 +14,6 @@ build32
 build_rel32
 *.gcov
 build_cov
+*.sdf
+*.opensdf
+ipch
