@@ -45,4 +45,9 @@ double PlaybackSource::GetPos() const
 	return 0.0;
 }
 
+bool PlaybackSource::IsPlaybackDevice() const
+{
+	return true;
+}
+
 }

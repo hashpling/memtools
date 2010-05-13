@@ -197,6 +197,11 @@ double ProcessSource::GetPos() const
 	return ind_pos;
 }
 
+bool ProcessSource::IsPlaybackDevice() const
+{
+	return false;
+}
+
 }
 
 }
