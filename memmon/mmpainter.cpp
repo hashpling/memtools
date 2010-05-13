@@ -466,6 +466,9 @@ void MMPainter::Read( const char* fname )
 
 	_source.reset();
 
+	if (mem.GetBlockList().empty())
+		throw std::runtime_error( "The memory dump was empty" );
+
 	const Region& r = mem.GetBlockList().back();
 	maxaddr = r.base + r.size;
 
