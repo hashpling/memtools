@@ -422,6 +422,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\gdibrush.h"
+				>
+			</File>
+			<File
+				RelativePath=".\gdipen.h"
+				>
+			</File>
+			<File
+				RelativePath=".\gdiswitcher.h"
+				>
+			</File>
+			<File
 				RelativePath=".\memmon.h"
 				>
 			</File>

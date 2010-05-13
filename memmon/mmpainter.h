@@ -10,6 +10,8 @@
 #include <fstream>
 #include "memorymap.h"
 #include "mmsource.h"
+#include "gdibrush.h"
+#include "gdipen.h"
 
 #ifdef _DEBUG
 #define MEMMON_DEBUG
@@ -81,9 +83,9 @@ private:
 	MemMon::MemoryMap mem;
 	MemMon::MemoryMap _memprev;
 
-	HBRUSH hBrush;
-	HBRUSH hWBrush;
-	HPEN hPen;
+	GDI::Brush hBrush;
+	GDI::Brush hWBrush;
+	GDI::Pen hPen;
 	HDC hMemDC;
 	HBITMAP hBmp;
 	HGDIOBJ hOldBmp;
