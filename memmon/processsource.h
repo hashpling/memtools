@@ -36,6 +36,7 @@ public:
 	size_t Update( MemMon::MemoryMap& );
 	bool Poll( double dtime, const MemMon::CPUPrefs& prefs );
 	double GetPos() const;
+	bool IsPlaybackDevice() const;
 
 private:
 	HANDLE _proc;

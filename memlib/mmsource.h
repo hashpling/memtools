@@ -31,6 +31,7 @@ public:
 	virtual size_t Update( MemoryMap& ) = 0;
 	virtual bool Poll( double, const CPUPrefs& ) = 0;
 	virtual double GetPos() const = 0;
+	virtual bool IsPlaybackDevice() const = 0;
 };
 
 }

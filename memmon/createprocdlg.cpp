@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <shlobj.h>
 #include <iomanip>
+#include <iterator>
 
 using std::list;
 using std::vector;
