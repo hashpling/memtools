@@ -366,18 +366,31 @@ void MMPainter::Update( bool bForce )
 			return;
 		}
 
-		if (hMemDC != NULL && _recorder.get() && next_update - ctime > 0.5)
+		if (hMemDC != NULL)
 		{
-			GDI::Switcher BrushSaver(hMemDC, GetStockObject(DC_BRUSH));
-			GDI::Switcher PenSaver(hMemDC, GetStockObject(DC_PEN));
-			::SetDCBrushColor(hMemDC, RGB(215, 38, 38));
-			::SetDCPenColor(hMemDC, RGB(215, 38, 38));
-			::Ellipse(hMemDC, 5, 5, 20, 20);
-		}
-		else
-		{
-			RECT tmp = { 5, 5, 20, 20 };
-			FillRect(hMemDC, &tmp, hWBrush);
+			if ( _recorder.get() && next_update - ctime > 0.5)
+			{
+				GDI::Switcher BrushSaver(hMemDC, GetStockObject(DC_BRUSH));
+				GDI::Switcher PenSaver(hMemDC, GetStockObject(DC_PEN));
+				::SetDCBrushColor(hMemDC, RGB(215, 38, 38));
+				::SetDCPenColor(hMemDC, RGB(215, 38, 38));
+				::Ellipse(hMemDC, 5, 5, 20, 20);
+			}
+			else if ( _source.get() && _source->IsPlaybackDevice() && next_update - ctime > 0.5 )
+			{
+				GDI::Switcher BrushSaver(hMemDC, GetStockObject(DC_BRUSH));
+				GDI::Switcher PenSaver(hMemDC, GetStockObject(DC_PEN));
+				::SetDCBrushColor(hMemDC, RGB(0, 0, 127));
+				::SetDCPenColor(hMemDC, RGB(0, 0, 0));
+
+				const POINT Triangle[] = { {5, 5}, {19, 12}, {5, 19} };
+				::Polygon(hMemDC, Triangle, 3);
+			}
+			else
+			{
+				RECT tmp = { 5, 5, 20, 20 };
+				FillRect(hMemDC, &tmp, hWBrush);
+			}
 		}
 
 		if ( bForce || ctime > next_update )
@@ -452,6 +465,9 @@ void MMPainter::Read( const char* fname )
 		throw std::runtime_error( "There was an error reading the dump." );
 
 	_source.reset();
+
+	if (mem.GetBlockList().empty())
+		throw std::runtime_error( "The memory dump was empty" );
 
 	const Region& r = mem.GetBlockList().back();
 	maxaddr = r.base + r.size;
