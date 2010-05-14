@@ -2,6 +2,7 @@
 #include "mminfo.h"
 #include "mmintio.h"
 #include <ctime>
+#include <cstdio>
 
 #ifdef _WIN32
 #include <sys/types.h>

@@ -7,6 +7,7 @@
 #include <vector>
 #include <utility>
 #include <exception>
+#include <stdexcept>
 #include "mmvalueptr.h"
 
 #ifndef _WIN32
@@ -16,30 +17,14 @@
 namespace MemMon
 {
 
-class Exception : public std::exception
-{
-public:
-	Exception() {}
-
-	Exception( const char* txt ) : _reason( txt ) {}
-	Exception( const std::string& str ) : _reason( str ) {}
-
-	virtual ~Exception() throw() {}
-	virtual const char* what() const throw() { return _reason.empty() ? std::exception::what() : _reason.c_str(); }
-
-private:
-	std::string _reason;
-};
-
 // Basic type to throw from constructors
 template< class T >
-class ConstructorFailure : public Exception
+class ConstructorFailure : public std::runtime_error
 {
 public:
-	ConstructorFailure() {}
+	ConstructorFailure() : std::runtime_error( std::string() ) {}
 
-	ConstructorFailure( const char* txt ) : Exception( txt ) {}
-	ConstructorFailure( const std::string& str ) : Exception( str ) {}
+	ConstructorFailure( const std::string& str ) : std::runtime_error( str ) {}
 
 	virtual ~ConstructorFailure() throw() {}
 };
