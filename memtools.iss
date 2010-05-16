@@ -34,7 +34,6 @@ Name: custom; Description: "Custom"; Flags: iscustom
 Name: "common"; Description: "common files"; Types: full t32bitonly t64bitonly custom; Flags: fixed
 Name: "c32bitexe"; Description: "win32 program files"; Types: full t32bitonly custom
 Name: "c64bitexe"; Description: "x64 program files"; Types: full t64bitonly; Check: Is64BitInstallMode
-Name: "source"; Description: "source files"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
@@ -56,19 +55,6 @@ Source: "{#VCREDIST}\amd64\Microsoft.VC100.CRT\msvcr100.dll"; DestDir: "{app}\bi
 Source: "{#VCREDIST}\amd64\Microsoft.VC100.CRT\msvcp100.dll"; DestDir: "{app}\bin64"; Components: c64bitexe
 Source: "readme.txt"; DestDir: "{app}"; Flags: isreadme; Components: common
 Source: "licence.txt"; DestDir: "{app}"; Components: common
-Source: "readme.txt"; DestDir: "{app}\src"; Components: source
-Source: "licence.txt"; DestDir: "{app}\src"; Components: source
-Source: "memtools.sln"; DestDir: "{app}\src"; Components: source
-Source: "memtools.iss"; DestDir: "{app}\src"; Components: source
-Source: "no_deprecate.vsprops"; DestDir: "{app}\src"; Components: source
-Source: "fmtlib\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\fmtlib"; Components: source
-Source: "joinrec\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\joinrec"; Components: source
-Source: "memcat\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\memcat"; Components: source
-Source: "memdiff\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\memdiff"; Components: source
-Source: "memlib\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\memlib"; Components: source
-Source: "memmon\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\memmon"; Components: source
-Source: "memtest\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\memtest"; Components: source
-Source: "splitrec\*"; Excludes: "*.aps,.*,*.user"; DestDir: "{app}\src\splitrec"; Components: source
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
