@@ -1,4 +1,4 @@
-// Copyright (c) 2008 Charles Bailey
+// Copyright (c) 2008,2010 Charles Bailey
 #include "stdafx.h"
 #include "createprocdlg.h"
 #include "mmpainter.h"

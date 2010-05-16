@@ -1,7 +1,7 @@
 #ifndef PLAYBACKSOURCE_H
 #define PLAYBACKSOURCE_H
 
-// Copyright (c) 2008 Charles Bailey
+// Copyright (c) 2008,2010 Charles Bailey
 
 #include "mmsource.h"
 #include "memorymap.h"

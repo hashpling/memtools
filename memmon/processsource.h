@@ -1,7 +1,7 @@
 #ifndef PROCESSSOURCE_H
 #define PROCESSSOURCE_H
 
-// Copyright (c) 2008 Charles Bailey
+// Copyright (c) 2008,2010 Charles Bailey
 
 #include "mmsource.h"
 

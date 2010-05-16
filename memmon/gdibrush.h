@@ -1,6 +1,8 @@
 #ifndef GDIBRUSH_H
 #define GDIBRUSH_H
 
+// Copyright (c) 2009 Charles Bailey
+
 #include <windows.h>
 #include "mminfo.h"
 

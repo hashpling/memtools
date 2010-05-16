@@ -1,6 +1,8 @@
 #ifndef GDIPEN_H
 #define GDIPEN_H
 
+// Copyright (c) 2009 Charles Bailey
+
 #include <windows.h>
 #include "mminfo.h"
 

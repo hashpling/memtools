@@ -1,7 +1,7 @@
 #ifndef MMSOURCE_H
 #define MMSOURCE_H
 
-// Copyright (c) 2008 Charles Bailey
+// Copyright (c) 2008,2010 Charles Bailey
 
 class MMPrefs;
 

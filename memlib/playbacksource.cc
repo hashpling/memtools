@@ -1,4 +1,4 @@
-// Copyright (c) 2008 Charles Bailey
+// Copyright (c) 2008,2010 Charles Bailey
 #include "playbacksource.h"
 #include "mminfo.h"
 #include "memorydiff.h"

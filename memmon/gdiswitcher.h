@@ -1,6 +1,8 @@
 #ifndef GDISWITCHER_H
 #define GDISWITCHER_H
 
+// Copyright (c) 2009 Charles Bailey
+
 #include <windows.h>
 #include "mminfo.h"
 
