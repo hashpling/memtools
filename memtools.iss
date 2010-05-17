@@ -51,8 +51,8 @@ Source: "x64\release\memcat.exe"; DestDir: "{app}\bin64"; Flags: ignoreversion; 
 Source: "x64\release\memdiff.exe"; DestDir: "{app}\bin64"; Flags: ignoreversion; Components: c64bitexe
 Source: "x64\release\memmon.exe"; DestDir: "{app}\bin64"; Flags: ignoreversion; Components: c64bitexe
 Source: "x64\release\splitrec.exe"; DestDir: "{app}\bin64"; Flags: ignoreversion; Components: c64bitexe
-Source: "{#VCREDIST}\amd64\Microsoft.VC100.CRT\msvcr100.dll"; DestDir: "{app}\bin64"; Components: c64bitexe
-Source: "{#VCREDIST}\amd64\Microsoft.VC100.CRT\msvcp100.dll"; DestDir: "{app}\bin64"; Components: c64bitexe
+Source: "{#VCREDIST}\x64\Microsoft.VC100.CRT\msvcr100.dll"; DestDir: "{app}\bin64"; Components: c64bitexe
+Source: "{#VCREDIST}\x64\Microsoft.VC100.CRT\msvcp100.dll"; DestDir: "{app}\bin64"; Components: c64bitexe
 Source: "readme.txt"; DestDir: "{app}"; Flags: isreadme; Components: common
 Source: "licence.txt"; DestDir: "{app}"; Components: common
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
