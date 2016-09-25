@@ -38,7 +38,6 @@ public:
 	public:
 		virtual ~Change() {}
 		virtual void Apply( RegionList&, RegionList::iterator& ) const = 0;
-		virtual Change* Clone() const = 0;
 		virtual void Write( std::streambuf* sb ) const = 0;
 	};
 
@@ -47,7 +46,6 @@ public:
 	public:
 		explicit Addition( const Region& r ) : _r( r ) {}
 		void Apply( RegionList&, RegionList::iterator& ) const;
-		Change* Clone() const { return new Addition( _r ); }
 		void Write( std::streambuf* sb ) const;
 
 		const Region& GetRegion() const { return _r; }
@@ -64,7 +62,6 @@ public:
 	public:
 		explicit Removal( const size_t& b ) : _b( b ) {}
 		void Apply( RegionList&, RegionList::iterator& ) const;
-		Change* Clone() const { return new Removal( _b ); }
 		void Write( std::streambuf* sb ) const;
 
 		size_t GetBase() const { return _b; }
@@ -81,7 +78,6 @@ public:
 	public:
 		explicit DetailChange( const Region& r ) : _r( r ) {}
 		void Apply( RegionList&, RegionList::iterator& ) const;
-		Change* Clone() const { return new DetailChange( _r ); }
 		void Write( std::streambuf* sb ) const;
 
 		const Region& GetRegion() const { return _r; }
