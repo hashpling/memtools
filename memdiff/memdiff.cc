@@ -1,6 +1,7 @@
 // Copyright (c) 2008 Charles Bailey
 #include "memorymap.h"
 #include "memorydiff.h"
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 

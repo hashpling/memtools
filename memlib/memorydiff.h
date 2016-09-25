@@ -4,6 +4,7 @@
 // Copyright (c) 2008 Charles Bailey
 
 #include "mminfo.h"
+#include <memory>
 
 namespace MemMon
 {
@@ -92,7 +93,7 @@ public:
 		Region _r;
 	};
 
-	typedef std::vector< ValuePtr< Change, Cloner > > Changes;
+	typedef std::vector< std::unique_ptr< Change > > Changes;
 
 	const Changes& GetChanges() const { return _changes; }
 

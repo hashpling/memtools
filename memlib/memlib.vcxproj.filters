@@ -44,9 +44,6 @@
     <ClInclude Include="mmsource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mmvalueptr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="playbacksource.h">
       <Filter>Header Files</Filter>
     </ClInclude>

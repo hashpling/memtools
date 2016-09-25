@@ -8,7 +8,6 @@
 #include <utility>
 #include <exception>
 #include <stdexcept>
-#include "mmvalueptr.h"
 
 #ifndef _WIN32
 #include <stdint.h>

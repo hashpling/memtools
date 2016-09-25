@@ -138,7 +138,6 @@
     <ClInclude Include="mminfo.h" />
     <ClInclude Include="mmintio.h" />
     <ClInclude Include="mmsource.h" />
-    <ClInclude Include="mmvalueptr.h" />
     <ClInclude Include="playbacksource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

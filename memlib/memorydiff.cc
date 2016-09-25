@@ -3,6 +3,7 @@
 #include "memorydiff.h"
 #include "memorymap.h"
 #include "mmintio.h"
+#include <algorithm>
 #include <cstring>
 
 namespace MemMon
