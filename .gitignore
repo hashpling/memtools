@@ -18,3 +18,5 @@ build_cov
 *.opensdf
 ipch
 installer
+*.VC.db
+*.VC.opendb
