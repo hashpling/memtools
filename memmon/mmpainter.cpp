@@ -110,48 +110,44 @@ COLORREF MMPainter::GetColour(vector<Region>::const_iterator& reg
 							, vector<Region>::const_iterator rend
 							, size_t base, size_t end) const
 {
-	COLORREF c = RGB(0, 0, 0);
+	if (reg == rend)
+		return RGB(0, 0, 0);
 
-	if (reg != rend)
+	while (reg != rend && (reg->base + reg->size) < base)
 	{
-		while (reg != rend && (reg->base + reg->size) < base)
-		{
-			++reg;
-		}
-
-		size_t tmp = 0, tmp2 = 0;
-		int max_type = 0;
-
-		vector<Region>::const_iterator oreg = reg;
-		while (reg != rend && reg->base < end)
-		{
-			size_t sbegin = std::max(base, reg->base);
-			size_t send = std::min(end, reg->base + reg->size);
-
-			tmp += (send - sbegin) * reg->type;
-			tmp2 += (send - sbegin) * std::max( static_cast< int >( reg->type ), 1);
-
-			if (reg->type > max_type) max_type = reg->type;
-
-			oreg = reg;
-			++reg;
-		}
-		// Reset back to the last interval so that the overlaps match up
-		reg = oreg;
-
-		if (max_type > 0) tmp = tmp2;
-
-		if (tmp > end - base)
-		{
-			c = RGB(255, 255 - ((tmp - (end - base)) * 255) / (end - base), 0);
-		}
-		else
-		{
-			c = RGB((tmp * 255) / (end - base), 255, 0);
-		}
+		++reg;
 	}
 
-	return c;
+	size_t tmp = 0, tmp2 = 0;
+	int max_type = 0;
+
+	auto oreg = reg;
+	while (reg != rend && reg->base < end)
+	{
+		size_t sbegin = std::max(base, reg->base);
+		size_t send = std::min(end, reg->base + reg->size);
+
+		tmp += (send - sbegin) * reg->type;
+		tmp2 += (send - sbegin) * std::max( static_cast< int >( reg->type ), 1);
+
+		if (reg->type > max_type) max_type = reg->type;
+
+		oreg = reg;
+		++reg;
+	}
+	// Reset back to the last interval so that the overlaps match up
+	reg = oreg;
+
+	if (max_type > 0) tmp = tmp2;
+
+	if (tmp > end - base)
+	{
+		return RGB(255, 255 - ((tmp - (end - base)) * 255) / (end - base), 0);
+	}
+	else
+	{
+		return RGB((tmp * 255) / (end - base), 255, 0);
+	}
 }
 
 void MMPainter::DisplayGauge(HDC hdc, bool bQuick) const
@@ -257,10 +253,9 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 	GDI::Switcher PenSaver(hdc, GetStockObject(DC_PEN));
 	SetDCPenColor(hdc, RGB(0, 0, 0));
 
-	for (vector<FreeRegion>::const_iterator k = mem.GetFreeList().begin();
-			k != mem.GetFreeList().end(); ++k)
+	for (const auto& r: mem.GetFreeList())
 	{
-		double width = dradius * 8.0 * double(k->size) / double(maxaddr);
+		double width = dradius * 8.0 * double(r.size) / double(maxaddr);
 		int nwidth = int(width);
 
 		if (nwidth < 6) break;
@@ -273,7 +268,7 @@ void MMPainter::DisplayBlobs(HDC hdc) const
 
 		if (nwidth > (radius << 2)) nwidth = radius << 2;
 
-		SetDCBrushColor(hdc, GetBlobColour(*k));
+		SetDCBrushColor(hdc, GetBlobColour(r));
 		Ellipse(hdc, currentpos, radius + 20 * currentline, currentpos + nwidth
 											, radius + 20 * (currentline + 1));
 

@@ -297,9 +297,9 @@ void MemoryDiff::Apply( MemoryMap& target ) const
 	RegionList& blocklist = target.GetBlockListRef();
 	RegionList::iterator i = blocklist.begin();
 
-	for( Changes::const_iterator cit = _changes.begin(); cit != _changes.end(); ++cit )
+	for( const auto& change: _changes )
 	{
-		(*cit)->Apply( blocklist, i );
+		change->Apply( blocklist, i );
 	}
 
 	target.RecalcFreeList();
@@ -348,9 +348,9 @@ void MemoryDiff::Write( StreamBuf* sb ) const
 
 	_ti.Write( sb );
 
-	for( Changes::const_iterator i = _changes.begin(); i != _changes.end(); ++i )
+	for( const auto& change : _changes )
 	{
-		DoWrite( i->get(), sb );
+		DoWrite( change.get(), sb );
 	}
 	sb->sputc( '\xf0' );
 }

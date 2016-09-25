@@ -215,7 +215,7 @@ void CPDlgContext::Load()
 
 void CPDlgContext::Save( const Command& cmd )
 {
-	list< Command >::iterator q = std::find( _commands.begin(), _commands.end(), cmd );
+	auto q = std::find( _commands.begin(), _commands.end(), cmd );
 
 	if( q == _commands.end() )
 	{
@@ -232,7 +232,7 @@ void CPDlgContext::Save( const Command& cmd )
 	tchvector buffer;
 	std::back_insert_iterator< tchvector > out = std::back_inserter( buffer );
 
-	for( list< Command >::const_iterator i = _commands.begin(); i != _commands.end(); ++i )
+	for( auto i = _commands.begin(); i != _commands.end(); ++i )
 	{
 		if( i != _commands.begin() )
 			*out++ = 0;
@@ -353,15 +353,15 @@ void InitDialog( HWND hwndDlg, LPARAM lParam )
 
 	pcu->Load();
 
-	const list< CPDlgContext::Command >& cmds = pcu->GetCommands();
+	auto& cmds = pcu->GetCommands();
 
 	if( !cmds.empty() )
 	{
 		HWND hwndHist = ::GetDlgItem( hwndDlg, IDC_CMD_HIST );
-		for( list< CPDlgContext::Command >::const_iterator i = cmds.begin(); i != cmds.end(); ++i )
+		for( const auto& cmd: cmds )
 		{
-			LRESULT lRes = ::SendMessage( hwndHist, CB_ADDSTRING, 0, reinterpret_cast< LPARAM >( i->MakeSummaryStr().c_str() ) );
-			lRes = ::SendMessage( hwndHist, CB_SETITEMDATA, lRes, reinterpret_cast< LPARAM >( &*i ) );
+			LRESULT lRes = ::SendMessage( hwndHist, CB_ADDSTRING, 0, reinterpret_cast< LPARAM >( cmd.MakeSummaryStr().c_str() ) );
+			lRes = ::SendMessage( hwndHist, CB_SETITEMDATA, lRes, reinterpret_cast< LPARAM >( &cmd ) );
 		}
 		ShowWindow( hwndHist, SW_SHOWNOACTIVATE );
 
