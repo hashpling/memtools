@@ -61,19 +61,16 @@ namespace MemMon
 
 		void Swap( ValuePtr& r ) throw()
 		{
-			std::swap( _t, r._t );
+			using std::swap;
+			swap( _t, r._t );
 		}
 
 	private:
 		T* _t;
 	};
 
-}
-
-namespace std
-{
-	template< class T, template< class > class C >
-	void swap( MemMon::ValuePtr< T, C >& l, MemMon::ValuePtr< T, C >& r ) { l.Swap( r ); }
+	template< class T, template <class> class C >
+	inline void swap(ValuePtr< T, C >& l, ValuePtr< T, C >& r) { l.Swap(r); }
 }
 
 #endif//MMVALUEPTR_H

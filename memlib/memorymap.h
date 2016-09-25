@@ -78,11 +78,11 @@ inline Stream& operator>>( Stream& is, MemoryMap& mem)
 	return is;
 }
 
+inline void swap( MemoryMap& l, MemoryMap& r )
+{
+	l.Swap(r);
 }
 
-namespace std
-{
-	template<> inline void swap( MemMon::MemoryMap& l, MemMon::MemoryMap& r ) { l.Swap( r ); }
 }
 
 #endif//MEMORYMAP_H
