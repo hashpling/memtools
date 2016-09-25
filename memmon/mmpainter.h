@@ -102,8 +102,8 @@ private:
 
 	MMPrefs* pPrefs;
 
-	std::auto_ptr< MemMon::Source > _source;
-	std::auto_ptr< Recorder > _recorder;
+	std::unique_ptr< MemMon::Source > _source;
+	std::unique_ptr< Recorder > _recorder;
 };
 
 #endif//MMPAINTER_H
